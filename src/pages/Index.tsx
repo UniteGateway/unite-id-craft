@@ -6,6 +6,7 @@ import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import { CreditCard, LayoutGrid, Download, ArrowLeft, FileImage, FileText } from "lucide-react";
 
 const generateId = (idx: number) =>
@@ -20,10 +21,100 @@ const emptyCard = (idx: number): IDCardData => ({
 
 type Mode = "select" | "single" | "multiple";
 
+const waitForImage = (img: HTMLImageElement) => {
+  if (img.complete && img.naturalWidth > 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve) => {
+    const done = () => resolve();
+    img.onload = done;
+    img.onerror = done;
+  });
+};
+
+const srcToDataUrl = async (src: string) => {
+  if (src.startsWith("data:")) {
+    return src;
+  }
+
+  const response = await fetch(src, { mode: "cors" });
+  const blob = await response.blob();
+
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Failed to read image"));
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsDataURL(blob);
+  });
+};
+
+const createExportClone = async (element: HTMLElement) => {
+  const clone = element.cloneNode(true) as HTMLElement;
+  clone.style.position = "fixed";
+  clone.style.left = "-10000px";
+  clone.style.top = "0";
+  clone.style.margin = "0";
+  clone.style.transform = "none";
+  clone.style.pointerEvents = "none";
+  clone.style.zIndex = "-1";
+
+  document.body.appendChild(clone);
+
+  const sourceImages = Array.from(element.querySelectorAll("img"));
+  const cloneImages = Array.from(clone.querySelectorAll("img"));
+
+  await Promise.all(
+    cloneImages.map(async (cloneImage, index) => {
+      const sourceImage = sourceImages[index];
+      const src = sourceImage?.currentSrc || sourceImage?.src || cloneImage.src;
+
+      if (!src) return;
+
+      try {
+        cloneImage.crossOrigin = "anonymous";
+        cloneImage.referrerPolicy = "no-referrer";
+        cloneImage.src = await srcToDataUrl(src);
+        await waitForImage(cloneImage);
+      } catch {
+        await waitForImage(cloneImage);
+      }
+    })
+  );
+
+  return clone;
+};
+
+const exportNodeToPng = async (element: HTMLElement, pixelRatio: number) => {
+  const clone = await createExportClone(element);
+
+  try {
+    return await toPng(clone, {
+      pixelRatio,
+      cacheBust: true,
+      includeQueryParams: true,
+      backgroundColor: "#ffffff",
+    });
+  } finally {
+    clone.remove();
+  }
+};
+
+const triggerDownload = (href: string, filename: string) => {
+  const link = document.createElement("a");
+  link.href = href;
+  link.download = filename;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
+
 const Index: React.FC = () => {
   const [mode, setMode] = useState<Mode>("select");
   const [cards, setCards] = useState<IDCardData[]>([emptyCard(0)]);
   const [cardCount, setCardCount] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const a4Ref = useRef<HTMLDivElement>(null);
 
@@ -59,7 +150,6 @@ const Index: React.FC = () => {
     });
   };
 
-  // Render barcodes
   useEffect(() => {
     cards.forEach((card) => {
       const el = document.getElementById(`barcode-${card.employeeId}`);
@@ -83,46 +173,69 @@ const Index: React.FC = () => {
   const downloadSinglePNG = async () => {
     const el = cardRefs.current[0];
     if (!el) return;
-    const dataUrl = await toPng(el, { pixelRatio: 3, cacheBust: true, includeQueryParams: true });
-    const link = document.createElement("a");
-    link.download = `id-card-${cards[0].employeeId}.png`;
-    link.href = dataUrl;
-    link.click();
+
+    try {
+      setIsExporting(true);
+      const dataUrl = await exportNodeToPng(el, 3);
+      triggerDownload(dataUrl, `id-card-${cards[0].employeeId}.png`);
+      toast.success("PNG downloaded");
+    } catch {
+      toast.error("PNG download failed");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const downloadSinglePDF = async () => {
     const el = cardRefs.current[0];
     if (!el) return;
-    const dataUrl = await toPng(el, { pixelRatio: 4, cacheBust: true, includeQueryParams: true });
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [54, 85.6] });
-    pdf.addImage(dataUrl, "PNG", 0, 0, 54, 85.6);
-    pdf.save(`id-card-${cards[0].employeeId}.pdf`);
+
+    try {
+      setIsExporting(true);
+      const dataUrl = await exportNodeToPng(el, 4);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [54, 85.6] });
+      pdf.addImage(dataUrl, "PNG", 0, 0, 54, 85.6);
+      pdf.save(`id-card-${cards[0].employeeId}.pdf`);
+      toast.success("PDF downloaded");
+    } catch {
+      toast.error("PDF download failed");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const downloadA4PDF = async () => {
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const cardW = 54;
-    const cardH = 85.6;
-    const margin = 10;
-    const gap = 5;
+    try {
+      setIsExporting(true);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const cardW = 54;
+      const cardH = 85.6;
+      const margin = 10;
+      const gap = 5;
 
-    for (let i = 0; i < cards.length; i++) {
-      const el = cardRefs.current[i];
-      if (!el) continue;
-      const dataUrl = await toPng(el, { pixelRatio: 4, cacheBust: true, includeQueryParams: true });
-      const col = i % 3;
-      const row = Math.floor(i / 3);
-      const x = margin + col * (cardW + gap);
-      const y = margin + row * (cardH + gap);
+      for (let i = 0; i < cards.length; i++) {
+        const el = cardRefs.current[i];
+        if (!el) continue;
 
-      // Cut lines
-      pdf.setDrawColor(200);
-      pdf.setLineWidth(0.1);
-      pdf.rect(x, y, cardW, cardH);
+        const dataUrl = await exportNodeToPng(el, 4);
+        const col = i % 3;
+        const row = Math.floor(i / 3);
+        const x = margin + col * (cardW + gap);
+        const y = margin + row * (cardH + gap);
 
-      pdf.addImage(dataUrl, "PNG", x, y, cardW, cardH);
+        pdf.setDrawColor(200);
+        pdf.setLineWidth(0.1);
+        pdf.rect(x, y, cardW, cardH);
+        pdf.addImage(dataUrl, "PNG", x, y, cardW, cardH);
+      }
+
+      pdf.save("id-cards-a4.pdf");
+      toast.success("A4 PDF downloaded");
+    } catch {
+      toast.error("A4 PDF download failed");
+    } finally {
+      setIsExporting(false);
     }
-    pdf.save("id-cards-a4.pdf");
   };
 
   if (mode === "select") {
@@ -169,7 +282,6 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -187,15 +299,15 @@ const Index: React.FC = () => {
           <div className="flex gap-2">
             {mode === "single" ? (
               <>
-                <Button size="sm" variant="outline" onClick={downloadSinglePNG}>
+                <Button size="sm" variant="outline" onClick={downloadSinglePNG} disabled={isExporting}>
                   <FileImage className="h-4 w-4 mr-1" /> PNG
                 </Button>
-                <Button size="sm" onClick={downloadSinglePDF}>
+                <Button size="sm" onClick={downloadSinglePDF} disabled={isExporting}>
                   <FileText className="h-4 w-4 mr-1" /> PDF
                 </Button>
               </>
             ) : (
-              <Button size="sm" onClick={downloadA4PDF}>
+              <Button size="sm" onClick={downloadA4PDF} disabled={isExporting}>
                 <Download className="h-4 w-4 mr-1" /> A4 PDF
               </Button>
             )}
@@ -205,7 +317,6 @@ const Index: React.FC = () => {
 
       <div className="mx-auto max-w-7xl p-4 lg:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Forms */}
           <div className="space-y-4">
             {mode === "multiple" && (
               <div className="flex items-center gap-3 mb-2">
@@ -234,7 +345,6 @@ const Index: React.FC = () => {
             </div>
           </div>
 
-          {/* Preview */}
           <div className="space-y-4">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Live Preview
@@ -242,7 +352,9 @@ const Index: React.FC = () => {
             {mode === "single" ? (
               <div className="flex justify-center">
                 <IDCard
-                  ref={(el) => { cardRefs.current[0] = el; }}
+                  ref={(el) => {
+                    cardRefs.current[0] = el;
+                  }}
                   data={cards[0]}
                 />
               </div>
@@ -255,7 +367,9 @@ const Index: React.FC = () => {
                   {cards.map((card, i) => (
                     <IDCard
                       key={i}
-                      ref={(el) => { cardRefs.current[i] = el; }}
+                      ref={(el) => {
+                        cardRefs.current[i] = el;
+                      }}
                       data={card}
                       scale={0.55}
                     />
@@ -270,5 +384,5 @@ const Index: React.FC = () => {
   );
 };
 
-
 export default Index;
+
