@@ -270,7 +270,5 @@ const Index: React.FC = () => {
   );
 };
 
-// Need Input import for the card count
-import { Input } from "@/components/ui/input";
 
 export default Index;
