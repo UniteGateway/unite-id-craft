@@ -136,8 +136,8 @@ const Index: React.FC = () => {
       const cardWidth = ID_CARD_EXPORT_SIZE_MM.width;
       const cardHeight = ID_CARD_EXPORT_SIZE_MM.height;
 
-      for (let index = 0; index < cards.length; index += 1) {
-        const canvas = await renderIdCardCanvas(cards[index]);
+      const totalSlots = 9;
+      for (let index = 0; index < totalSlots; index += 1) {
         const column = index % 3;
         const row = Math.floor(index / 3);
         const x = margin + column * (cardWidth + gap);
@@ -146,7 +146,11 @@ const Index: React.FC = () => {
         pdf.setDrawColor(200);
         pdf.setLineWidth(0.1);
         pdf.rect(x, y, cardWidth, cardHeight);
-        pdf.addImage(canvas.toDataURL("image/png"), "PNG", x, y, cardWidth, cardHeight);
+
+        if (index < cards.length) {
+          const canvas = await renderIdCardCanvas(cards[index]);
+          pdf.addImage(canvas.toDataURL("image/png"), "PNG", x, y, cardWidth, cardHeight);
+        }
       }
 
       pdf.save("id-cards-a4.pdf");
