@@ -1,5 +1,5 @@
-import React from "react";
-import uniteSolarLogo from "@/assets/unite-solar-logo.png";
+import React, { useEffect, useState } from "react";
+import uniteSolarLogoSrc from "@/assets/unite-solar-logo.png";
 
 export interface IDCardData {
   name: string;
@@ -13,10 +13,31 @@ interface IDCardProps {
   scale?: number;
 }
 
+// Convert the bundled logo URL to a data URI once so html-to-image can capture it
+let cachedLogoDataUri: string | null = null;
+function useLogoDataUri() {
+  const [uri, setUri] = useState(cachedLogoDataUri);
+  useEffect(() => {
+    if (cachedLogoDataUri) return;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(img, 0, 0);
+      cachedLogoDataUri = canvas.toDataURL("image/png");
+      setUri(cachedLogoDataUri);
+    };
+    img.src = uniteSolarLogoSrc;
+  }, []);
+  return uri || uniteSolarLogoSrc;
+}
+
 const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
   ({ data, scale = 1 }, ref) => {
-    // Card at 300 DPI: 54mm = 638px, 85.6mm = 1012px
-    // We'll use a base of 320x506 and scale
+    const logoSrc = useLogoDataUri();
     const w = 320;
     const h = 506;
 
@@ -89,11 +110,11 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
           }}
         />
 
-        {/* Logo */}
+        {/* Logo - large and prominent */}
         <div
           style={{
             position: "absolute",
-            top: 12 * scale,
+            top: 8 * scale,
             left: 0,
             right: 0,
             display: "flex",
@@ -102,10 +123,10 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
           }}
         >
           <img
-            src={uniteSolarLogo}
+            src={logoSrc}
             alt="Unite Solar"
             style={{
-              height: 60 * scale,
+              height: 80 * scale,
               objectFit: "contain",
             }}
           />
@@ -115,7 +136,7 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
         <div
           style={{
             position: "absolute",
-            top: h * 0.16 * scale,
+            top: h * 0.19 * scale,
             left: "50%",
             transform: "translateX(-50%)",
             width: 170 * scale,
