@@ -88,7 +88,7 @@ const Index: React.FC = () => {
   const downloadSinglePNG = async () => {
     try {
       setIsExporting(true);
-      const canvas = await renderIdCardCanvas(cards[0]);
+      const canvas = await renderIdCardCanvas(cards[0], 4);
       await downloadCanvasAsPng(canvas, `id-card-${cards[0].employeeId}.png`);
       toast.success("PNG downloaded");
     } catch (error) {
@@ -102,7 +102,7 @@ const Index: React.FC = () => {
   const downloadSinglePDF = async () => {
     try {
       setIsExporting(true);
-      const canvas = await renderIdCardCanvas(cards[0]);
+      const canvas = await renderIdCardCanvas(cards[0], 4);
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -148,7 +148,7 @@ const Index: React.FC = () => {
         pdf.rect(x, y, cardWidth, cardHeight);
 
         if (index < cards.length) {
-          const canvas = await renderIdCardCanvas(cards[index]);
+          const canvas = await renderIdCardCanvas(cards[index], 3);
           pdf.addImage(canvas.toDataURL("image/png"), "PNG", x, y, cardWidth, cardHeight);
         }
       }

@@ -15,6 +15,8 @@ const DARK = "#3a3a3a";
 const ORANGE = "#f08c00";
 const MUTED_TEXT = "#cccccc";
 const PLACEHOLDER = "#e0e0e0";
+const PLACEHOLDER_TEXT = "#999999";
+const FONT_FAMILY = "Inter, Arial, Helvetica, sans-serif";
 const DEFAULT_SCALE = 2;
 
 export const ID_CARD_EXPORT_SIZE_MM = {
@@ -77,6 +79,16 @@ const loadImage = async (src: string) => {
   return promise;
 };
 
+const waitForFonts = async () => {
+  if ("fonts" in document) {
+    try {
+      await document.fonts.ready;
+    } catch {
+      // Ignore font readiness failures and fall back to available fonts.
+    }
+  }
+};
+
 const createRoundedRectPath = (
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -98,21 +110,55 @@ const createRoundedRectPath = (
   ctx.closePath();
 };
 
-const drawContainImage = (
+const setFont = (ctx: CanvasRenderingContext2D, fontWeight: number, fontSize: number) => {
+  ctx.font = `${fontWeight} ${fontSize}px ${FONT_FAMILY}`;
+};
+
+const measureTextWidth = (ctx: CanvasRenderingContext2D, text: string, letterSpacing = 0) => {
+  if (!text) {
+    return 0;
+  }
+
+  return ctx.measureText(text).width + Math.max(0, text.length - 1) * letterSpacing;
+};
+
+const drawTextWithLetterSpacing = (
   ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement,
+  text: string,
   x: number,
   y: number,
-  width: number,
+  letterSpacing = 0,
+) => {
+  let cursorX = x;
+  for (const character of text) {
+    ctx.fillText(character, cursorX, y);
+    cursorX += ctx.measureText(character).width + letterSpacing;
+  }
+};
+
+const truncateToWidth = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  letterSpacing = 0,
+) => {
+  let output = text.trim();
+  while (output.length > 0 && measureTextWidth(ctx, `${output}…`, letterSpacing) > maxWidth) {
+    output = output.slice(0, -1).trimEnd();
+  }
+  return output ? `${output}…` : "";
+};
+
+const drawCenteredImageByHeight = (
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  top: number,
   height: number,
 ) => {
-  const ratio = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+  const ratio = height / image.naturalHeight;
   const drawWidth = image.naturalWidth * ratio;
-  const drawHeight = image.naturalHeight * ratio;
-  const drawX = x + (width - drawWidth) / 2;
-  const drawY = y + (height - drawHeight) / 2;
-
-  ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+  const drawX = (BASE_WIDTH - drawWidth) / 2;
+  ctx.drawImage(image, drawX, top, drawWidth, height);
 };
 
 const drawRoundedImageCover = (
@@ -144,49 +190,6 @@ const drawRoundedImageCover = (
   ctx.restore();
 };
 
-const truncateToWidth = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number) => {
-  let output = text.trim();
-  while (output.length > 0 && ctx.measureText(`${output}…`).width > maxWidth) {
-    output = output.slice(0, -1).trimEnd();
-  }
-  return output ? `${output}…` : "";
-};
-
-const createWrappedLines = (
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-  maxLines: number,
-) => {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  if (!words.length) {
-    return ["Designation"];
-  }
-
-  const lines: string[] = [];
-  let current = words[0];
-
-  for (let index = 1; index < words.length; index += 1) {
-    const candidate = `${current} ${words[index]}`;
-    if (ctx.measureText(candidate).width <= maxWidth) {
-      current = candidate;
-      continue;
-    }
-
-    lines.push(current);
-    if (lines.length === maxLines - 1) {
-      const remainder = [words[index], ...words.slice(index + 1)].join(" ");
-      lines.push(truncateToWidth(ctx, remainder, maxWidth));
-      return lines;
-    }
-
-    current = words[index];
-  }
-
-  lines.push(current);
-  return lines.slice(0, maxLines);
-};
-
 const drawFittedCenterText = (
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -198,49 +201,52 @@ const drawFittedCenterText = (
     maxWidth: number;
     minFontSize?: number;
     uppercase?: boolean;
+    letterSpacing?: number;
   },
 ) => {
-  const { color, fontSize, fontWeight, maxWidth, minFontSize = 10, uppercase = false } = options;
+  const {
+    color,
+    fontSize,
+    fontWeight,
+    maxWidth,
+    minFontSize = 10,
+    uppercase = false,
+    letterSpacing = 0,
+  } = options;
   let content = uppercase ? text.toUpperCase() : text;
   let size = fontSize;
 
   for (; size > minFontSize; size -= 1) {
-    ctx.font = `${fontWeight} ${size}px Arial, Helvetica, sans-serif`;
-    if (ctx.measureText(content).width <= maxWidth) {
+    setFont(ctx, fontWeight, size);
+    if (measureTextWidth(ctx, content, letterSpacing) <= maxWidth) {
       break;
     }
   }
 
-  ctx.font = `${fontWeight} ${size}px Arial, Helvetica, sans-serif`;
-  if (ctx.measureText(content).width > maxWidth) {
-    content = truncateToWidth(ctx, content, maxWidth);
+  setFont(ctx, fontWeight, size);
+  if (measureTextWidth(ctx, content, letterSpacing) > maxWidth) {
+    content = truncateToWidth(ctx, content, maxWidth, letterSpacing);
   }
 
   ctx.fillStyle = color;
-  ctx.textAlign = "center";
+  ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.fillText(content, BASE_WIDTH / 2, y);
+  drawTextWithLetterSpacing(
+    ctx,
+    content,
+    (BASE_WIDTH - measureTextWidth(ctx, content, letterSpacing)) / 2,
+    y,
+    letterSpacing,
+  );
 };
 
 const drawDesignation = (ctx: CanvasRenderingContext2D, designation: string) => {
-  let size = 13;
-  let lines: string[] = [];
-
-  for (; size >= 10; size -= 1) {
-    ctx.font = `600 ${size}px Arial, Helvetica, sans-serif`;
-    lines = createWrappedLines(ctx, designation || "Designation", BASE_WIDTH * 0.78, 2);
-    if (lines.length <= 2) {
-      break;
-    }
-  }
-
-  const lineHeight = size * 1.15;
-  ctx.fillStyle = MUTED_TEXT;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.font = `600 ${size}px Arial, Helvetica, sans-serif`;
-  lines.forEach((line, index) => {
-    ctx.fillText(line, BASE_WIDTH / 2, BASE_HEIGHT * 0.66 + index * lineHeight);
+  drawFittedCenterText(ctx, designation || "Designation", BASE_HEIGHT * 0.66, {
+    color: MUTED_TEXT,
+    fontSize: 13,
+    fontWeight: 600,
+    maxWidth: BASE_WIDTH * 0.82,
+    minFontSize: 10,
   });
 };
 
@@ -251,16 +257,16 @@ const drawEmployeeId = (ctx: CanvasRenderingContext2D, employeeId: string) => {
 
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.font = "400 12px Arial, Helvetica, sans-serif";
+  setFont(ctx, 400, 12);
   const labelWidth = ctx.measureText(label).width;
-  ctx.font = "700 12px Arial, Helvetica, sans-serif";
+  setFont(ctx, 700, 12);
   const valueWidth = ctx.measureText(value).width;
   const startX = (BASE_WIDTH - (labelWidth + valueWidth)) / 2;
 
   ctx.fillStyle = WHITE;
-  ctx.font = "400 12px Arial, Helvetica, sans-serif";
+  setFont(ctx, 400, 12);
   ctx.fillText(label, startX, y);
-  ctx.font = "700 12px Arial, Helvetica, sans-serif";
+  setFont(ctx, 700, 12);
   ctx.fillText(value, startX + labelWidth, y);
 };
 
@@ -315,10 +321,10 @@ const drawPlaceholderPhoto = (ctx: CanvasRenderingContext2D, x: number, y: numbe
   ctx.stroke();
   ctx.restore();
 
-  ctx.fillStyle = "#999999";
+  ctx.fillStyle = PLACEHOLDER_TEXT;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = "500 14px Arial, Helvetica, sans-serif";
+  setFont(ctx, 500, 14);
   ctx.fillText("Photo", x + width / 2, y + height / 2);
 };
 
@@ -326,6 +332,8 @@ export const renderIdCardCanvas = async (
   data: ExportableIdCardData,
   scale = DEFAULT_SCALE,
 ) => {
+  await waitForFonts();
+
   const canvas = document.createElement("canvas");
   canvas.width = BASE_WIDTH * scale;
   canvas.height = BASE_HEIGHT * scale;
@@ -350,14 +358,18 @@ export const renderIdCardCanvas = async (
 
   ctx.fillStyle = WHITE;
   ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+
+  ctx.fillStyle = WHITE;
+  ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT * 0.35);
+
   ctx.fillStyle = DARK;
   ctx.fillRect(0, BASE_HEIGHT * 0.35, BASE_WIDTH, BASE_HEIGHT * 0.65);
 
   ctx.save();
-  ctx.translate(BASE_WIDTH * 0.65, BASE_HEIGHT * 0.28);
+  ctx.translate(BASE_WIDTH, BASE_HEIGHT * 0.28);
   ctx.transform(1, Math.tan((-15 * Math.PI) / 180), 0, 1, 0, 0);
   ctx.fillStyle = ORANGE;
-  ctx.fillRect(0, 0, BASE_WIDTH * 0.35, BASE_HEIGHT * 0.12);
+  ctx.fillRect(-BASE_WIDTH * 0.35, 0, BASE_WIDTH * 0.35, BASE_HEIGHT * 0.12);
   ctx.restore();
 
   ctx.save();
@@ -367,7 +379,7 @@ export const renderIdCardCanvas = async (
   ctx.fillRect(0, 0, BASE_WIDTH * 0.35, BASE_HEIGHT * 0.12);
   ctx.restore();
 
-  drawContainImage(ctx, logoImage, 20, 8, BASE_WIDTH - 40, 80);
+  drawCenteredImageByHeight(ctx, logoImage, 8, 80);
 
   const photoX = (BASE_WIDTH - 170) / 2;
   const photoY = BASE_HEIGHT * 0.19;
@@ -381,15 +393,16 @@ export const renderIdCardCanvas = async (
     color: WHITE,
     fontSize: 18,
     fontWeight: 700,
-    maxWidth: BASE_WIDTH * 0.78,
+    maxWidth: BASE_WIDTH * 0.84,
     minFontSize: 12,
     uppercase: true,
+    letterSpacing: 1,
   });
 
   drawDesignation(ctx, data.designation || "Designation");
 
   ctx.fillStyle = ORANGE;
-  ctx.fillRect(BASE_WIDTH * 0.15, BASE_HEIGHT * 0.71, BASE_WIDTH * 0.7, 1.5);
+  ctx.fillRect(BASE_WIDTH * 0.15, BASE_HEIGHT * 0.71, BASE_WIDTH * 0.7, 1);
 
   drawEmployeeId(ctx, data.employeeId || "US-BA-001");
 
