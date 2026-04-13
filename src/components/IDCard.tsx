@@ -186,8 +186,9 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
             zIndex: 5,
             color: "#ffffff",
             fontSize: 18 * scale,
-            fontWeight: 600,
-            letterSpacing: 0.5,
+            fontWeight: 700,
+            letterSpacing: 1,
+            textTransform: "uppercase" as const,
           }}
         >
           {data.name || "Full Name"}
@@ -197,14 +198,14 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
         <div
           style={{
             position: "absolute",
-            top: h * 0.65 * scale,
+            top: h * 0.66 * scale,
             left: 0,
             right: 0,
             textAlign: "center",
             zIndex: 5,
             color: "#cccccc",
-            fontSize: 11 * scale,
-            fontWeight: 400,
+            fontSize: 13 * scale,
+            fontWeight: 600,
           }}
         >
           {data.designation || "Designation"}
