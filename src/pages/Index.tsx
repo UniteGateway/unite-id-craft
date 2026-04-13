@@ -5,6 +5,7 @@ import IDCardForm from "@/components/IDCardForm";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
+import { Input } from "@/components/ui/input";
 import { CreditCard, LayoutGrid, Download, ArrowLeft, FileImage, FileText } from "lucide-react";
 
 const generateId = (idx: number) =>
