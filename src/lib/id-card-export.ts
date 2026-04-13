@@ -249,6 +249,7 @@ const drawEmployeeId = (ctx: CanvasRenderingContext2D, employeeId: string) => {
   const value = employeeId || "US-BA-001";
   const y = BASE_HEIGHT * 0.73;
 
+  ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.font = "400 12px Arial, Helvetica, sans-serif";
   const labelWidth = ctx.measureText(label).width;
