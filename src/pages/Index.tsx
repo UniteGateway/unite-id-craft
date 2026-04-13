@@ -83,7 +83,7 @@ const Index: React.FC = () => {
   const downloadSinglePNG = async () => {
     const el = cardRefs.current[0];
     if (!el) return;
-    const dataUrl = await toPng(el, { pixelRatio: 3 });
+    const dataUrl = await toPng(el, { pixelRatio: 3, cacheBust: true, includeQueryParams: true });
     const link = document.createElement("a");
     link.download = `id-card-${cards[0].employeeId}.png`;
     link.href = dataUrl;
@@ -93,7 +93,7 @@ const Index: React.FC = () => {
   const downloadSinglePDF = async () => {
     const el = cardRefs.current[0];
     if (!el) return;
-    const dataUrl = await toPng(el, { pixelRatio: 4 });
+    const dataUrl = await toPng(el, { pixelRatio: 4, cacheBust: true, includeQueryParams: true });
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [54, 85.6] });
     pdf.addImage(dataUrl, "PNG", 0, 0, 54, 85.6);
     pdf.save(`id-card-${cards[0].employeeId}.pdf`);
@@ -109,7 +109,7 @@ const Index: React.FC = () => {
     for (let i = 0; i < cards.length; i++) {
       const el = cardRefs.current[i];
       if (!el) continue;
-      const dataUrl = await toPng(el, { pixelRatio: 4 });
+      const dataUrl = await toPng(el, { pixelRatio: 4, cacheBust: true, includeQueryParams: true });
       const col = i % 3;
       const row = Math.floor(i / 3);
       const x = margin + col * (cardW + gap);
