@@ -9,6 +9,7 @@ export interface ExportableIdCardData {
   photoZoom?: number;
   photoOffsetX?: number;
   photoOffsetY?: number;
+  bgColor?: string;
 }
 
 const BASE_WIDTH = 320;
@@ -369,7 +370,7 @@ export const renderIdCardCanvas = async (
   ctx.fillStyle = WHITE;
   ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT * 0.35);
 
-  ctx.fillStyle = DARK;
+  ctx.fillStyle = data.bgColor || DARK;
   ctx.fillRect(0, BASE_HEIGHT * 0.35, BASE_WIDTH, BASE_HEIGHT * 0.65);
 
   ctx.save();

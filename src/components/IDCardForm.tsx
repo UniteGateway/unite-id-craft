@@ -2,8 +2,8 @@ import React, { useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Upload, ZoomIn, Move } from "lucide-react";
-import type { IDCardData } from "./IDCard";
+import { Upload, ZoomIn, Move, Palette } from "lucide-react";
+import { type IDCardData, BG_COLOR_PRESETS } from "./IDCard";
 
 interface IDCardFormProps {
   index: number;
@@ -127,7 +127,7 @@ const IDCardForm: React.FC<IDCardFormProps> = ({ index, data, onChange }) => {
         </div>
       </div>
 
-      {/* Photo adjustment controls - only show when photo is uploaded */}
+      {/* Photo adjustment controls */}
       {data.photo && (
         <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
           <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
@@ -180,6 +180,41 @@ const IDCardForm: React.FC<IDCardFormProps> = ({ index, data, onChange }) => {
           </div>
         </div>
       )}
+
+      {/* Background color picker */}
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground flex items-center gap-1">
+          <Palette className="h-3 w-3" /> Background Color
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {BG_COLOR_PRESETS.map((preset) => (
+            <button
+              key={preset.value}
+              type="button"
+              title={preset.label}
+              onClick={() => onChange(index, { ...data, bgColor: preset.value })}
+              className={`h-7 w-7 rounded-full border-2 transition-all ${
+                (data.bgColor || "#3a3a3a") === preset.value
+                  ? "border-primary scale-110 ring-2 ring-primary/30"
+                  : "border-border hover:border-primary/50"
+              }`}
+              style={{ backgroundColor: preset.value }}
+            />
+          ))}
+          <label
+            title="Custom color"
+            className="relative h-7 w-7 rounded-full border-2 border-dashed border-border hover:border-primary/50 cursor-pointer flex items-center justify-center overflow-hidden"
+          >
+            <Palette className="h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              type="color"
+              value={data.bgColor || "#3a3a3a"}
+              onChange={(e) => onChange(index, { ...data, bgColor: e.target.value })}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          </label>
+        </div>
+      </div>
     </div>
   );
 };

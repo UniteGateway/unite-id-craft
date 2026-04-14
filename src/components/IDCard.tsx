@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from "react";
 import uniteSolarLogoSrc from "@/assets/unite-solar-logo.png";
 
+export const BG_COLOR_PRESETS = [
+  { label: "Dark Grey", value: "#3a3a3a" },
+  { label: "Logo Blue", value: "#1a3c6e" },
+  { label: "Navy", value: "#0d1b2a" },
+  { label: "Teal", value: "#1a5c5a" },
+  { label: "Maroon", value: "#5a1a2a" },
+  { label: "Charcoal", value: "#2d2d2d" },
+];
+
 export interface IDCardData {
   name: string;
   designation: string;
@@ -9,6 +18,7 @@ export interface IDCardData {
   photoZoom?: number;
   photoOffsetX?: number;
   photoOffsetY?: number;
+  bgColor?: string;
 }
 
 interface IDCardProps {
@@ -53,7 +63,7 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
           height: h * scale,
           borderRadius: 16 * scale,
           fontFamily: "'Inter', sans-serif",
-          background: "linear-gradient(180deg, #ffffff 35%, #3a3a3a 35%)",
+          background: `linear-gradient(180deg, #ffffff 35%, ${data.bgColor || "#3a3a3a"} 35%)`,
           boxShadow: scale > 0.8 ? "0 4px 24px rgba(0,0,0,0.12)" : "none",
         }}
       >
@@ -78,7 +88,7 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
             left: 0,
             right: 0,
             height: h * 0.65 * scale,
-            background: "#3a3a3a",
+            background: data.bgColor || "#3a3a3a",
             zIndex: 1,
           }}
         />
