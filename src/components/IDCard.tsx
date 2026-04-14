@@ -159,6 +159,7 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
+                transform: `scale(${data.photoZoom ?? 1}) translate(${data.photoOffsetX ?? 0}%, ${data.photoOffsetY ?? 0}%)`,
               }}
             />
           ) : (
