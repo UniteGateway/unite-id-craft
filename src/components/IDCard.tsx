@@ -6,6 +6,9 @@ export interface IDCardData {
   designation: string;
   employeeId: string;
   photo: string | null;
+  photoZoom?: number;
+  photoOffsetX?: number;
+  photoOffsetY?: number;
 }
 
 interface IDCardProps {
