@@ -6,6 +6,9 @@ export interface ExportableIdCardData {
   designation: string;
   employeeId: string;
   photo: string | null;
+  photoZoom?: number;
+  photoOffsetX?: number;
+  photoOffsetY?: number;
 }
 
 const BASE_WIDTH = 320;
