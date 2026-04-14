@@ -11,7 +11,18 @@ import {
   ID_CARD_EXPORT_SIZE_MM,
   renderIdCardCanvas,
 } from "@/lib/id-card-export";
-import { CreditCard, LayoutGrid, Download, ArrowLeft, FileImage, FileText } from "lucide-react";
+import {
+  CreditCard,
+  LayoutGrid,
+  Download,
+  ArrowLeft,
+  FileImage,
+  FileText,
+  Upload,
+  Sparkles,
+} from "lucide-react";
+import uniteSolarLogoSrc from "@/assets/unite-solar-logo.png";
+import TemplateManager from "@/components/TemplateManager";
 
 const generateId = (idx: number) => `US-BA-${String(idx + 1).padStart(3, "0")}`;
 
@@ -29,6 +40,8 @@ const Index: React.FC = () => {
   const [cards, setCards] = useState<IDCardData[]>([emptyCard(0)]);
   const [cardCount, setCardCount] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
+  const [showCardCountInput, setShowCardCountInput] = useState(false);
+  const [tempCardCount, setTempCardCount] = useState("1");
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleCardChange = useCallback((idx: number, data: IDCardData) => {
@@ -40,19 +53,27 @@ const Index: React.FC = () => {
   }, []);
 
   const handleModeSelect = (nextMode: "single" | "multiple") => {
-    setMode(nextMode);
     if (nextMode === "single") {
+      setMode("single");
       setCards([emptyCard(0)]);
       setCardCount(1);
       return;
     }
+    // For multiple, show card count input first
+    setShowCardCountInput(true);
+    setTempCardCount("1");
+  };
 
-    setCards(Array.from({ length: 9 }, (_, idx) => emptyCard(idx)));
-    setCardCount(9);
+  const confirmMultipleCards = () => {
+    const count = Math.min(100, Math.max(1, parseInt(tempCardCount) || 1));
+    setCardCount(count);
+    setCards(Array.from({ length: count }, (_, idx) => emptyCard(idx)));
+    setShowCardCountInput(false);
+    setMode("multiple");
   };
 
   const updateCardCount = (count: number) => {
-    const safeCount = Math.min(9, Math.max(1, count));
+    const safeCount = Math.min(100, Math.max(1, count));
     setCardCount(safeCount);
     setCards((prev) => {
       const next = [...prev];
@@ -66,10 +87,7 @@ const Index: React.FC = () => {
   useEffect(() => {
     cards.forEach((card) => {
       const barcodeElement = document.getElementById(`barcode-${card.employeeId}`);
-      if (!barcodeElement) {
-        return;
-      }
-
+      if (!barcodeElement) return;
       try {
         JsBarcode(barcodeElement, card.employeeId || "US-BA-001", {
           format: "CODE128",
@@ -80,7 +98,7 @@ const Index: React.FC = () => {
           lineColor: "#ffffff",
         });
       } catch {
-        // Ignore preview barcode errors for incomplete values.
+        // Ignore
       }
     });
   }, [cards]);
@@ -108,12 +126,10 @@ const Index: React.FC = () => {
         unit: "mm",
         format: [ID_CARD_EXPORT_SIZE_MM.width, ID_CARD_EXPORT_SIZE_MM.height],
       });
-
       pdf.addImage(
         canvas.toDataURL("image/png"),
         "PNG",
-        0,
-        0,
+        0, 0,
         ID_CARD_EXPORT_SIZE_MM.width,
         ID_CARD_EXPORT_SIZE_MM.height,
       );
@@ -130,16 +146,29 @@ const Index: React.FC = () => {
   const downloadA4PDF = async () => {
     try {
       setIsExporting(true);
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const margin = 10;
       const gap = 5;
       const cardWidth = ID_CARD_EXPORT_SIZE_MM.width;
       const cardHeight = ID_CARD_EXPORT_SIZE_MM.height;
+      const cols = 3;
+      const rows = 3;
+      const cardsPerPage = cols * rows;
+      const totalPages = Math.ceil(cards.length / cardsPerPage);
+      // Total slots = full pages worth, so empty slots on last page are blank
+      const totalSlots = totalPages * cardsPerPage;
 
-      const totalSlots = 9;
-      for (let index = 0; index < totalSlots; index += 1) {
-        const column = index % 3;
-        const row = Math.floor(index / 3);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+      for (let i = 0; i < totalSlots; i++) {
+        const pageIndex = Math.floor(i / cardsPerPage);
+        const slotOnPage = i % cardsPerPage;
+        const column = slotOnPage % cols;
+        const row = Math.floor(slotOnPage / cols);
+
+        if (i > 0 && slotOnPage === 0) {
+          pdf.addPage();
+        }
+
         const x = margin + column * (cardWidth + gap);
         const y = margin + row * (cardHeight + gap);
 
@@ -147,14 +176,14 @@ const Index: React.FC = () => {
         pdf.setLineWidth(0.1);
         pdf.rect(x, y, cardWidth, cardHeight);
 
-        if (index < cards.length) {
-          const canvas = await renderIdCardCanvas(cards[index], 3);
+        if (i < cards.length) {
+          const canvas = await renderIdCardCanvas(cards[i], 3);
           pdf.addImage(canvas.toDataURL("image/png"), "PNG", x, y, cardWidth, cardHeight);
         }
       }
 
       pdf.save("id-cards-a4.pdf");
-      toast.success("A4 PDF downloaded");
+      toast.success(`A4 PDF downloaded (${totalPages} page${totalPages > 1 ? "s" : ""})`);
     } catch (error) {
       console.error(error);
       toast.error("A4 PDF download failed");
@@ -163,34 +192,86 @@ const Index: React.FC = () => {
     }
   };
 
-  if (mode === "select") {
+  // Card count input modal for multiple mode
+  if (showCardCountInput) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-lg w-full space-y-6 text-center">
+        <div className="max-w-sm w-full space-y-6 text-center">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground">ID Card Generator</h1>
-            <p className="text-muted-foreground text-sm">Unite Solar — Professional Employee ID Cards</p>
+            <LayoutGrid className="h-10 w-10 text-primary mx-auto" />
+            <h2 className="text-2xl font-bold text-foreground">How many cards?</h2>
+            <p className="text-muted-foreground text-sm">Enter the number of ID cards to generate (1–100)</p>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button
-              onClick={() => handleModeSelect("single")}
-              className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-border bg-card p-8 transition-all hover:border-primary hover:shadow-lg"
-            >
-              <CreditCard className="h-10 w-10 text-primary" />
-              <span className="font-semibold text-foreground">Single Card</span>
-              <span className="text-xs text-muted-foreground">Generate one ID card</span>
-            </button>
-            <button
-              onClick={() => handleModeSelect("multiple")}
-              className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-border bg-card p-8 transition-all hover:border-primary hover:shadow-lg"
-            >
-              <LayoutGrid className="h-10 w-10 text-primary" />
-              <span className="font-semibold text-foreground">Multiple Cards</span>
-              <span className="text-xs text-muted-foreground">A4 sheet — up to 9 cards</span>
-            </button>
+          <Input
+            type="number"
+            min={1}
+            max={100}
+            value={tempCardCount}
+            onChange={(e) => setTempCardCount(e.target.value)}
+            className="text-center text-2xl font-bold h-14"
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && confirmMultipleCards()}
+          />
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => setShowCardCountInput(false)}>
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+            </Button>
+            <Button className="flex-1" onClick={confirmMultipleCards}>
+              Continue
+            </Button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Landing / select page
+  if (mode === "select") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Logo top center */}
+        <div className="flex justify-center pt-8 pb-2">
+          <img src={uniteSolarLogoSrc} alt="Unite Solar" className="h-20 object-contain" />
+        </div>
+
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-2xl w-full space-y-8 text-center">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-foreground">ID Card Generator</h1>
+              <p className="text-muted-foreground text-sm">Professional Employee ID Cards</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                onClick={() => handleModeSelect("single")}
+                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-border bg-card p-8 transition-all hover:border-primary hover:shadow-lg"
+              >
+                <CreditCard className="h-10 w-10 text-primary" />
+                <span className="font-semibold text-foreground">Single Card</span>
+                <span className="text-xs text-muted-foreground">Generate one ID card</span>
+              </button>
+              <button
+                onClick={() => handleModeSelect("multiple")}
+                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-border bg-card p-8 transition-all hover:border-primary hover:shadow-lg"
+              >
+                <LayoutGrid className="h-10 w-10 text-primary" />
+                <span className="font-semibold text-foreground">Multiple Cards</span>
+                <span className="text-xs text-muted-foreground">A4 sheet — choose 1 to 100 cards</span>
+              </button>
+            </div>
+
+            {/* Template Manager */}
+            <TemplateManager />
+          </div>
+        </div>
+
+        {/* Powered by footer */}
+        <footer className="py-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            Powered by{" "}
+            <span className="font-semibold text-foreground">Unite Developers Global Inc</span>
+          </p>
+        </footer>
       </div>
     );
   }
@@ -204,10 +285,9 @@ const Index: React.FC = () => {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-lg font-semibold text-foreground">
-              {mode === "single" ? "Single Card" : "Multiple Cards (A4)"}
+              {mode === "single" ? "Single Card" : `Multiple Cards (${cardCount})`}
             </h1>
           </div>
-
           <div className="flex gap-2">
             {mode === "single" ? (
               <>
@@ -236,14 +316,13 @@ const Index: React.FC = () => {
                 <Input
                   type="number"
                   min={1}
-                  max={9}
+                  max={100}
                   value={cardCount}
                   onChange={(event) => updateCardCount(Number(event.target.value))}
                   className="w-20"
                 />
               </div>
             )}
-
             <div className="max-h-[75vh] overflow-y-auto space-y-4 pr-2">
               {cards.map((card, index) => (
                 <IDCardForm key={index} index={index} data={card} onChange={handleCardChange} />
@@ -256,9 +335,7 @@ const Index: React.FC = () => {
             {mode === "single" ? (
               <div className="flex justify-center">
                 <IDCard
-                  ref={(element) => {
-                    cardRefs.current[0] = element;
-                  }}
+                  ref={(el) => { cardRefs.current[0] = el; }}
                   data={cards[0]}
                 />
               </div>
@@ -268,9 +345,7 @@ const Index: React.FC = () => {
                   {cards.map((card, index) => (
                     <IDCard
                       key={index}
-                      ref={(element) => {
-                        cardRefs.current[index] = element;
-                      }}
+                      ref={(el) => { cardRefs.current[index] = el; }}
                       data={card}
                       scale={0.55}
                     />
@@ -281,6 +356,13 @@ const Index: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="py-4 text-center border-t border-border mt-8">
+        <p className="text-xs text-muted-foreground">
+          Powered by <span className="font-semibold text-foreground">Unite Developers Global Inc</span>
+        </p>
+      </footer>
     </div>
   );
 };
