@@ -391,7 +391,7 @@ export const renderIdCardCanvas = async (
   const photoX = (BASE_WIDTH - 170) / 2;
   const photoY = BASE_HEIGHT * 0.19;
   if (photoImage) {
-    drawRoundedImageCover(ctx, photoImage, photoX, photoY, 170, 195, 14);
+    drawRoundedImageCover(ctx, photoImage, photoX, photoY, 170, 195, 14, data.photoZoom ?? 1, data.photoOffsetX ?? 0, data.photoOffsetY ?? 0);
   } else {
     drawPlaceholderPhoto(ctx, photoX, photoY, 170, 195);
   }
