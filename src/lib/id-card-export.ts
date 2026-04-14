@@ -172,12 +172,16 @@ const drawRoundedImageCover = (
   width: number,
   height: number,
   radius: number,
+  zoom = 1,
+  offsetX = 0,
+  offsetY = 0,
 ) => {
-  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
-  const drawWidth = image.naturalWidth * scale;
-  const drawHeight = image.naturalHeight * scale;
-  const drawX = x + (width - drawWidth) / 2;
-  const drawY = y + (height - drawHeight) / 2;
+  const baseScale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  const finalScale = baseScale * zoom;
+  const drawWidth = image.naturalWidth * finalScale;
+  const drawHeight = image.naturalHeight * finalScale;
+  const drawX = x + (width - drawWidth) / 2 + (offsetX / 100) * width;
+  const drawY = y + (height - drawHeight) / 2 + (offsetY / 100) * height;
 
   ctx.save();
   createRoundedRectPath(ctx, x, y, width, height, radius);
