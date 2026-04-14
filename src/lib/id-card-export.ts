@@ -6,6 +6,9 @@ export interface ExportableIdCardData {
   designation: string;
   employeeId: string;
   photo: string | null;
+  photoZoom?: number;
+  photoOffsetX?: number;
+  photoOffsetY?: number;
 }
 
 const BASE_WIDTH = 320;
@@ -169,12 +172,16 @@ const drawRoundedImageCover = (
   width: number,
   height: number,
   radius: number,
+  zoom = 1,
+  offsetX = 0,
+  offsetY = 0,
 ) => {
-  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
-  const drawWidth = image.naturalWidth * scale;
-  const drawHeight = image.naturalHeight * scale;
-  const drawX = x + (width - drawWidth) / 2;
-  const drawY = y + (height - drawHeight) / 2;
+  const baseScale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  const finalScale = baseScale * zoom;
+  const drawWidth = image.naturalWidth * finalScale;
+  const drawHeight = image.naturalHeight * finalScale;
+  const drawX = x + (width - drawWidth) / 2 + (offsetX / 100) * width;
+  const drawY = y + (height - drawHeight) / 2 + (offsetY / 100) * height;
 
   ctx.save();
   createRoundedRectPath(ctx, x, y, width, height, radius);
@@ -384,7 +391,7 @@ export const renderIdCardCanvas = async (
   const photoX = (BASE_WIDTH - 170) / 2;
   const photoY = BASE_HEIGHT * 0.19;
   if (photoImage) {
-    drawRoundedImageCover(ctx, photoImage, photoX, photoY, 170, 195, 14);
+    drawRoundedImageCover(ctx, photoImage, photoX, photoY, 170, 195, 14, data.photoZoom ?? 1, data.photoOffsetX ?? 0, data.photoOffsetY ?? 0);
   } else {
     drawPlaceholderPhoto(ctx, photoX, photoY, 170, 195);
   }

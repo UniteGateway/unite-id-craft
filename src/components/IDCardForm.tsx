@@ -1,7 +1,8 @@
 import React, { useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Upload, ZoomIn, Move } from "lucide-react";
 import type { IDCardData } from "./IDCard";
 
 interface IDCardFormProps {
@@ -17,7 +18,13 @@ const IDCardForm: React.FC<IDCardFormProps> = ({ index, data, onChange }) => {
       if (file) {
         const reader = new FileReader();
         reader.onload = (ev) => {
-          onChange(index, { ...data, photo: ev.target?.result as string });
+          onChange(index, {
+            ...data,
+            photo: ev.target?.result as string,
+            photoZoom: 1,
+            photoOffsetX: 0,
+            photoOffsetY: 0,
+          });
         };
         reader.readAsDataURL(file);
       }
@@ -32,7 +39,13 @@ const IDCardForm: React.FC<IDCardFormProps> = ({ index, data, onChange }) => {
       if (file && file.type.startsWith("image/")) {
         const reader = new FileReader();
         reader.onload = (ev) => {
-          onChange(index, { ...data, photo: ev.target?.result as string });
+          onChange(index, {
+            ...data,
+            photo: ev.target?.result as string,
+            photoZoom: 1,
+            photoOffsetX: 0,
+            photoOffsetY: 0,
+          });
         };
         reader.readAsDataURL(file);
       }
@@ -113,6 +126,60 @@ const IDCardForm: React.FC<IDCardFormProps> = ({ index, data, onChange }) => {
           )}
         </div>
       </div>
+
+      {/* Photo adjustment controls - only show when photo is uploaded */}
+      {data.photo && (
+        <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+          <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <ZoomIn className="h-3 w-3" /> Photo Adjustment
+          </p>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">
+              Zoom: {((data.photoZoom ?? 1) * 100).toFixed(0)}%
+            </Label>
+            <Slider
+              min={100}
+              max={300}
+              step={5}
+              value={[(data.photoZoom ?? 1) * 100]}
+              onValueChange={([v]) =>
+                onChange(index, { ...data, photoZoom: v / 100 })
+              }
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Move className="h-3 w-3" /> Horizontal: {data.photoOffsetX ?? 0}%
+            </Label>
+            <Slider
+              min={-50}
+              max={50}
+              step={1}
+              value={[data.photoOffsetX ?? 0]}
+              onValueChange={([v]) =>
+                onChange(index, { ...data, photoOffsetX: v })
+              }
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Move className="h-3 w-3" /> Vertical: {data.photoOffsetY ?? 0}%
+            </Label>
+            <Slider
+              min={-50}
+              max={50}
+              step={1}
+              value={[data.photoOffsetY ?? 0]}
+              onValueChange={([v]) =>
+                onChange(index, { ...data, photoOffsetY: v })
+              }
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
