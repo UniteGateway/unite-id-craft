@@ -3,11 +3,14 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
-import Index from "./pages/Index.tsx";
+import Landing from "./pages/Landing.tsx";
+import Home from "./pages/Home.tsx";
+import IDCards from "./pages/IDCards.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Auth from "./pages/Auth.tsx";
 import VisitingCards from "./pages/VisitingCards.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import ComingSoon from "./pages/ComingSoon.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
 const queryClient = new QueryClient();
@@ -19,8 +22,18 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/id-cards" element={<IDCards />} />
+            <Route path="/coming-soon" element={<ComingSoon />} />
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/visiting-cards"
               element={
