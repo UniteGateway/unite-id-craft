@@ -66,6 +66,21 @@ const Auth: React.FC = () => {
     else nav("/home");
   };
 
+  const handleForgot = async () => {
+    const emailParsed = z.string().trim().email().safeParse(email);
+    if (!emailParsed.success) {
+      toast.error("Enter your email above first, then tap Forgot password");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(emailParsed.data, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success("Password reset link sent. Check your email.");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -91,6 +106,14 @@ const Auth: React.FC = () => {
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />} Sign In
               </Button>
+              <button
+                type="button"
+                onClick={handleForgot}
+                disabled={busy}
+                className="text-xs text-primary hover:underline mt-1 block mx-auto"
+              >
+                Forgot password?
+              </button>
             </form>
           </TabsContent>
           <TabsContent value="signup">

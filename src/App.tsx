@@ -8,6 +8,7 @@ import Home from "./pages/Home.tsx";
 import IDCards from "./pages/IDCards.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Auth from "./pages/Auth.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
 import VisitingCards from "./pages/VisitingCards.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import ComingSoon from "./pages/ComingSoon.tsx";
@@ -24,6 +25,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/id-cards" element={<IDCards />} />
             <Route path="/coming-soon" element={<ComingSoon />} />
             <Route
