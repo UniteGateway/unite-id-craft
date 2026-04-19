@@ -3,6 +3,10 @@
 import React from "react";
 import { Sun, Zap, Leaf, ShieldCheck, Award, Users, TrendingUp, Mail, Phone, MapPin, CheckCircle2, AlertTriangle, Wallet } from "lucide-react";
 import { computeProposal, inr, num, type ProposalInputs } from "@/lib/proposal-calc";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 
 export interface ExtraPage {
   image_url: string;
@@ -25,6 +29,26 @@ export interface ProposalDoc extends ProposalInputs {
 
 const NAVY = "#0b1f3a";
 const GREEN = "#16a34a";
+
+// Cumulative savings vs flat investment line, year 0..25.
+function buildRoiSeries(annualSavings: number, totalCost: number) {
+  const data: { year: number; savings: number; investment: number }[] = [];
+  for (let y = 0; y <= 25; y++) {
+    data.push({ year: y, savings: Math.round(annualSavings * y), investment: Math.round(totalCost) });
+  }
+  return data;
+}
+
+// Pie data: System / Civil / Footing / Add-ons / GST. Skip zero slices.
+function buildCostSplit(c: { systemCost: number; civilCost: number; footingTotal: number; addonsTotal: number; gstTotal: number }) {
+  return [
+    { name: "System", value: c.systemCost, color: "#0b1f3a" },
+    { name: "Civil", value: c.civilCost, color: "#2563eb" },
+    { name: "Footing", value: c.footingTotal, color: "#7c3aed" },
+    { name: "Add-ons", value: c.addonsTotal, color: "#f59e0b" },
+    { name: "GST", value: c.gstTotal, color: "#16a34a" },
+  ].filter((s) => s.value > 0);
+}
 
 const Page: React.FC<{ children: React.ReactNode; pageNo: number; totalPages: number; title?: string }> = ({
   children, pageNo, totalPages, title,
@@ -392,30 +416,86 @@ const ProposalDocument: React.FC<{ doc: ProposalDoc }> = ({ doc }) => {
       {/* PAGE 8 — ROI */}
       <Page pageNo={8} totalPages={total} title="ROI Analysis">
         <SectionTitle>Return on Investment</SectionTitle>
-        <table className="w-full border-collapse">
-          <thead><tr><TH>Parameter</TH><TH className="text-right">Value</TH></tr></thead>
-          <tbody>
-            <tr><TD>Plant Capacity</TD><TD className="text-right" mono>{num(doc.capacity_kw || 0)} kW</TD></tr>
-            <tr><TD>Avg. Generation</TD><TD className="text-right" mono>{num(c.monthlyUnits)} units / month</TD></tr>
-            <tr><TD>Electricity Tariff</TD><TD className="text-right" mono>{inr(doc.electricity_tariff || 0)} / unit</TD></tr>
-            <tr><TD>Monthly Savings</TD><TD className="text-right font-bold" mono>{inr(c.monthlySavings)}</TD></tr>
-            <tr><TD>Annual Savings</TD><TD className="text-right font-bold" mono>{inr(c.annualSavings)}</TD></tr>
-            <tr style={{ background: `${GREEN}15` }}><TD className="font-black">Payback Period</TD><TD className="text-right font-black" mono style={{ color: GREEN }}>{num(c.roiMonths, 1)} months</TD></tr>
-            <tr style={{ background: `${NAVY}08` }}><TD className="font-bold">25-Year Net Savings</TD><TD className="text-right font-black" mono style={{ color: NAVY }}>{inr(c.savings25y)}</TD></tr>
-          </tbody>
-        </table>
 
-        <SectionTitle accent={GREEN}>Environmental Impact</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl p-5 text-white" style={{ background: GREEN }}>
-            <Leaf className="h-8 w-8 mb-2" />
-            <div className="text-[10px] uppercase tracking-wider text-emerald-100">CO₂ avoided / year</div>
-            <div className="text-3xl font-black">{num(c.co2TonsYear, 1)} tons</div>
+        <div className="grid grid-cols-4 gap-2 mb-3">
+          <div className="rounded-lg p-2 text-center" style={{ background: `${NAVY}10` }}>
+            <div className="text-[8.5px] uppercase tracking-wider text-slate-500">Monthly Savings</div>
+            <div className="text-[13px] font-black" style={{ color: NAVY }}>{inr(c.monthlySavings)}</div>
           </div>
-          <div className="rounded-xl p-5 text-white" style={{ background: NAVY }}>
-            <Sun className="h-8 w-8 mb-2" />
-            <div className="text-[10px] uppercase tracking-wider text-emerald-300">Equivalent trees / year</div>
-            <div className="text-3xl font-black">{num(c.treesEquivalent)}</div>
+          <div className="rounded-lg p-2 text-center" style={{ background: `${NAVY}10` }}>
+            <div className="text-[8.5px] uppercase tracking-wider text-slate-500">Annual Savings</div>
+            <div className="text-[13px] font-black" style={{ color: NAVY }}>{inr(c.annualSavings)}</div>
+          </div>
+          <div className="rounded-lg p-2 text-center" style={{ background: `${GREEN}18` }}>
+            <div className="text-[8.5px] uppercase tracking-wider text-slate-500">Payback</div>
+            <div className="text-[13px] font-black" style={{ color: GREEN }}>{num(c.roiMonths, 1)} mo</div>
+          </div>
+          <div className="rounded-lg p-2 text-center" style={{ background: `${GREEN}18` }}>
+            <div className="text-[8.5px] uppercase tracking-wider text-slate-500">25-Yr Net</div>
+            <div className="text-[13px] font-black" style={{ color: GREEN }}>{inr(c.savings25y)}</div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 p-3 mb-3">
+          <div className="text-[11px] font-bold mb-1" style={{ color: NAVY }}>25-Year Cumulative Savings vs Investment</div>
+          <div style={{ width: "100%", height: 200 }}>
+            <ResponsiveContainer>
+              <LineChart data={buildRoiSeries(c.annualSavings, c.totalCost)} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="year" tick={{ fontSize: 9, fill: "#475569" }} />
+                <YAxis tick={{ fontSize: 9, fill: "#475569" }} tickFormatter={(v) => `₹${(v / 100000).toFixed(0)}L`} width={50} />
+                <Tooltip formatter={(v: number) => inr(v)} labelFormatter={(l) => `Year ${l}`} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Line type="monotone" dataKey="savings" name="Cumulative Savings" stroke={GREEN} strokeWidth={2.5} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="investment" name="Investment" stroke={NAVY} strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-slate-200 p-3">
+            <div className="text-[11px] font-bold mb-1" style={{ color: NAVY }}>Project Cost Split</div>
+            <div style={{ width: "100%", height: 180 }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={buildCostSplit(c)}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={62}
+                    innerRadius={28}
+                    isAnimationActive={false}
+                    label={(e: any) => `${e.name} ${(e.percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                    style={{ fontSize: 9 }}
+                  >
+                    {buildCostSplit(c).map((s, i) => (
+                      <Cell key={i} fill={s.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => inr(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="grid grid-rows-2 gap-2">
+            <div className="rounded-xl p-3 text-white flex items-center gap-3" style={{ background: GREEN }}>
+              <Leaf className="h-7 w-7 shrink-0" />
+              <div>
+                <div className="text-[9px] uppercase tracking-wider text-emerald-100">CO₂ avoided / year</div>
+                <div className="text-2xl font-black leading-tight">{num(c.co2TonsYear, 1)} tons</div>
+              </div>
+            </div>
+            <div className="rounded-xl p-3 text-white flex items-center gap-3" style={{ background: NAVY }}>
+              <Sun className="h-7 w-7 shrink-0" />
+              <div>
+                <div className="text-[9px] uppercase tracking-wider text-emerald-300">Equivalent trees / year</div>
+                <div className="text-2xl font-black leading-tight">{num(c.treesEquivalent)}</div>
+              </div>
+            </div>
           </div>
         </div>
       </Page>
