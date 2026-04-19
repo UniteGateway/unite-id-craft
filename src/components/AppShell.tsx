@@ -1,10 +1,12 @@
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AppShell = ({ children }: { children: ReactNode }) => {
+  const isMobile = useIsMobile();
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
