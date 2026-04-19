@@ -4,13 +4,23 @@ import React from "react";
 import { Sun, Zap, Leaf, ShieldCheck, Award, Users, TrendingUp, Mail, Phone, MapPin, CheckCircle2, AlertTriangle, Wallet } from "lucide-react";
 import { computeProposal, inr, num, type ProposalInputs } from "@/lib/proposal-calc";
 
+export interface ExtraPage {
+  image_url: string;
+  caption?: string;
+}
+
 export interface ProposalDoc extends ProposalInputs {
   id?: string;
   title?: string;
   proposal_number?: string;
   cover_image_url?: string;
+  /** "background" = Unite branding overlaid on top (default).
+   *  "fullpage"   = use the uploaded image as the entire page, no header/footer/overlay. */
+  cover_mode?: "background" | "fullpage";
   client_contact?: string;
   client_email?: string;
+  /** Additional pages appended at the end. Each is rendered as a full-bleed image page. */
+  extra_pages?: ExtraPage[];
 }
 
 const NAVY = "#0b1f3a";
