@@ -82,6 +82,20 @@ const Auth: React.FC = () => {
     else toast.success("Password reset link sent. Check your email.");
   };
 
+  const handleGoogle = async () => {
+    setBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}/home`,
+    });
+    if (result.error) {
+      setBusy(false);
+      toast.error(result.error.message || "Google sign-in failed");
+      return;
+    }
+    if (result.redirected) return;
+    nav("/home", { replace: true });
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm">
