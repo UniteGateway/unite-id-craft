@@ -12,12 +12,11 @@ import ResetPassword from "./pages/ResetPassword.tsx";
 import VisitingCards from "./pages/VisitingCards.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import ComingSoon from "./pages/ComingSoon.tsx";
+import SocialMedia from "./pages/SocialMedia.tsx";
+import Admin from "./pages/Admin.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
-import AppShell from "./components/AppShell.tsx";
 
 const queryClient = new QueryClient();
-
-const Shell = ({ children }: { children: React.ReactNode }) => <AppShell>{children}</AppShell>;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -29,21 +28,13 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-
-            {/* Studio routes — all wrapped in sliding sidebar shell */}
+            <Route path="/id-cards" element={<IDCards />} />
+            <Route path="/coming-soon" element={<ComingSoon />} />
             <Route
               path="/home"
               element={
                 <ProtectedRoute>
-                  <Shell><Home /></Shell>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/id-cards"
-              element={
-                <ProtectedRoute>
-                  <Shell><IDCards /></Shell>
+                  <Home />
                 </ProtectedRoute>
               }
             />
@@ -51,7 +42,7 @@ const App = () => (
               path="/visiting-cards"
               element={
                 <ProtectedRoute>
-                  <Shell><VisitingCards /></Shell>
+                  <VisitingCards />
                 </ProtectedRoute>
               }
             />
@@ -59,32 +50,26 @@ const App = () => (
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Shell><Dashboard /></Shell>
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />
-
-            {/* Coming soon module routes */}
-            {["flyers", "brochures", "presentations", "proposals", "letterheads"].map((p) => (
-              <Route
-                key={p}
-                path={`/${p}`}
-                element={
-                  <ProtectedRoute>
-                    <Shell><ComingSoon /></Shell>
-                  </ProtectedRoute>
-                }
-              />
-            ))}
             <Route
-              path="/coming-soon"
+              path="/social-media"
               element={
                 <ProtectedRoute>
-                  <Shell><ComingSoon /></Shell>
+                  <SocialMedia />
                 </ProtectedRoute>
               }
             />
-
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

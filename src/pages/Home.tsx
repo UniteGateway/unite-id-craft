@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import AppNav from "@/components/AppNav";
 import { useAuth } from "@/hooks/useAuth";
 import {
   CreditCard,
@@ -12,7 +13,10 @@ import {
   LibraryBig,
   LayoutDashboard,
   Sparkles,
+  Instagram,
+  ShieldCheck,
 } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Tile {
   icon: React.ElementType;
@@ -26,11 +30,12 @@ interface Tile {
 const designTiles: Tile[] = [
   { icon: CreditCard, title: "ID Cards", desc: "Employee badges", to: "/id-cards", hue: "from-orange-500 to-amber-400", ready: true },
   { icon: Contact, title: "Business Cards", desc: "Visiting cards", to: "/visiting-cards", hue: "from-blue-600 to-cyan-400", ready: true },
-  { icon: FileImage, title: "Flyers", desc: "Single-page promos", to: "/flyers", hue: "from-pink-500 to-rose-400" },
-  { icon: BookOpen, title: "Brochures", desc: "Tri-fold layouts", to: "/brochures", hue: "from-emerald-500 to-teal-400" },
-  { icon: Presentation, title: "Presentations", desc: "Pitch decks (PPT)", to: "/presentations", hue: "from-violet-600 to-fuchsia-400" },
-  { icon: FileSignature, title: "Proposals", desc: "Client proposals", to: "/proposals", hue: "from-indigo-600 to-blue-400" },
-  { icon: Mail, title: "Letterheads", desc: "Stationery", to: "/letterheads", hue: "from-yellow-500 to-orange-400" },
+  { icon: Instagram, title: "Social Media", desc: "Instagram posts & stories", to: "/social-media", hue: "from-fuchsia-500 to-pink-500", ready: true },
+  { icon: FileImage, title: "Flyers", desc: "Single-page promos", to: "/coming-soon?type=flyers", hue: "from-pink-500 to-rose-400" },
+  { icon: BookOpen, title: "Brochures", desc: "Tri-fold layouts", to: "/coming-soon?type=brochures", hue: "from-emerald-500 to-teal-400" },
+  { icon: Presentation, title: "Presentations", desc: "Pitch decks (PPT)", to: "/coming-soon?type=presentations", hue: "from-violet-600 to-fuchsia-400" },
+  { icon: FileSignature, title: "Proposals", desc: "Client proposals", to: "/coming-soon?type=proposals", hue: "from-indigo-600 to-blue-400" },
+  { icon: Mail, title: "Letterheads", desc: "Stationery", to: "/coming-soon?type=letterheads", hue: "from-yellow-500 to-orange-400" },
 ];
 
 const workTiles: Tile[] = [
@@ -63,9 +68,14 @@ const Tile: React.FC<{ tile: Tile; onClick: () => void }> = ({ tile, onClick }) 
 const Home: React.FC = () => {
   const nav = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
+  const visibleWorkTiles = isAdmin
+    ? [...workTiles, { icon: ShieldCheck, title: "Admin", desc: "API keys & brand library", to: "/admin", hue: "from-emerald-600 to-teal-500", ready: true } as Tile]
+    : workTiles;
 
   return (
     <div className="min-h-screen bg-background">
+      <AppNav />
       <main className="mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
@@ -96,7 +106,7 @@ const Home: React.FC = () => {
             Your work
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-            {workTiles.map((t) => (
+            {visibleWorkTiles.map((t) => (
               <Tile key={t.title} tile={t} onClick={() => nav(t.to)} />
             ))}
           </div>

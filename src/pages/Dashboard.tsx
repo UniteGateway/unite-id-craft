@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import AppNav from "@/components/AppNav";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Printer, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -74,6 +75,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <AppNav />
       <main className="mx-auto max-w-7xl p-4">
         <div className="flex items-center justify-between mb-6">
           <div>
