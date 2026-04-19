@@ -4,13 +4,23 @@ import React from "react";
 import { Sun, Zap, Leaf, ShieldCheck, Award, Users, TrendingUp, Mail, Phone, MapPin, CheckCircle2, AlertTriangle, Wallet } from "lucide-react";
 import { computeProposal, inr, num, type ProposalInputs } from "@/lib/proposal-calc";
 
+export interface ExtraPage {
+  image_url: string;
+  caption?: string;
+}
+
 export interface ProposalDoc extends ProposalInputs {
   id?: string;
   title?: string;
   proposal_number?: string;
   cover_image_url?: string;
+  /** "background" = Unite branding overlaid on top (default).
+   *  "fullpage"   = use the uploaded image as the entire page, no header/footer/overlay. */
+  cover_mode?: "background" | "fullpage";
   client_contact?: string;
   client_email?: string;
+  /** Additional pages appended at the end. Each is rendered as a full-bleed image page. */
+  extra_pages?: ExtraPage[];
 }
 
 const NAVY = "#0b1f3a";
@@ -79,13 +89,20 @@ const TD: React.FC<React.TdHTMLAttributes<HTMLTableCellElement> & { mono?: boole
 // ────────────────────────────────────────────────────────────────────────────────
 const ProposalDocument: React.FC<{ doc: ProposalDoc }> = ({ doc }) => {
   const c = computeProposal(doc);
-  const total = 12;
+  const extras = doc.extra_pages || [];
+  const total = 12 + extras.length;
   const today = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
   const proposalNo = doc.proposal_number || `USP-${(doc.id || "DRAFT").slice(0, 6).toUpperCase()}`;
+  const fullPageCover = doc.cover_mode === "fullpage" && !!doc.cover_image_url;
 
   return (
     <div id="proposal-doc" className="space-y-6 py-6 bg-slate-100">
       {/* PAGE 1 — COVER */}
+      {fullPageCover ? (
+        <div className="pdf-page relative mx-auto shadow-2xl overflow-hidden bg-white" style={{ width: "210mm", height: "297mm" }}>
+          <img src={doc.cover_image_url} alt="" crossOrigin="anonymous" className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+      ) : (
       <div className="pdf-page relative mx-auto shadow-2xl overflow-hidden" style={{ width: "210mm", height: "297mm", background: NAVY }}>
         {doc.cover_image_url ? (
           <img src={doc.cover_image_url} alt="" crossOrigin="anonymous" className="absolute inset-0 w-full h-full object-cover opacity-70" />
@@ -133,6 +150,7 @@ const ProposalDocument: React.FC<{ doc: ProposalDoc }> = ({ doc }) => {
           </div>
         </div>
       </div>
+      )}
 
       {/* PAGE 2 — PROPOSAL SUMMARY */}
       <Page pageNo={2} totalPages={total} title="Proposal Summary">
@@ -499,6 +517,26 @@ const ProposalDocument: React.FC<{ doc: ProposalDoc }> = ({ doc }) => {
           </div>
         </div>
       </Page>
+
+      {/* EXTRA PAGES — full-bleed images appended after page 12 */}
+      {extras.map((p, i) => (
+        <div
+          key={`extra-${i}`}
+          className="pdf-page relative mx-auto shadow-2xl overflow-hidden bg-white"
+          style={{ width: "210mm", height: "297mm" }}
+        >
+          {p.image_url ? (
+            <img src={p.image_url} alt="" crossOrigin="anonymous" className="absolute inset-0 w-full h-full object-contain bg-white" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-slate-300 text-sm">Blank page</div>
+          )}
+          {p.caption && (
+            <div className="absolute bottom-0 left-0 right-0 px-10 py-3 text-[10px] text-slate-500 bg-white/90 border-t border-slate-200 text-center">
+              {p.caption}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 };

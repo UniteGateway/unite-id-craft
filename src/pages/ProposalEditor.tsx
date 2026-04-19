@@ -10,8 +10,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Download, Loader2, Save, Sparkles, Upload, Plus, Trash2, ArrowLeft } from "lucide-react";
-import ProposalDocument, { type ProposalDoc } from "@/components/proposals/ProposalDocument";
+import { Download, Loader2, Save, Sparkles, Upload, Plus, Trash2, ArrowLeft, ImagePlus } from "lucide-react";
+import ProposalDocument, { type ProposalDoc, type ExtraPage } from "@/components/proposals/ProposalDocument";
+import { Switch } from "@/components/ui/switch";
 import { computeProposal, inr } from "@/lib/proposal-calc";
 import { exportProposalPdf } from "@/lib/proposal-export";
 
@@ -42,6 +43,7 @@ const ProposalEditor: React.FC = () => {
   const [generatingCover, setGeneratingCover] = useState(false);
   const [exporting, setExporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const extraPageRef = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof ProposalDoc>(k: K, v: ProposalDoc[K]) => setDoc((d) => ({ ...d, [k]: v }));
   const setNum = (k: keyof ProposalDoc) => (e: React.ChangeEvent<HTMLInputElement>) => set(k, (e.target.value === "" ? undefined : +e.target.value) as any);
@@ -54,9 +56,12 @@ const ProposalEditor: React.FC = () => {
       setLoading(false);
       if (error) { toast.error(error.message); return; }
       if (!data) { toast.error("Proposal not found"); nav("/proposals"); return; }
+      const ov = (data.overrides as any) || {};
       setDoc({
         ...empty, ...data,
         addons: Array.isArray(data.addons) ? (data.addons as any) : [],
+        cover_mode: ov.cover_mode || "background",
+        extra_pages: Array.isArray(ov.extra_pages) ? ov.extra_pages : [],
       } as ProposalDoc);
     });
   }, [id, user, nav]);
@@ -91,6 +96,7 @@ const ProposalEditor: React.FC = () => {
       footing_cost: doc.footing_cost ?? null,
       electricity_tariff: doc.electricity_tariff ?? null,
       addons: doc.addons || [],
+      overrides: { cover_mode: doc.cover_mode || "background", extra_pages: doc.extra_pages || [] },
       computed,
     };
     const op = id && id !== "new"
@@ -170,6 +176,34 @@ const ProposalEditor: React.FC = () => {
   };
   const delAddon = (i: number) => set("addons", (doc.addons || []).filter((_, j) => j !== i));
 
+  // Extra pages (appended after page 12 in the PDF)
+  const addBlankPage = () => set("extra_pages", [...(doc.extra_pages || []), { image_url: "", caption: "" } as ExtraPage]);
+  const onUploadExtraPage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f || !user) return;
+    const path = `${user.id}/extra/${Date.now()}-${f.name}`;
+    const { error } = await supabase.storage.from("proposals").upload(path, f, { contentType: f.type, upsert: true });
+    if (error) { toast.error(error.message); return; }
+    const { data: pub } = supabase.storage.from("proposals").getPublicUrl(path);
+    set("extra_pages", [...(doc.extra_pages || []), { image_url: pub.publicUrl, caption: "" }]);
+    if (extraPageRef.current) extraPageRef.current.value = "";
+    toast.success("Page added");
+  };
+  const updExtra = (i: number, k: keyof ExtraPage, v: string) => {
+    const next = [...(doc.extra_pages || [])];
+    (next[i] as any)[k] = v;
+    set("extra_pages", next);
+  };
+  const delExtra = (i: number) => set("extra_pages", (doc.extra_pages || []).filter((_, j) => j !== i));
+  const replaceExtraImage = async (i: number, file: File) => {
+    if (!user) return;
+    const path = `${user.id}/extra/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("proposals").upload(path, file, { contentType: file.type, upsert: true });
+    if (error) { toast.error(error.message); return; }
+    const { data: pub } = supabase.storage.from("proposals").getPublicUrl(path);
+    updExtra(i, "image_url", pub.publicUrl);
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-background"><AppNav />
       <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -222,11 +256,75 @@ const ProposalEditor: React.FC = () => {
                     </Button>
                     <input ref={fileRef} type="file" accept="image/*" hidden onChange={onUploadCover} />
                   </div>
+
+                  {doc.cover_image_url && (
+                    <div className="rounded-md border p-2.5 space-y-2 bg-muted/30">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <Label className="text-xs">Full-page replacement</Label>
+                          <p className="text-[10px] text-muted-foreground leading-tight">
+                            On = use uploaded image as the entire page (no header/footer/overlay).
+                            Off = Unite Solar branding overlaid on top.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={doc.cover_mode === "fullpage"}
+                          onCheckedChange={(v) => set("cover_mode", v ? "fullpage" : "background")}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {doc.cover_image_url && (
                     <Button variant="ghost" size="sm" className="w-full text-destructive" onClick={() => set("cover_image_url", "")}>
                       Remove cover
                     </Button>
                   )}
+
+                  {/* Extra pages */}
+                  <div className="pt-3 border-t space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Extra pages (appended at end)</Label>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={addBlankPage} title="Add blank page">
+                          <Plus className="h-3.5 w-3.5" /> Blank
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => extraPageRef.current?.click()} title="Upload image as page">
+                          <ImagePlus className="h-3.5 w-3.5" /> Image
+                        </Button>
+                        <input ref={extraPageRef} type="file" accept="image/*" hidden onChange={onUploadExtraPage} />
+                      </div>
+                    </div>
+                    {(doc.extra_pages || []).length === 0 && (
+                      <p className="text-[10px] text-muted-foreground">No extra pages. Add blank pages or upload images to insert at the end of the PDF.</p>
+                    )}
+                    {(doc.extra_pages || []).map((p, i) => (
+                      <div key={i} className="rounded-md border p-2 space-y-1.5 bg-background">
+                        <div className="flex gap-2 items-start">
+                          {p.image_url ? (
+                            <img src={p.image_url} alt="" className="w-12 h-16 object-cover rounded border" />
+                          ) : (
+                            <label className="w-12 h-16 rounded border border-dashed flex items-center justify-center text-[9px] text-muted-foreground cursor-pointer hover:bg-muted">
+                              Upload
+                              <input type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) replaceExtraImage(i, f); }} />
+                            </label>
+                          )}
+                          <div className="flex-1 space-y-1">
+                            <div className="text-[10px] font-medium text-muted-foreground">Page {12 + i + 1}</div>
+                            <Input
+                              placeholder="Optional caption"
+                              value={p.caption || ""}
+                              onChange={(e) => updExtra(i, "caption", e.target.value)}
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => delExtra(i)} className="h-7 w-7">
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="client" className="space-y-3 pt-3">
