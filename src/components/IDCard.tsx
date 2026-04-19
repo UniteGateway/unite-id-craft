@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import uniteSolarLogoSrc from "@/assets/unite-solar-logo.png";
+import EditableText from "@/components/EditableText";
 
 export const BG_COLOR_PRESETS = [
   { label: "Dark Grey", value: "#3a3a3a" },
