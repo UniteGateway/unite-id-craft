@@ -34,7 +34,7 @@ const designTiles: Tile[] = [
   { icon: FileImage, title: "Flyers", desc: "Single-page promos", to: "/coming-soon?type=flyers", hue: "from-pink-500 to-rose-400" },
   { icon: BookOpen, title: "Brochures", desc: "Tri-fold layouts", to: "/coming-soon?type=brochures", hue: "from-emerald-500 to-teal-400" },
   { icon: Presentation, title: "Presentations", desc: "Pitch decks (PPT)", to: "/coming-soon?type=presentations", hue: "from-violet-600 to-fuchsia-400" },
-  { icon: FileSignature, title: "Proposals", desc: "Client proposals", to: "/coming-soon?type=proposals", hue: "from-indigo-600 to-blue-400" },
+  { icon: FileSignature, title: "Proposals", desc: "Solar project proposals", to: "/proposals", hue: "from-indigo-600 to-blue-400", ready: true },
   { icon: Mail, title: "Letterheads", desc: "Stationery", to: "/coming-soon?type=letterheads", hue: "from-yellow-500 to-orange-400" },
 ];
 

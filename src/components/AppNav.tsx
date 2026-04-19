@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { CreditCard, Contact, LayoutDashboard, LogOut, LogIn, Home as HomeIcon, Sparkles, ShieldCheck } from "lucide-react";
+import { CreditCard, Contact, LayoutDashboard, LogOut, LogIn, Home as HomeIcon, Sparkles, ShieldCheck, FileSignature } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,10 @@ const AppNav: React.FC = () => {
           <NavLink to="/social-media" className={navItem}>
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">Social Media</span>
+          </NavLink>
+          <NavLink to="/proposals" className={navItem}>
+            <FileSignature className="h-4 w-4" />
+            <span className="hidden sm:inline">Proposals</span>
           </NavLink>
           {user && (
             <NavLink to="/dashboard" className={navItem}>
