@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import AppNav from "@/components/AppNav";
+import PageBanner, { BANNERS } from "@/components/PageBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -271,6 +272,15 @@ const VisitingCards: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppNav />
+      <div className="mx-auto max-w-7xl px-4 pt-4">
+        <PageBanner
+          image={BANNERS.visiting}
+          eyebrow="Business Cards"
+          title="Design your visiting card"
+          subtitle="Pick a template, edit the zones, and export print-ready 13×19 sheets."
+          height="sm"
+        />
+      </div>
       <main className="mx-auto max-w-7xl p-4 grid lg:grid-cols-[1fr,360px] gap-6">
         <section className="space-y-4">
           <div className="flex items-center gap-2">

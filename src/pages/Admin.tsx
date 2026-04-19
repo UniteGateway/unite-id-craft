@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AppNav from "@/components/AppNav";
+import PageBanner, { BANNERS } from "@/components/PageBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Navigate } from "react-router-dom";
@@ -144,11 +145,15 @@ const AdminPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppNav />
-      <main className="mx-auto max-w-5xl px-4 py-8 space-y-8">
-        <header>
-          <h1 className="text-3xl font-bold flex items-center gap-2"><ShieldCheck className="h-7 w-7 text-primary" /> Admin</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage AI provider keys and the shared brand library.</p>
-        </header>
+      <main className="mx-auto max-w-5xl px-4 py-6 space-y-8">
+        <PageBanner
+          image={BANNERS.admin}
+          eyebrow="Admin Console"
+          icon={<ShieldCheck className="h-3.5 w-3.5" />}
+          title="Studio Administration"
+          subtitle="Manage AI provider keys and the shared brand library used across the studio."
+          height="sm"
+        />
 
         <Card>
           <CardHeader>

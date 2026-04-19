@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import AppNav from "@/components/AppNav";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles } from "lucide-react";
+import PageBanner, { BANNERS } from "@/components/PageBanner";
 
 const labels: Record<string, { title: string; desc: string }> = {
   flyers: { title: "Flyers", desc: "Eye-catching single-page promotional designs." },
@@ -20,13 +21,17 @@ const ComingSoon: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppNav />
-      <main className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6">
-          <Sparkles className="h-3.5 w-3.5" />
-          Coming soon
-        </div>
-        <h1 className="text-3xl md:text-4xl font-extrabold text-foreground">{meta.title}</h1>
-        <p className="text-muted-foreground mt-3">{meta.desc}</p>
+      <div className="mx-auto max-w-5xl px-4 pt-4">
+        <PageBanner
+          image={BANNERS.comingSoon}
+          eyebrow="Coming soon"
+          icon={<Sparkles className="h-3.5 w-3.5" />}
+          title={meta.title}
+          subtitle={meta.desc}
+          height="md"
+        />
+      </div>
+      <main className="mx-auto max-w-2xl px-4 py-12 text-center">
         <p className="text-sm text-muted-foreground mt-6">
           We're crafting AI-powered templates and a drag-and-drop editor for{" "}
           <span className="font-semibold text-foreground">{meta.title.toLowerCase()}</span>. Stay

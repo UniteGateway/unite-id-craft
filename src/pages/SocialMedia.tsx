@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import AppNav from "@/components/AppNav";
+import PageBanner, { BANNERS } from "@/components/PageBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
@@ -124,12 +125,14 @@ const SocialMedia: React.FC = () => {
     <div className="min-h-screen bg-background">
       <AppNav />
       <main className="mx-auto max-w-7xl px-4 py-6 space-y-6">
-        <header>
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" /> Social Media Studio
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Generate Instagram-ready designs with Unite GPT or Unite Flash.</p>
-        </header>
+        <PageBanner
+          image={BANNERS.social}
+          eyebrow="Social Media Studio"
+          icon={<Sparkles className="h-3.5 w-3.5" />}
+          title="Design for Instagram, in seconds"
+          subtitle="Generate Instagram-ready posts and stories with Unite GPT or Unite Flash."
+          height="md"
+        />
 
         <Tabs defaultValue="create">
           <TabsList>
