@@ -14,6 +14,8 @@ import Dashboard from "./pages/Dashboard.tsx";
 import ComingSoon from "./pages/ComingSoon.tsx";
 import SocialMedia from "./pages/SocialMedia.tsx";
 import Admin from "./pages/Admin.tsx";
+import Proposals from "./pages/Proposals.tsx";
+import ProposalEditor from "./pages/ProposalEditor.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
 const queryClient = new QueryClient();
@@ -67,6 +69,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proposals"
+              element={
+                <ProtectedRoute>
+                  <Proposals />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proposals/:id"
+              element={
+                <ProtectedRoute>
+                  <ProposalEditor />
                 </ProtectedRoute>
               }
             />
