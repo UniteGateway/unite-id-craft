@@ -517,6 +517,26 @@ const ProposalDocument: React.FC<{ doc: ProposalDoc }> = ({ doc }) => {
           </div>
         </div>
       </Page>
+
+      {/* EXTRA PAGES — full-bleed images appended after page 12 */}
+      {extras.map((p, i) => (
+        <div
+          key={`extra-${i}`}
+          className="pdf-page relative mx-auto shadow-2xl overflow-hidden bg-white"
+          style={{ width: "210mm", height: "297mm" }}
+        >
+          {p.image_url ? (
+            <img src={p.image_url} alt="" crossOrigin="anonymous" className="absolute inset-0 w-full h-full object-contain bg-white" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-slate-300 text-sm">Blank page</div>
+          )}
+          {p.caption && (
+            <div className="absolute bottom-0 left-0 right-0 px-10 py-3 text-[10px] text-slate-500 bg-white/90 border-t border-slate-200 text-center">
+              {p.caption}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 };
