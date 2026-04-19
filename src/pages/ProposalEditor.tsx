@@ -43,6 +43,7 @@ const ProposalEditor: React.FC = () => {
   const [generatingCover, setGeneratingCover] = useState(false);
   const [exporting, setExporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const extraPageRef = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof ProposalDoc>(k: K, v: ProposalDoc[K]) => setDoc((d) => ({ ...d, [k]: v }));
   const setNum = (k: keyof ProposalDoc) => (e: React.ChangeEvent<HTMLInputElement>) => set(k, (e.target.value === "" ? undefined : +e.target.value) as any);
