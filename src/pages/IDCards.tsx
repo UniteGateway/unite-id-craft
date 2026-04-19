@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import IDCard, { type IDCardData } from "@/components/IDCard";
 import IDCardForm from "@/components/IDCardForm";
+import { useUndoableState } from "@/hooks/useUndoableState";
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,11 @@ type Mode = "select" | "single" | "multiple";
 
 const Index: React.FC = () => {
   const [mode, setMode] = useState<Mode>("select");
-  const [cards, setCards] = useState<IDCardData[]>([emptyCard(0)]);
+  const {
+    value: cards,
+    setValue: setCards,
+    replaceValue: replaceCards,
+  } = useUndoableState<IDCardData[]>([emptyCard(0)]);
   const [cardCount, setCardCount] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
   const [showCardCountInput, setShowCardCountInput] = useState(false);
@@ -52,7 +57,7 @@ const Index: React.FC = () => {
       next[idx] = data;
       return next;
     });
-  }, []);
+  }, [setCards]);
 
   const handleModeSelect = (nextMode: "single" | "multiple") => {
     if (nextMode === "single") {
