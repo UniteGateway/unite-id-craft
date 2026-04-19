@@ -1,1 +1,7 @@
 project_id = "qbtvbghjrxobifmsgvha"
+
+[functions.generate-template]
+verify_jwt = false
+
+[functions.detect-card-fields]
+verify_jwt = false

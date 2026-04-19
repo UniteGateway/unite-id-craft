@@ -14,7 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          company: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          company?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      visiting_card_templates: {
+        Row: {
+          created_at: string
+          field_zones: Json
+          height_px: number | null
+          id: string
+          image_url: string
+          name: string
+          source: string
+          updated_at: string
+          user_id: string
+          width_px: number | null
+        }
+        Insert: {
+          created_at?: string
+          field_zones?: Json
+          height_px?: number | null
+          id?: string
+          image_url: string
+          name: string
+          source: string
+          updated_at?: string
+          user_id: string
+          width_px?: number | null
+        }
+        Update: {
+          created_at?: string
+          field_zones?: Json
+          height_px?: number | null
+          id?: string
+          image_url?: string
+          name?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+          width_px?: number | null
+        }
+        Relationships: []
+      }
+      visiting_cards: {
+        Row: {
+          created_at: string
+          field_values: Json
+          id: string
+          template_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          field_values?: Json
+          id?: string
+          template_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          field_values?: Json
+          id?: string
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visiting_cards_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "visiting_card_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
