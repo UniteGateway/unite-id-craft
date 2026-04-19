@@ -10,8 +10,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Download, Loader2, Save, Sparkles, Upload, Plus, Trash2, ArrowLeft } from "lucide-react";
-import ProposalDocument, { type ProposalDoc } from "@/components/proposals/ProposalDocument";
+import { Download, Loader2, Save, Sparkles, Upload, Plus, Trash2, ArrowLeft, ImagePlus } from "lucide-react";
+import ProposalDocument, { type ProposalDoc, type ExtraPage } from "@/components/proposals/ProposalDocument";
+import { Switch } from "@/components/ui/switch";
 import { computeProposal, inr } from "@/lib/proposal-calc";
 import { exportProposalPdf } from "@/lib/proposal-export";
 
