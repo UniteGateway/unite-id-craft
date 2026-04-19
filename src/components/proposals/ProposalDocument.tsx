@@ -37,13 +37,13 @@ const Page: React.FC<{ children: React.ReactNode; pageNo: number; totalPages: nu
       {title && <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{title}</div>}
     </div>
 
-    {/* Body */}
-    <div className="px-10 py-6" style={{ minHeight: "calc(297mm - 90mm)" }}>
+    {/* Body — fixed height so content cannot push into the footer */}
+    <div className="px-10 py-5 overflow-hidden" style={{ height: "calc(297mm - 28mm)" }}>
       {children}
     </div>
 
-    {/* Footer */}
-    <div className="absolute bottom-0 left-0 right-0 px-10 py-3 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-500">
+    {/* Footer — fixed height band */}
+    <div className="absolute bottom-0 left-0 right-0 h-[14mm] px-10 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-500 bg-white">
       <span>Unite Solar · contact@unitesolar.in · +91 00000 00000</span>
       <span>Page {pageNo} / {totalPages}</span>
     </div>
