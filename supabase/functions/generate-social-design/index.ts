@@ -120,7 +120,7 @@ Design a social media graphic for ${spec.label}. Modern, eye-catching, print-qua
 
     if (!imageDataUrl) throw new Error("No image returned. Try a different prompt.");
 
-    return new Response(JSON.stringify({ image: imageDataUrl, format, model }), {
+    return new Response(JSON.stringify({ image: imageDataUrl, format, model: effectiveModel, fellBack: effectiveModel !== model }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
