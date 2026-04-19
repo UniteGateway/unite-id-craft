@@ -19,14 +19,18 @@ const AppNav: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-1">
-          <NavLink to="/" end className={navItem}>
+        <div className="flex items-center gap-1 overflow-x-auto">
+          <NavLink to="/home" className={navItem}>
+            <HomeIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Studio</span>
+          </NavLink>
+          <NavLink to="/id-cards" className={navItem}>
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">ID Cards</span>
           </NavLink>
           <NavLink to="/visiting-cards" className={navItem}>
             <Contact className="h-4 w-4" />
-            <span className="hidden sm:inline">Visiting Cards</span>
+            <span className="hidden sm:inline">Business Cards</span>
           </NavLink>
           {user && (
             <NavLink to="/dashboard" className={navItem}>
