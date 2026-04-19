@@ -3,6 +3,10 @@
 import React from "react";
 import { Sun, Zap, Leaf, ShieldCheck, Award, Users, TrendingUp, Mail, Phone, MapPin, CheckCircle2, AlertTriangle, Wallet } from "lucide-react";
 import { computeProposal, inr, num, type ProposalInputs } from "@/lib/proposal-calc";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 
 export interface ExtraPage {
   image_url: string;
