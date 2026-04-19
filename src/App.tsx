@@ -12,6 +12,8 @@ import ResetPassword from "./pages/ResetPassword.tsx";
 import VisitingCards from "./pages/VisitingCards.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import ComingSoon from "./pages/ComingSoon.tsx";
+import SocialMedia from "./pages/SocialMedia.tsx";
+import Admin from "./pages/Admin.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
 const queryClient = new QueryClient();
@@ -49,6 +51,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/social-media"
+              element={
+                <ProtectedRoute>
+                  <SocialMedia />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
                 </ProtectedRoute>
               }
             />

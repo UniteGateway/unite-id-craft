@@ -13,7 +13,10 @@ import {
   LibraryBig,
   LayoutDashboard,
   Sparkles,
+  Instagram,
+  ShieldCheck,
 } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Tile {
   icon: React.ElementType;
@@ -27,6 +30,7 @@ interface Tile {
 const designTiles: Tile[] = [
   { icon: CreditCard, title: "ID Cards", desc: "Employee badges", to: "/id-cards", hue: "from-orange-500 to-amber-400", ready: true },
   { icon: Contact, title: "Business Cards", desc: "Visiting cards", to: "/visiting-cards", hue: "from-blue-600 to-cyan-400", ready: true },
+  { icon: Instagram, title: "Social Media", desc: "Instagram posts & stories", to: "/social-media", hue: "from-fuchsia-500 to-pink-500", ready: true },
   { icon: FileImage, title: "Flyers", desc: "Single-page promos", to: "/coming-soon?type=flyers", hue: "from-pink-500 to-rose-400" },
   { icon: BookOpen, title: "Brochures", desc: "Tri-fold layouts", to: "/coming-soon?type=brochures", hue: "from-emerald-500 to-teal-400" },
   { icon: Presentation, title: "Presentations", desc: "Pitch decks (PPT)", to: "/coming-soon?type=presentations", hue: "from-violet-600 to-fuchsia-400" },
@@ -64,6 +68,10 @@ const Tile: React.FC<{ tile: Tile; onClick: () => void }> = ({ tile, onClick }) 
 const Home: React.FC = () => {
   const nav = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
+  const visibleWorkTiles = isAdmin
+    ? [...workTiles, { icon: ShieldCheck, title: "Admin", desc: "API keys & brand library", to: "/admin", hue: "from-emerald-600 to-teal-500", ready: true } as Tile]
+    : workTiles;
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,7 +106,7 @@ const Home: React.FC = () => {
             Your work
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-            {workTiles.map((t) => (
+            {visibleWorkTiles.map((t) => (
               <Tile key={t.title} tile={t} onClick={() => nav(t.to)} />
             ))}
           </div>

@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { CreditCard, Contact, LayoutDashboard, LogOut, LogIn, Home as HomeIcon } from "lucide-react";
+import { CreditCard, Contact, LayoutDashboard, LogOut, LogIn, Home as HomeIcon, Sparkles, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ const navItem = ({ isActive }: { isActive: boolean }) =>
 
 const AppNav: React.FC = () => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useUserRole();
   const nav = useNavigate();
 
   return (
@@ -32,10 +34,20 @@ const AppNav: React.FC = () => {
             <Contact className="h-4 w-4" />
             <span className="hidden sm:inline">Business Cards</span>
           </NavLink>
+          <NavLink to="/social-media" className={navItem}>
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline">Social Media</span>
+          </NavLink>
           {user && (
             <NavLink to="/dashboard" className={navItem}>
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
+            </NavLink>
+          )}
+          {isAdmin && (
+            <NavLink to="/admin" className={navItem}>
+              <ShieldCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Admin</span>
             </NavLink>
           )}
         </div>
