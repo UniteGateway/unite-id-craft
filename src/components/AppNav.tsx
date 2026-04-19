@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navItem = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -55,7 +56,8 @@ const AppNav: React.FC = () => {
             </NavLink>
           )}
         </div>
-        <div>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
           {user ? (
             <Button variant="ghost" size="sm" onClick={async () => { await signOut(); nav("/"); }}>
               <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Sign out</span>
