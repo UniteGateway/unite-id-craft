@@ -268,11 +268,59 @@ const VisitingCards: React.FC = () => {
             </div>
           )}
 
-          <Tabs defaultValue="upload">
+          <Tabs defaultValue="library">
             <TabsList>
+              <TabsTrigger value="library"><LibraryBig className="h-4 w-4 mr-1" />Library</TabsTrigger>
               <TabsTrigger value="upload"><Upload className="h-4 w-4 mr-1" />Upload</TabsTrigger>
               <TabsTrigger value="ai"><Sparkles className="h-4 w-4 mr-1" />AI Generate</TabsTrigger>
             </TabsList>
+            <TabsContent value="library" className="space-y-4">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Built-in</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {BUILT_IN_TEMPLATES.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => pickBuiltIn(t)}
+                      className="group relative aspect-[3.5/2] rounded-lg border border-border overflow-hidden hover:border-primary hover:shadow-md transition-all"
+                    >
+                      <img src={t.image} alt={t.name} className="absolute inset-0 w-full h-full object-cover" />
+                      <span className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur px-2 py-1 text-[10px] font-medium text-foreground truncate">
+                        {t.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {savedTemplates.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Your templates</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {savedTemplates.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => pickSaved(t)}
+                        className="group relative aspect-[3.5/2] rounded-lg border border-border overflow-hidden hover:border-primary hover:shadow-md transition-all"
+                      >
+                        <img src={t.image_url} alt={t.name} className="absolute inset-0 w-full h-full object-cover" />
+                        <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-background/80 text-[9px] uppercase font-semibold">
+                          {t.source}
+                        </span>
+                        <span className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur px-2 py-1 text-[10px] font-medium text-foreground truncate">
+                          {t.name}
+                        </span>
+                        <span
+                          onClick={(e) => deleteSaved(t.id, e)}
+                          className="absolute top-1 left-1 h-6 w-6 rounded-full bg-background/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
             <TabsContent value="upload" className="space-y-2">
               <div
                 onClick={() => fileRef.current?.click()}
