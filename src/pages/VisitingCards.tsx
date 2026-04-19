@@ -40,11 +40,49 @@ const VisitingCards: React.FC = () => {
   const [selectedZone, setSelectedZone] = useState<number | null>(null);
   const [busy, setBusy] = useState<string>("");
   const [aiPrompt, setAiPrompt] = useState("Modern minimalist business card with subtle blue accent");
+  const [savedTemplates, setSavedTemplates] = useState<any[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading && !user) nav("/auth");
   }, [user, loading, nav]);
+
+  // Load user's saved templates for the library
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("visiting_card_templates")
+      .select("id, name, image_url, field_zones, source")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setSavedTemplates(data || []));
+  }, [user, busy]);
+
+  const pickBuiltIn = (t: BuiltInTemplate) => {
+    setImageUrl(t.image);
+    setZones(t.zones);
+    setTemplateId(null); // built-ins aren't in DB; saved card will store as snapshot if needed
+    setTitle(t.name);
+    toast.success(`${t.name} loaded`);
+  };
+
+  const pickSaved = (t: any) => {
+    setImageUrl(t.image_url);
+    setZones(t.field_zones);
+    setTemplateId(t.id);
+    setTitle(t.name);
+    toast.success(`${t.name} loaded`);
+  };
+
+  const deleteSaved = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Delete this template?")) return;
+    await supabase.from("visiting_card_templates").delete().eq("id", id);
+    setSavedTemplates((prev) => prev.filter((t) => t.id !== id));
+    if (templateId === id) {
+      setTemplateId(null);
+      setImageUrl("");
+    }
+  };
 
   // Load existing card if editing
   useEffect(() => {
