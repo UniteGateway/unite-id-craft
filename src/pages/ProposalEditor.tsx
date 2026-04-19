@@ -176,6 +176,34 @@ const ProposalEditor: React.FC = () => {
   };
   const delAddon = (i: number) => set("addons", (doc.addons || []).filter((_, j) => j !== i));
 
+  // Extra pages (appended after page 12 in the PDF)
+  const addBlankPage = () => set("extra_pages", [...(doc.extra_pages || []), { image_url: "", caption: "" } as ExtraPage]);
+  const onUploadExtraPage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f || !user) return;
+    const path = `${user.id}/extra/${Date.now()}-${f.name}`;
+    const { error } = await supabase.storage.from("proposals").upload(path, f, { contentType: f.type, upsert: true });
+    if (error) { toast.error(error.message); return; }
+    const { data: pub } = supabase.storage.from("proposals").getPublicUrl(path);
+    set("extra_pages", [...(doc.extra_pages || []), { image_url: pub.publicUrl, caption: "" }]);
+    if (extraPageRef.current) extraPageRef.current.value = "";
+    toast.success("Page added");
+  };
+  const updExtra = (i: number, k: keyof ExtraPage, v: string) => {
+    const next = [...(doc.extra_pages || [])];
+    (next[i] as any)[k] = v;
+    set("extra_pages", next);
+  };
+  const delExtra = (i: number) => set("extra_pages", (doc.extra_pages || []).filter((_, j) => j !== i));
+  const replaceExtraImage = async (i: number, file: File) => {
+    if (!user) return;
+    const path = `${user.id}/extra/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("proposals").upload(path, file, { contentType: file.type, upsert: true });
+    if (error) { toast.error(error.message); return; }
+    const { data: pub } = supabase.storage.from("proposals").getPublicUrl(path);
+    updExtra(i, "image_url", pub.publicUrl);
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-background"><AppNav />
       <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
