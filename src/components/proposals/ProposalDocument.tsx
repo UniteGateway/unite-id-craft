@@ -277,29 +277,45 @@ const ProposalDocument: React.FC<{ doc: ProposalDoc }> = ({ doc }) => {
         </div>
       </Page>
 
-      {/* PAGE 6 — TECHNICAL BOQ */}
+      {/* PAGE 6 — TECHNICAL BOQ (mirrors reference QTN structure A–F) */}
       <Page pageNo={6} totalPages={total} title="Technical BOQ">
         <SectionTitle>Bill of Quantities</SectionTitle>
-        <table className="w-full border-collapse rounded-xl overflow-hidden">
-          <thead><tr><TH>Item</TH><TH>Specification</TH><TH className="text-right">Qty</TH></tr></thead>
-          <tbody>
-            <tr><TD>Solar Panels</TD><TD>Mono PERC, Tier-1, {num(doc.panel_wattage || 0)}Wp</TD><TD className="text-right" mono>{num(doc.panel_count || 0)} nos</TD></tr>
-            <tr><TD>Inverter</TD><TD>String / Central, MPPT, IP65</TD><TD className="text-right" mono>{num(doc.inverter_capacity || 0)} kW</TD></tr>
-            <tr><TD>Mounting Structure</TD><TD>{doc.structure_type || "Hot-dip galvanised MS"}</TD><TD className="text-right" mono>{num(doc.capacity_kw || 0)} kW set</TD></tr>
-            <tr><TD>DC Cables</TD><TD>4 sq.mm, UV-resistant copper</TD><TD className="text-right" mono>Lot</TD></tr>
-            <tr><TD>AC Cables</TD><TD>Aluminium / copper as per design</TD><TD className="text-right" mono>Lot</TD></tr>
-            <tr><TD>Earthing Kit</TD><TD>Chemical earthing pits, GI strip</TD><TD className="text-right" mono>3 sets</TD></tr>
-            <tr><TD>Lightning Arrestor</TD><TD>ESE type</TD><TD className="text-right" mono>As required</TD></tr>
-            <tr><TD>Monitoring System</TD><TD>Wi-Fi / GSM data logger</TD><TD className="text-right" mono>1 no</TD></tr>
-            <tr><TD>Boundary Wall</TD><TD>{doc.wall_type || "RCC"}</TD><TD className="text-right" mono>{num(doc.boundary_length_rmt || 0)} RMT</TD></tr>
-            <tr><TD>Foundation Footings</TD><TD>RCC pedestal</TD><TD className="text-right" mono>{num(doc.footing_count || 0)} nos</TD></tr>
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <TH className="w-[8%]">Sno</TH>
+              <TH>Description</TH>
+              <TH className="w-[28%]">Specification / Brand</TH>
+              <TH className="text-right w-[18%]">Qty</TH>
+            </tr>
+          </thead>
+          <tbody className="[&_td]:py-1.5 [&_td]:text-[11px]">
+            <tr style={{ background: `${NAVY}10` }}><TD className="font-black">A</TD><TD className="font-bold" colSpan={3}>Solar Modules</TD></tr>
+            <tr><TD>A1</TD><TD>Mono PERC Bifacial Half-Cut Modules</TD><TD>Tier-1 / Unite Solar</TD><TD className="text-right" mono>{num(doc.panel_count || 0)} × {num(doc.panel_wattage || 0)}Wp</TD></tr>
+
+            <tr style={{ background: `${NAVY}10` }}><TD className="font-black">B</TD><TD className="font-bold" colSpan={3}>Solar Inverter</TD></tr>
+            <tr><TD>B1</TD><TD>String Inverter w/ Remote Monitoring</TD><TD>Fox ESS / PowerOne / Eq.</TD><TD className="text-right" mono>{num(doc.inverter_capacity || 0)} kW · 1 No</TD></tr>
+
+            <tr style={{ background: `${NAVY}10` }}><TD className="font-black">C</TD><TD className="font-bold" colSpan={3}>Mounting Structure</TD></tr>
+            <tr><TD>C1</TD><TD>{doc.structure_type || "MS Hot-Dip Galvanised"} w/ civil foundation</TD><TD>ISMC / GI</TD><TD className="text-right" mono>1 Set</TD></tr>
+            <tr><TD>C2</TD><TD>C-Profile w/ Lip & Base Plate</TD><TD>75 × 40 × 5 mm</TD><TD className="text-right" mono>1 Set</TD></tr>
+            <tr><TD>C3</TD><TD>Rafter & Purlin Lip Section</TD><TD>80 × 40 × 2 mm</TD><TD className="text-right" mono>1 Set</TD></tr>
+
+            <tr style={{ background: `${NAVY}10` }}><TD className="font-black">D</TD><TD className="font-bold" colSpan={3}>Cables, DCDB, ACDB & Switchgear</TD></tr>
+            <tr><TD>D1</TD><TD>DCDB & LT Panel · ACDB</TD><TD>L&T / ABB / Siemens</TD><TD className="text-right" mono>1 Set</TD></tr>
+            <tr><TD>D2</TD><TD>Tinned-Cu Flexible DC Cable (Modules→DCDB→Inverter)</TD><TD>Polycab / Finolex / Eq.</TD><TD className="text-right" mono>1 Set</TD></tr>
+            <tr><TD>D3</TD><TD>XLPE Al Armoured / Cu Cable (Inverter→ACDB→Main)</TD><TD>Polycab / Finolex / Eq.</TD><TD className="text-right" mono>1 Set</TD></tr>
+
+            <tr style={{ background: `${NAVY}10` }}><TD className="font-black">E</TD><TD className="font-bold" colSpan={3}>Earthing & Lightning</TD></tr>
+            <tr><TD>E1</TD><TD>Maintenance-free Earthing + LA + Bentonite pits</TD><TD>Conventional Type LA</TD><TD className="text-right" mono>1 Set</TD></tr>
+
+            <tr style={{ background: `${NAVY}10` }}><TD className="font-black">F</TD><TD className="font-bold" colSpan={3}>Mechanical Accessories</TD></tr>
+            <tr><TD>F1</TD><TD>Cable trays, walkway, SS ties, lugs, RTV sealant, fire-safety</TD><TD>Standard</TD><TD className="text-right" mono>1 Set</TD></tr>
           </tbody>
         </table>
 
-        <div className="grid grid-cols-3 gap-3 mt-6">
-          <Stat label="Panels" value={`${num(doc.panel_count || 0)}`} icon={Sun} color={NAVY} />
-          <Stat label="Inverter" value={`${num(doc.inverter_capacity || 0)} kW`} icon={Zap} color={GREEN} />
-          <Stat label="Structure" value={doc.structure_type || "MS Galv"} icon={ShieldCheck} color="#f59e0b" />
+        <div className="mt-3 text-[9.5px] text-slate-600 leading-snug">
+          <strong>Client Scope:</strong> Internet for inverter, electricity, transformer, water, land levelling, water-proofing, soil testing, structural approval, module cleaning, fencing, security camera, staircase, inverter & storage room.
         </div>
       </Page>
 
