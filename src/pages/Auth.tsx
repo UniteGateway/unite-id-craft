@@ -187,6 +187,7 @@ const Auth: React.FC = () => {
         >
           ← Back to landing page
         </button>
+        </div>
       </div>
     </div>
   );
