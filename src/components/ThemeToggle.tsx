@@ -1,0 +1,20 @@
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/useTheme";
+
+const ThemeToggle: React.FC<{ className?: string }> = ({ className }) => {
+  const { theme, toggle } = useTheme();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggle}
+      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      className={className}
+    >
+      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </Button>
+  );
+};
+
+export default ThemeToggle;
