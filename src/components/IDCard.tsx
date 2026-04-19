@@ -25,6 +25,8 @@ export interface IDCardData {
 interface IDCardProps {
   data: IDCardData;
   scale?: number;
+  /** When provided, name/designation/employeeId become double-click editable. */
+  onChange?: (next: IDCardData) => void;
 }
 
 // Convert the bundled logo URL to a data URI once so html-to-image can capture it
@@ -50,8 +52,9 @@ function useLogoDataUri() {
 }
 
 const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
-  ({ data, scale = 1 }, ref) => {
+  ({ data, scale = 1, onChange }, ref) => {
     const logoSrc = useLogoDataUri();
+    const update = (patch: Partial<IDCardData>) => onChange?.({ ...data, ...patch });
     const w = 320;
     const h = 506;
 
