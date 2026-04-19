@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import uniteSolarLogoSrc from "@/assets/unite-solar-logo.png";
 import TemplateManager from "@/components/TemplateManager";
+import AppNav from "@/components/AppNav";
 
 const generateId = (idx: number) => `US-BA-${String(idx + 1).padStart(3, "0")}`;
 
@@ -229,6 +230,7 @@ const Index: React.FC = () => {
   if (mode === "select") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        <AppNav />
         {/* Logo top center */}
         <div className="flex justify-center pt-8 pb-2">
           <img src={uniteSolarLogoSrc} alt="Unite Solar" className="h-20 object-contain" />
