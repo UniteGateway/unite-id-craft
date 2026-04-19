@@ -1,5 +1,6 @@
 import React from "react";
 import type { CardZone } from "@/lib/visiting-card-print";
+import EditableText from "@/components/EditableText";
 
 interface Props {
   imageUrl: string;
@@ -7,6 +8,8 @@ interface Props {
   values: Record<string, string>;
   selectedZone?: number | null;
   onZoneClick?: (idx: number) => void;
+  /** When provided, double-clicking a field allows inline editing. */
+  onValueChange?: (role: string, next: string) => void;
   className?: string;
 }
 
@@ -17,6 +20,7 @@ const VisitingCardPreview: React.FC<Props> = ({
   values,
   selectedZone,
   onZoneClick,
+  onValueChange,
   className,
 }) => {
   return (
@@ -33,7 +37,7 @@ const VisitingCardPreview: React.FC<Props> = ({
         />
       )}
       {zones.map((z, i) => {
-        const text = values[z.role] || `[${z.role}]`;
+        const text = values[z.role] || "";
         const isSelected = selectedZone === i;
         return (
           <div
@@ -54,9 +58,15 @@ const VisitingCardPreview: React.FC<Props> = ({
               containerType: "size",
             }}
           >
-            <span className="w-full whitespace-pre-wrap" style={{ fontSize: `${z.font_size_pct}%` as any }}>
-              {text}
-            </span>
+            <EditableText
+              as="span"
+              value={text}
+              placeholder={`[${z.role}]`}
+              onChange={onValueChange ? (v) => onValueChange(z.role, v) : undefined}
+              stopPropagation
+              className="w-full whitespace-pre-wrap"
+              style={{ fontSize: `${z.font_size_pct}%` as any, display: "block" }}
+            />
           </div>
         );
       })}

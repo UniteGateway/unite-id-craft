@@ -303,6 +303,7 @@ const VisitingCards: React.FC = () => {
               values={values}
               selectedZone={selectedZone}
               onZoneClick={setSelectedZone}
+              onValueChange={(role, next) => setValues((v) => ({ ...v, [role]: next }))}
             />
           ) : (
             <div className="aspect-[3.5/2] rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground bg-muted/30">

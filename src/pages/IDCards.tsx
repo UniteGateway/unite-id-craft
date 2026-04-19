@@ -350,6 +350,7 @@ const Index: React.FC = () => {
                 <IDCard
                   ref={(el) => { cardRefs.current[0] = el; }}
                   data={cards[0]}
+                  onChange={(next) => handleCardChange(0, next)}
                 />
               </div>
             ) : (
@@ -361,6 +362,7 @@ const Index: React.FC = () => {
                       ref={(el) => { cardRefs.current[index] = el; }}
                       data={card}
                       scale={0.55}
+                      onChange={(next) => handleCardChange(index, next)}
                     />
                   ))}
                 </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import uniteSolarLogoSrc from "@/assets/unite-solar-logo.png";
+import EditableText from "@/components/EditableText";
 
 export const BG_COLOR_PRESETS = [
   { label: "Dark Grey", value: "#3a3a3a" },
@@ -24,6 +25,8 @@ export interface IDCardData {
 interface IDCardProps {
   data: IDCardData;
   scale?: number;
+  /** When provided, name/designation/employeeId become double-click editable. */
+  onChange?: (next: IDCardData) => void;
 }
 
 // Convert the bundled logo URL to a data URI once so html-to-image can capture it
@@ -49,8 +52,9 @@ function useLogoDataUri() {
 }
 
 const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
-  ({ data, scale = 1 }, ref) => {
+  ({ data, scale = 1, onChange }, ref) => {
     const logoSrc = useLogoDataUri();
+    const update = (patch: Partial<IDCardData>) => onChange?.({ ...data, ...patch });
     const w = 320;
     const h = 506;
 
@@ -202,10 +206,14 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
             fontSize: 18 * scale,
             fontWeight: 700,
             letterSpacing: 1,
-            textTransform: "uppercase" as const,
           }}
         >
-          {data.name || "Full Name"}
+          <EditableText
+            value={data.name}
+            onChange={onChange ? (v) => update({ name: v }) : undefined}
+            placeholder="FULL NAME"
+            uppercase
+          />
         </div>
 
         {/* Designation */}
@@ -222,7 +230,11 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
             fontWeight: 600,
           }}
         >
-          {data.designation || "Designation"}
+          <EditableText
+            value={data.designation}
+            onChange={onChange ? (v) => update({ designation: v }) : undefined}
+            placeholder="Designation"
+          />
         </div>
 
         {/* Divider */}
@@ -252,9 +264,12 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
           }}
         >
           <span style={{ fontWeight: 400 }}>Employee ID: </span>
-          <span style={{ fontWeight: 700 }}>
-            {data.employeeId || "US-BA-001"}
-          </span>
+          <EditableText
+            value={data.employeeId}
+            onChange={onChange ? (v) => update({ employeeId: v }) : undefined}
+            placeholder="US-BA-001"
+            style={{ fontWeight: 700 }}
+          />
         </div>
 
         {/* Barcode area */}
