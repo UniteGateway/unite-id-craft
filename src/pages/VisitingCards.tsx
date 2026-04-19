@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Upload, Sparkles, Save, Download, Plus, Printer } from "lucide-react";
+import { Loader2, Upload, Sparkles, Save, Download, Plus, Printer, LibraryBig, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import VisitingCardPreview from "@/components/visiting/VisitingCardPreview";
 import ZoneEditor from "@/components/visiting/ZoneEditor";
@@ -17,6 +17,7 @@ import {
   exportPrintSheet,
   loadCard,
 } from "@/lib/visiting-card-print";
+import { BUILT_IN_TEMPLATES, type BuiltInTemplate } from "@/lib/builtin-templates";
 
 const DEFAULT_ZONES: CardZone[] = [
   { role: "name", x: 5, y: 35, width: 60, height: 12, font_size_pct: 12, text_align: "left", color_hex: "#111111" },
@@ -39,11 +40,49 @@ const VisitingCards: React.FC = () => {
   const [selectedZone, setSelectedZone] = useState<number | null>(null);
   const [busy, setBusy] = useState<string>("");
   const [aiPrompt, setAiPrompt] = useState("Modern minimalist business card with subtle blue accent");
+  const [savedTemplates, setSavedTemplates] = useState<any[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading && !user) nav("/auth");
   }, [user, loading, nav]);
+
+  // Load user's saved templates for the library
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("visiting_card_templates")
+      .select("id, name, image_url, field_zones, source")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setSavedTemplates(data || []));
+  }, [user, busy]);
+
+  const pickBuiltIn = (t: BuiltInTemplate) => {
+    setImageUrl(t.image);
+    setZones(t.zones);
+    setTemplateId(null); // built-ins aren't in DB; saved card will store as snapshot if needed
+    setTitle(t.name);
+    toast.success(`${t.name} loaded`);
+  };
+
+  const pickSaved = (t: any) => {
+    setImageUrl(t.image_url);
+    setZones(t.field_zones);
+    setTemplateId(t.id);
+    setTitle(t.name);
+    toast.success(`${t.name} loaded`);
+  };
+
+  const deleteSaved = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Delete this template?")) return;
+    await supabase.from("visiting_card_templates").delete().eq("id", id);
+    setSavedTemplates((prev) => prev.filter((t) => t.id !== id));
+    if (templateId === id) {
+      setTemplateId(null);
+      setImageUrl("");
+    }
+  };
 
   // Load existing card if editing
   useEffect(() => {
@@ -151,21 +190,59 @@ const VisitingCards: React.FC = () => {
     }
   };
 
+  const ensureTemplateInDb = async (): Promise<string | null> => {
+    if (!user) return null;
+    if (templateId) return templateId;
+    if (!imageUrl) return null;
+    // Built-in: fetch bundled asset, upload to storage, then insert template row
+    setBusy("Importing template...");
+    const res = await fetch(imageUrl);
+    const blob = await res.blob();
+    const ext = (blob.type.split("/")[1] || "png").split("+")[0];
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("card-templates").upload(path, blob);
+    if (upErr) throw upErr;
+    const { data: pub } = supabase.storage.from("card-templates").getPublicUrl(path);
+    const { data: tpl, error: tplErr } = await supabase
+      .from("visiting_card_templates")
+      .insert({
+        user_id: user.id,
+        name: title || "Imported template",
+        source: "upload",
+        image_url: pub.publicUrl,
+        field_zones: zones as any,
+      })
+      .select()
+      .single();
+    if (tplErr) throw tplErr;
+    setTemplateId(tpl.id);
+    setImageUrl(pub.publicUrl);
+    return tpl.id;
+  };
+
   const saveCard = async () => {
-    if (!user || !templateId) {
-      toast.error("Upload or generate a template first");
+    if (!user) return;
+    if (!imageUrl) {
+      toast.error("Pick a template from the library, upload one, or generate one first");
       return;
     }
-    setBusy("Saving...");
-    const payload = { user_id: user.id, template_id: templateId, title, field_values: values };
-    if (editId) {
-      await supabase.from("visiting_cards").update(payload).eq("id", editId);
-    } else {
-      const { data } = await supabase.from("visiting_cards").insert(payload).select().single();
-      if (data) nav(`/visiting-cards?edit=${data.id}`, { replace: true });
+    try {
+      const tplId = await ensureTemplateInDb();
+      if (!tplId) return;
+      setBusy("Saving...");
+      const payload = { user_id: user.id, template_id: tplId, title, field_values: values };
+      if (editId) {
+        await supabase.from("visiting_cards").update(payload).eq("id", editId);
+      } else {
+        const { data } = await supabase.from("visiting_cards").insert(payload).select().single();
+        if (data) nav(`/visiting-cards?edit=${data.id}`, { replace: true });
+      }
+      toast.success("Saved to dashboard");
+    } catch (e: any) {
+      toast.error(e.message || "Save failed");
+    } finally {
+      setBusy("");
     }
-    setBusy("");
-    toast.success("Saved to dashboard");
   };
 
   const downloadSingle = async () => {
@@ -198,7 +275,7 @@ const VisitingCards: React.FC = () => {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <Input value={title} onChange={(e) => setTitle(e.target.value)} className="max-w-sm font-semibold" />
-            <Button onClick={saveCard} disabled={!!busy || !templateId}>
+            <Button onClick={saveCard} disabled={!!busy || !imageUrl}>
               <Save className="h-4 w-4" /> Save
             </Button>
             <Button variant="outline" onClick={downloadSingle} disabled={!imageUrl || !!busy}>
@@ -229,11 +306,59 @@ const VisitingCards: React.FC = () => {
             </div>
           )}
 
-          <Tabs defaultValue="upload">
+          <Tabs defaultValue="library">
             <TabsList>
+              <TabsTrigger value="library"><LibraryBig className="h-4 w-4 mr-1" />Library</TabsTrigger>
               <TabsTrigger value="upload"><Upload className="h-4 w-4 mr-1" />Upload</TabsTrigger>
               <TabsTrigger value="ai"><Sparkles className="h-4 w-4 mr-1" />AI Generate</TabsTrigger>
             </TabsList>
+            <TabsContent value="library" className="space-y-4">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Built-in</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {BUILT_IN_TEMPLATES.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => pickBuiltIn(t)}
+                      className="group relative aspect-[3.5/2] rounded-lg border border-border overflow-hidden hover:border-primary hover:shadow-md transition-all"
+                    >
+                      <img src={t.image} alt={t.name} className="absolute inset-0 w-full h-full object-cover" />
+                      <span className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur px-2 py-1 text-[10px] font-medium text-foreground truncate">
+                        {t.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {savedTemplates.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Your templates</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {savedTemplates.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => pickSaved(t)}
+                        className="group relative aspect-[3.5/2] rounded-lg border border-border overflow-hidden hover:border-primary hover:shadow-md transition-all"
+                      >
+                        <img src={t.image_url} alt={t.name} className="absolute inset-0 w-full h-full object-cover" />
+                        <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-background/80 text-[9px] uppercase font-semibold">
+                          {t.source}
+                        </span>
+                        <span className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur px-2 py-1 text-[10px] font-medium text-foreground truncate">
+                          {t.name}
+                        </span>
+                        <span
+                          onClick={(e) => deleteSaved(t.id, e)}
+                          className="absolute top-1 left-1 h-6 w-6 rounded-full bg-background/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
             <TabsContent value="upload" className="space-y-2">
               <div
                 onClick={() => fileRef.current?.click()}
