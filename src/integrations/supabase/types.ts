@@ -104,6 +104,105 @@ export type Database = {
         }
         Relationships: []
       }
+      proposals: {
+        Row: {
+          addons: Json
+          boundary_length_rmt: number | null
+          capacity_kw: number | null
+          civil_cost_per_rmt: number | null
+          client_contact: string | null
+          client_email: string | null
+          client_location: string | null
+          client_name: string | null
+          computed: Json
+          cost_per_kw: number | null
+          cover_image_url: string | null
+          cover_source: string | null
+          created_at: string
+          electricity_tariff: number | null
+          footing_cost: number | null
+          footing_count: number | null
+          id: string
+          inverter_capacity: number | null
+          overrides: Json
+          panel_count: number | null
+          panel_wattage: number | null
+          project_type: string | null
+          proposal_number: string | null
+          soil_type: string | null
+          status: string
+          structure_type: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          wall_type: string | null
+        }
+        Insert: {
+          addons?: Json
+          boundary_length_rmt?: number | null
+          capacity_kw?: number | null
+          civil_cost_per_rmt?: number | null
+          client_contact?: string | null
+          client_email?: string | null
+          client_location?: string | null
+          client_name?: string | null
+          computed?: Json
+          cost_per_kw?: number | null
+          cover_image_url?: string | null
+          cover_source?: string | null
+          created_at?: string
+          electricity_tariff?: number | null
+          footing_cost?: number | null
+          footing_count?: number | null
+          id?: string
+          inverter_capacity?: number | null
+          overrides?: Json
+          panel_count?: number | null
+          panel_wattage?: number | null
+          project_type?: string | null
+          proposal_number?: string | null
+          soil_type?: string | null
+          status?: string
+          structure_type?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          wall_type?: string | null
+        }
+        Update: {
+          addons?: Json
+          boundary_length_rmt?: number | null
+          capacity_kw?: number | null
+          civil_cost_per_rmt?: number | null
+          client_contact?: string | null
+          client_email?: string | null
+          client_location?: string | null
+          client_name?: string | null
+          computed?: Json
+          cost_per_kw?: number | null
+          cover_image_url?: string | null
+          cover_source?: string | null
+          created_at?: string
+          electricity_tariff?: number | null
+          footing_cost?: number | null
+          footing_count?: number | null
+          id?: string
+          inverter_capacity?: number | null
+          overrides?: Json
+          panel_count?: number | null
+          panel_wattage?: number | null
+          project_type?: string | null
+          proposal_number?: string | null
+          soil_type?: string | null
+          status?: string
+          structure_type?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          wall_type?: string | null
+        }
+        Relationships: []
+      }
       social_designs: {
         Row: {
           created_at: string
