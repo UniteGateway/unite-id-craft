@@ -6,7 +6,7 @@ import AppNav from "@/components/AppNav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, FileSignature, Trash2, Loader2, Pencil } from "lucide-react";
+import { Plus, FileSignature, Trash2, Loader2, Pencil, Copy } from "lucide-react";
 import { inr } from "@/lib/proposal-calc";
 
 interface Row {
@@ -45,6 +45,25 @@ const ProposalsList: React.FC = () => {
     if (error) { toast.error(error.message); return; }
     toast.success("Deleted");
     load();
+  };
+
+  const duplicate = async (id: string) => {
+    if (!user) return;
+    const { data: src, error: fetchErr } = await supabase
+      .from("proposals").select("*").eq("id", id).maybeSingle();
+    if (fetchErr || !src) { toast.error(fetchErr?.message || "Not found"); return; }
+    const { id: _id, created_at, updated_at, proposal_number, ...rest } = src as any;
+    const insertRow = {
+      ...rest,
+      user_id: user.id,
+      title: `${src.title || "Untitled"} (Copy)`,
+      status: "draft",
+    };
+    const { data: created, error: insErr } = await supabase
+      .from("proposals").insert(insertRow).select("id").single();
+    if (insErr) { toast.error(insErr.message); return; }
+    toast.success("Duplicated");
+    nav(`/proposals/${created.id}`);
   };
 
   return (
@@ -96,9 +115,14 @@ const ProposalsList: React.FC = () => {
                       <div className="font-bold">{inr(r.computed?.totalCost || 0)}</div>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => nav(`/proposals/${r.id}`)}>
-                    <Pencil className="h-3.5 w-3.5" /> Open
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => nav(`/proposals/${r.id}`)}>
+                      <Pencil className="h-3.5 w-3.5" /> Open
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => duplicate(r.id)}>
+                      <Copy className="h-3.5 w-3.5" /> Duplicate
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
