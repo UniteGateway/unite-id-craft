@@ -8,7 +8,6 @@ const labels: Record<string, { title: string; desc: string }> = {
   flyers: { title: "Flyers", desc: "Eye-catching single-page promotional designs." },
   brochures: { title: "Brochures", desc: "Tri-fold and bi-fold print layouts." },
   presentations: { title: "Presentations", desc: "Branded PowerPoint pitch decks." },
-  proposals: { title: "Proposals", desc: "Client proposals with pricing tables." },
   letterheads: { title: "Letterheads", desc: "Corporate stationery letterheads." },
 };
 
