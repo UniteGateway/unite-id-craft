@@ -206,10 +206,14 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
             fontSize: 18 * scale,
             fontWeight: 700,
             letterSpacing: 1,
-            textTransform: "uppercase" as const,
           }}
         >
-          {data.name || "Full Name"}
+          <EditableText
+            value={data.name}
+            onChange={onChange ? (v) => update({ name: v }) : undefined}
+            placeholder="FULL NAME"
+            uppercase
+          />
         </div>
 
         {/* Designation */}
@@ -226,7 +230,11 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
             fontWeight: 600,
           }}
         >
-          {data.designation || "Designation"}
+          <EditableText
+            value={data.designation}
+            onChange={onChange ? (v) => update({ designation: v }) : undefined}
+            placeholder="Designation"
+          />
         </div>
 
         {/* Divider */}
@@ -256,9 +264,12 @@ const IDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
           }}
         >
           <span style={{ fontWeight: 400 }}>Employee ID: </span>
-          <span style={{ fontWeight: 700 }}>
-            {data.employeeId || "US-BA-001"}
-          </span>
+          <EditableText
+            value={data.employeeId}
+            onChange={onChange ? (v) => update({ employeeId: v }) : undefined}
+            placeholder="US-BA-001"
+            style={{ fontWeight: 700 }}
+          />
         </div>
 
         {/* Barcode area */}
