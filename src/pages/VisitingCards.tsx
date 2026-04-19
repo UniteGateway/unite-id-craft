@@ -19,6 +19,7 @@ import {
   loadCard,
 } from "@/lib/visiting-card-print";
 import { BUILT_IN_TEMPLATES, type BuiltInTemplate } from "@/lib/builtin-templates";
+import { useUndoableState } from "@/hooks/useUndoableState";
 
 const DEFAULT_ZONES: CardZone[] = [
   { role: "name", x: 5, y: 35, width: 60, height: 12, font_size_pct: 12, text_align: "left", color_hex: "#111111" },
@@ -36,7 +37,11 @@ const VisitingCards: React.FC = () => {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [zones, setZones] = useState<CardZone[]>(DEFAULT_ZONES);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const {
+    value: values,
+    setValue: setValues,
+    replaceValue: replaceValues,
+  } = useUndoableState<Record<string, string>>({});
   const [title, setTitle] = useState("Untitled card");
   const [selectedZone, setSelectedZone] = useState<number | null>(null);
   const [busy, setBusy] = useState<string>("");
@@ -96,7 +101,7 @@ const VisitingCards: React.FC = () => {
         .maybeSingle();
       if (data) {
         setTitle(data.title);
-        setValues(data.field_values as any);
+        replaceValues(data.field_values as any);
         const tpl = (data as any).visiting_card_templates;
         if (tpl) {
           setTemplateId(tpl.id);
