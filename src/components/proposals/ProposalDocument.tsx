@@ -150,6 +150,7 @@ const ProposalDocument: React.FC<{ doc: ProposalDoc }> = ({ doc }) => {
           </div>
         </div>
       </div>
+      )}
 
       {/* PAGE 2 — PROPOSAL SUMMARY */}
       <Page pageNo={2} totalPages={total} title="Proposal Summary">
