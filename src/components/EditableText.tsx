@@ -38,12 +38,14 @@ const EditableText: React.FC<EditableTextProps> = ({
   const [editing, setEditing] = useState(false);
   const Tag = as as any;
 
-  // Keep DOM in sync with value when not editing.
+  // While not editing, React owns the text content. When entering edit mode,
+  // we seed the element with the raw value (so the user edits the value, not
+  // the placeholder). On commit/cancel we hand control back to React.
   useEffect(() => {
-    if (!editing && ref.current) {
+    if (editing && ref.current) {
       ref.current.textContent = value || "";
     }
-  }, [value, editing]);
+  }, [editing, value]);
 
   const commit = () => {
     if (!ref.current) return;
