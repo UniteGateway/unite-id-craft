@@ -89,13 +89,20 @@ const TD: React.FC<React.TdHTMLAttributes<HTMLTableCellElement> & { mono?: boole
 // ────────────────────────────────────────────────────────────────────────────────
 const ProposalDocument: React.FC<{ doc: ProposalDoc }> = ({ doc }) => {
   const c = computeProposal(doc);
-  const total = 12;
+  const extras = doc.extra_pages || [];
+  const total = 12 + extras.length;
   const today = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
   const proposalNo = doc.proposal_number || `USP-${(doc.id || "DRAFT").slice(0, 6).toUpperCase()}`;
+  const fullPageCover = doc.cover_mode === "fullpage" && !!doc.cover_image_url;
 
   return (
     <div id="proposal-doc" className="space-y-6 py-6 bg-slate-100">
       {/* PAGE 1 — COVER */}
+      {fullPageCover ? (
+        <div className="pdf-page relative mx-auto shadow-2xl overflow-hidden bg-white" style={{ width: "210mm", height: "297mm" }}>
+          <img src={doc.cover_image_url} alt="" crossOrigin="anonymous" className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+      ) : (
       <div className="pdf-page relative mx-auto shadow-2xl overflow-hidden" style={{ width: "210mm", height: "297mm", background: NAVY }}>
         {doc.cover_image_url ? (
           <img src={doc.cover_image_url} alt="" crossOrigin="anonymous" className="absolute inset-0 w-full h-full object-cover opacity-70" />
