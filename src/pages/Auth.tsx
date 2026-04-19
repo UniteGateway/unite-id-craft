@@ -25,7 +25,7 @@ const Auth: React.FC = () => {
   const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
-    if (!loading && user) nav("/dashboard", { replace: true });
+    if (!loading && user) nav("/home", { replace: true });
   }, [user, loading, nav]);
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -63,15 +63,15 @@ const Auth: React.FC = () => {
     });
     setBusy(false);
     if (error) toast.error(error.message);
-    else nav("/dashboard");
+    else nav("/home");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-foreground mb-1">Welcome</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-1">Welcome to Unite Solar Studio</h1>
         <p className="text-sm text-muted-foreground mb-6">
-          Sign in to manage your visiting cards
+          Sign in to access the design studio, library &amp; dashboard
         </p>
         <Tabs defaultValue="signin">
           <TabsList className="grid grid-cols-2 mb-4">
@@ -117,7 +117,7 @@ const Auth: React.FC = () => {
           onClick={() => nav("/")}
           className="text-xs text-muted-foreground hover:text-foreground mt-4 block mx-auto"
         >
-          ← Continue without account (ID Cards only)
+          ← Back to landing page
         </button>
       </div>
     </div>
