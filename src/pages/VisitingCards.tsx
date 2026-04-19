@@ -275,7 +275,7 @@ const VisitingCards: React.FC = () => {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <Input value={title} onChange={(e) => setTitle(e.target.value)} className="max-w-sm font-semibold" />
-            <Button onClick={saveCard} disabled={!!busy || !templateId}>
+            <Button onClick={saveCard} disabled={!!busy || !imageUrl}>
               <Save className="h-4 w-4" /> Save
             </Button>
             <Button variant="outline" onClick={downloadSingle} disabled={!imageUrl || !!busy}>
