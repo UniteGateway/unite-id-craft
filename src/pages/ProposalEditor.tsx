@@ -256,11 +256,75 @@ const ProposalEditor: React.FC = () => {
                     </Button>
                     <input ref={fileRef} type="file" accept="image/*" hidden onChange={onUploadCover} />
                   </div>
+
+                  {doc.cover_image_url && (
+                    <div className="rounded-md border p-2.5 space-y-2 bg-muted/30">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <Label className="text-xs">Full-page replacement</Label>
+                          <p className="text-[10px] text-muted-foreground leading-tight">
+                            On = use uploaded image as the entire page (no header/footer/overlay).
+                            Off = Unite Solar branding overlaid on top.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={doc.cover_mode === "fullpage"}
+                          onCheckedChange={(v) => set("cover_mode", v ? "fullpage" : "background")}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {doc.cover_image_url && (
                     <Button variant="ghost" size="sm" className="w-full text-destructive" onClick={() => set("cover_image_url", "")}>
                       Remove cover
                     </Button>
                   )}
+
+                  {/* Extra pages */}
+                  <div className="pt-3 border-t space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Extra pages (appended at end)</Label>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={addBlankPage} title="Add blank page">
+                          <Plus className="h-3.5 w-3.5" /> Blank
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => extraPageRef.current?.click()} title="Upload image as page">
+                          <ImagePlus className="h-3.5 w-3.5" /> Image
+                        </Button>
+                        <input ref={extraPageRef} type="file" accept="image/*" hidden onChange={onUploadExtraPage} />
+                      </div>
+                    </div>
+                    {(doc.extra_pages || []).length === 0 && (
+                      <p className="text-[10px] text-muted-foreground">No extra pages. Add blank pages or upload images to insert at the end of the PDF.</p>
+                    )}
+                    {(doc.extra_pages || []).map((p, i) => (
+                      <div key={i} className="rounded-md border p-2 space-y-1.5 bg-background">
+                        <div className="flex gap-2 items-start">
+                          {p.image_url ? (
+                            <img src={p.image_url} alt="" className="w-12 h-16 object-cover rounded border" />
+                          ) : (
+                            <label className="w-12 h-16 rounded border border-dashed flex items-center justify-center text-[9px] text-muted-foreground cursor-pointer hover:bg-muted">
+                              Upload
+                              <input type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) replaceExtraImage(i, f); }} />
+                            </label>
+                          )}
+                          <div className="flex-1 space-y-1">
+                            <div className="text-[10px] font-medium text-muted-foreground">Page {12 + i + 1}</div>
+                            <Input
+                              placeholder="Optional caption"
+                              value={p.caption || ""}
+                              onChange={(e) => updExtra(i, "caption", e.target.value)}
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => delExtra(i)} className="h-7 w-7">
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="client" className="space-y-3 pt-3">
