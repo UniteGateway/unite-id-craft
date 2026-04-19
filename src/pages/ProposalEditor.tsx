@@ -96,6 +96,7 @@ const ProposalEditor: React.FC = () => {
       footing_cost: doc.footing_cost ?? null,
       electricity_tariff: doc.electricity_tariff ?? null,
       addons: doc.addons || [],
+      overrides: { cover_mode: doc.cover_mode || "background", extra_pages: doc.extra_pages || [] },
       computed,
     };
     const op = id && id !== "new"
