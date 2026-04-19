@@ -62,7 +62,7 @@ const Index: React.FC = () => {
   const handleModeSelect = (nextMode: "single" | "multiple") => {
     if (nextMode === "single") {
       setMode("single");
-      setCards([emptyCard(0)]);
+      replaceCards([emptyCard(0)]);
       setCardCount(1);
       return;
     }
@@ -74,7 +74,7 @@ const Index: React.FC = () => {
   const confirmMultipleCards = () => {
     const count = Math.min(100, Math.max(1, parseInt(tempCardCount) || 1));
     setCardCount(count);
-    setCards(Array.from({ length: count }, (_, idx) => emptyCard(idx)));
+    replaceCards(Array.from({ length: count }, (_, idx) => emptyCard(idx)));
     setShowCardCountInput(false);
     setMode("multiple");
   };
