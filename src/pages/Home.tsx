@@ -17,6 +17,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
+import PageBanner, { BANNERS } from "@/components/PageBanner";
 
 interface Tile {
   icon: React.ElementType;
@@ -76,19 +77,16 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppNav />
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
-            <Sparkles className="h-3.5 w-3.5" />
-            Exclusive Unite Solar Studio
-          </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-foreground">
-            Welcome{user?.email ? `, ${user.email.split("@")[0]}` : ""} 👋
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Pick a tool below to start designing on-brand.
-          </p>
-        </div>
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <PageBanner
+          image={BANNERS.studio}
+          eyebrow="Exclusive Unite Solar Studio"
+          icon={<Sparkles className="h-3.5 w-3.5" />}
+          title={`Welcome${user?.email ? `, ${user.email.split("@")[0]}` : ""} 👋`}
+          subtitle="Pick a tool below to start designing on-brand — ID cards, business cards, proposals & more."
+          height="md"
+          className="mb-8"
+        />
 
         <section className="mb-10">
           <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">

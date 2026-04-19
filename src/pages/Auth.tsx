@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import PageBanner, { BANNERS } from "@/components/PageBanner";
 
 const schema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
@@ -97,12 +98,22 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-foreground mb-1">Welcome to Unite Solar Studio</h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          Sign in to access the design studio, library &amp; dashboard
-        </p>
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-5xl px-4 pt-6">
+        <PageBanner
+          image={BANNERS.auth}
+          eyebrow="Unite Solar Studio"
+          title="Sign in to start designing"
+          subtitle="Branded ID cards, business cards, social media posts and proposals — all in one place."
+          height="sm"
+        />
+      </div>
+      <div className="flex items-center justify-center p-4 py-8">
+        <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h1 className="text-2xl font-bold text-foreground mb-1">Welcome to Unite Solar Studio</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            Sign in to access the design studio, library &amp; dashboard
+          </p>
         <Button
           type="button"
           variant="outline"
@@ -176,6 +187,7 @@ const Auth: React.FC = () => {
         >
           ← Back to landing page
         </button>
+        </div>
       </div>
     </div>
   );

@@ -24,6 +24,7 @@ import {
 import uniteSolarLogoSrc from "@/assets/unite-solar-logo.png";
 import TemplateManager from "@/components/TemplateManager";
 import AppNav from "@/components/AppNav";
+import PageBanner, { BANNERS } from "@/components/PageBanner";
 
 const generateId = (idx: number) => `US-BA-${String(idx + 1).padStart(3, "0")}`;
 
@@ -231,9 +232,19 @@ const Index: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <AppNav />
+        <div className="mx-auto max-w-5xl w-full px-4 pt-4">
+          <PageBanner
+            image={BANNERS.idCards}
+            eyebrow="Employee ID Cards"
+            icon={<CreditCard className="h-3.5 w-3.5" />}
+            title="Professional ID Card Generator"
+            subtitle="Create single or bulk Unite Solar employee badges with barcodes — print-ready in 300 DPI."
+            height="md"
+          />
+        </div>
         {/* Logo top center */}
-        <div className="flex justify-center pt-8 pb-2">
-          <img src={uniteSolarLogoSrc} alt="Unite Solar" className="h-20 object-contain" />
+        <div className="flex justify-center pt-6 pb-2">
+          <img src={uniteSolarLogoSrc} alt="Unite Solar" className="h-16 object-contain" />
         </div>
 
         <div className="flex-1 flex items-center justify-center p-4">

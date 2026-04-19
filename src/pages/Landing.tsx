@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import uniteSolarLogoSrc from "@/assets/unite-solar-logo.png";
+import ThemeToggle from "@/components/ThemeToggle";
+import { BANNERS } from "@/components/PageBanner";
 
 interface Tile {
   icon: React.ElementType;
@@ -54,6 +56,7 @@ const Landing: React.FC = () => {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {user ? (
               <Button onClick={() => nav("/home")}>
                 Open Studio <ArrowRight className="h-4 w-4" />
@@ -68,31 +71,42 @@ const Landing: React.FC = () => {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-4 pt-16 pb-12 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6">
-          <Sparkles className="h-3.5 w-3.5" />
-          Exclusive Unite Solar Design Branding App
-        </div>
-        <h1 className="text-4xl md:text-6xl font-extrabold text-foreground tracking-tight">
-          Design anything.
-          <br />
-          <span className="bg-gradient-to-r from-primary via-orange-500 to-amber-400 bg-clip-text text-transparent">
-            On-brand. Instantly.
-          </span>
-        </h1>
-        <p className="mt-5 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-          A Canva-style design hub built exclusively for the Unite Solar team — ID
-          cards, business cards, flyers, brochures, presentations, proposals and
-          letterheads with one click brand consistency.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Button size="lg" onClick={goAuthOrHome} className="text-base">
-            {user ? "Open Studio" : "Login to enter Studio"} <ArrowRight className="h-4 w-4" />
-          </Button>
-          <Button size="lg" variant="outline" onClick={() => nav("/id-cards")}>
-            Try ID Cards (no login)
-          </Button>
+      {/* Hero with banner image */}
+      <section className="relative overflow-hidden">
+        <img
+          src={BANNERS.landing}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
+        <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-primary/30 blur-3xl" />
+        <div className="absolute -bottom-20 -right-20 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
+
+        <div className="relative mx-auto max-w-6xl px-4 pt-20 pb-24 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-semibold mb-6 backdrop-blur">
+            <Sparkles className="h-3.5 w-3.5" />
+            Exclusive Unite Solar Design Branding App
+          </div>
+          <h1 className="text-4xl md:text-6xl font-extrabold text-foreground tracking-tight drop-shadow-sm">
+            Design anything.
+            <br />
+            <span className="bg-gradient-to-r from-primary via-orange-500 to-amber-400 bg-clip-text text-transparent">
+              On-brand. Instantly.
+            </span>
+          </h1>
+          <p className="mt-5 text-base md:text-lg text-foreground/85 max-w-2xl mx-auto">
+            A Canva-style design hub built exclusively for the Unite Solar team — ID
+            cards, business cards, flyers, brochures, presentations, proposals and
+            letterheads with one click brand consistency.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button size="lg" onClick={goAuthOrHome} className="text-base shadow-lg shadow-primary/30">
+              {user ? "Open Studio" : "Login to enter Studio"} <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => nav("/id-cards")} className="backdrop-blur bg-background/60">
+              Try ID Cards (no login)
+            </Button>
+          </div>
         </div>
       </section>
 
