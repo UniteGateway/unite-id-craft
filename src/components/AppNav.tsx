@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { CreditCard, Contact, LayoutDashboard, LogOut, LogIn } from "lucide-react";
+import { CreditCard, Contact, LayoutDashboard, LogOut, LogIn, Home as HomeIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
