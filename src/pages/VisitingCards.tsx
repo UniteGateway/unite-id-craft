@@ -231,14 +231,18 @@ const VisitingCards: React.FC = () => {
       if (!tplId) return;
       setBusy("Saving...");
       const payload = { user_id: user.id, template_id: tplId, title, field_values: values };
-    if (editId) {
-      await supabase.from("visiting_cards").update(payload).eq("id", editId);
-    } else {
-      const { data } = await supabase.from("visiting_cards").insert(payload).select().single();
-      if (data) nav(`/visiting-cards?edit=${data.id}`, { replace: true });
+      if (editId) {
+        await supabase.from("visiting_cards").update(payload).eq("id", editId);
+      } else {
+        const { data } = await supabase.from("visiting_cards").insert(payload).select().single();
+        if (data) nav(`/visiting-cards?edit=${data.id}`, { replace: true });
+      }
+      toast.success("Saved to dashboard");
+    } catch (e: any) {
+      toast.error(e.message || "Save failed");
+    } finally {
+      setBusy("");
     }
-    setBusy("");
-    toast.success("Saved to dashboard");
   };
 
   const downloadSingle = async () => {
