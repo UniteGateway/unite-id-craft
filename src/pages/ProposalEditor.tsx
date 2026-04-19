@@ -56,9 +56,12 @@ const ProposalEditor: React.FC = () => {
       setLoading(false);
       if (error) { toast.error(error.message); return; }
       if (!data) { toast.error("Proposal not found"); nav("/proposals"); return; }
+      const ov = (data.overrides as any) || {};
       setDoc({
         ...empty, ...data,
         addons: Array.isArray(data.addons) ? (data.addons as any) : [],
+        cover_mode: ov.cover_mode || "background",
+        extra_pages: Array.isArray(ov.extra_pages) ? ov.extra_pages : [],
       } as ProposalDoc);
     });
   }, [id, user, nav]);
