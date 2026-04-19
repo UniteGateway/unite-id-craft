@@ -30,6 +30,26 @@ export interface ProposalDoc extends ProposalInputs {
 const NAVY = "#0b1f3a";
 const GREEN = "#16a34a";
 
+// Cumulative savings vs flat investment line, year 0..25.
+function buildRoiSeries(annualSavings: number, totalCost: number) {
+  const data: { year: number; savings: number; investment: number }[] = [];
+  for (let y = 0; y <= 25; y++) {
+    data.push({ year: y, savings: Math.round(annualSavings * y), investment: Math.round(totalCost) });
+  }
+  return data;
+}
+
+// Pie data: System / Civil / Footing / Add-ons / GST. Skip zero slices.
+function buildCostSplit(c: { systemCost: number; civilCost: number; footingTotal: number; addonsTotal: number; gstTotal: number }) {
+  return [
+    { name: "System", value: c.systemCost, color: "#0b1f3a" },
+    { name: "Civil", value: c.civilCost, color: "#2563eb" },
+    { name: "Footing", value: c.footingTotal, color: "#7c3aed" },
+    { name: "Add-ons", value: c.addonsTotal, color: "#f59e0b" },
+    { name: "GST", value: c.gstTotal, color: "#16a34a" },
+  ].filter((s) => s.value > 0);
+}
+
 const Page: React.FC<{ children: React.ReactNode; pageNo: number; totalPages: number; title?: string }> = ({
   children, pageNo, totalPages, title,
 }) => (
