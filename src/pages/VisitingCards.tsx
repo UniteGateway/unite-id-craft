@@ -190,13 +190,47 @@ const VisitingCards: React.FC = () => {
     }
   };
 
+  const ensureTemplateInDb = async (): Promise<string | null> => {
+    if (!user) return null;
+    if (templateId) return templateId;
+    if (!imageUrl) return null;
+    // Built-in: fetch bundled asset, upload to storage, then insert template row
+    setBusy("Importing template...");
+    const res = await fetch(imageUrl);
+    const blob = await res.blob();
+    const ext = (blob.type.split("/")[1] || "png").split("+")[0];
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("card-templates").upload(path, blob);
+    if (upErr) throw upErr;
+    const { data: pub } = supabase.storage.from("card-templates").getPublicUrl(path);
+    const { data: tpl, error: tplErr } = await supabase
+      .from("visiting_card_templates")
+      .insert({
+        user_id: user.id,
+        name: title || "Imported template",
+        source: "upload",
+        image_url: pub.publicUrl,
+        field_zones: zones as any,
+      })
+      .select()
+      .single();
+    if (tplErr) throw tplErr;
+    setTemplateId(tpl.id);
+    setImageUrl(pub.publicUrl);
+    return tpl.id;
+  };
+
   const saveCard = async () => {
-    if (!user || !templateId) {
-      toast.error("Upload or generate a template first");
+    if (!user) return;
+    if (!imageUrl) {
+      toast.error("Pick a template from the library, upload one, or generate one first");
       return;
     }
-    setBusy("Saving...");
-    const payload = { user_id: user.id, template_id: templateId, title, field_values: values };
+    try {
+      const tplId = await ensureTemplateInDb();
+      if (!tplId) return;
+      setBusy("Saving...");
+      const payload = { user_id: user.id, template_id: tplId, title, field_values: values };
     if (editId) {
       await supabase.from("visiting_cards").update(payload).eq("id", editId);
     } else {
