@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Upload, Sparkles, Save, Download, Plus, Printer } from "lucide-react";
+import { Loader2, Upload, Sparkles, Save, Download, Plus, Printer, LibraryBig, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import VisitingCardPreview from "@/components/visiting/VisitingCardPreview";
 import ZoneEditor from "@/components/visiting/ZoneEditor";
@@ -17,6 +17,7 @@ import {
   exportPrintSheet,
   loadCard,
 } from "@/lib/visiting-card-print";
+import { BUILT_IN_TEMPLATES, type BuiltInTemplate } from "@/lib/builtin-templates";
 
 const DEFAULT_ZONES: CardZone[] = [
   { role: "name", x: 5, y: 35, width: 60, height: 12, font_size_pct: 12, text_align: "left", color_hex: "#111111" },
