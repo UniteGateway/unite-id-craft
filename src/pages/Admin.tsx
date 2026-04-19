@@ -160,7 +160,7 @@ const AdminPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <Label>Unite GPT (OpenAI / ChatGPT)</Label>
                 {hasKey("openai") && (
-                  <span className="text-xs text-emerald-600 font-medium flex items-center gap-2">
+                  <span className="text-xs text-primary font-medium flex items-center gap-2">
                     ✓ Configured
                     <button onClick={() => deleteKey("openai")} className="text-destructive hover:underline">remove</button>
                   </span>
@@ -179,7 +179,7 @@ const AdminPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <Label>Unite Flash (Google Gemini)</Label>
                 {hasKey("gemini") ? (
-                  <span className="text-xs text-emerald-600 font-medium flex items-center gap-2">
+                  <span className="text-xs text-primary font-medium flex items-center gap-2">
                     ✓ Configured
                     <button onClick={() => deleteKey("gemini")} className="text-destructive hover:underline">remove</button>
                   </span>
