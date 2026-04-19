@@ -72,7 +72,7 @@ const SectionTitle: React.FC<{ children: React.ReactNode; accent?: string }> = (
 const TH: React.FC<React.HTMLAttributes<HTMLTableCellElement>> = (p) => (
   <th {...p} className={`text-left text-[11px] font-bold uppercase tracking-wider px-3 py-2 text-white ${p.className || ""}`} style={{ background: NAVY }} />
 );
-const TD: React.FC<React.HTMLAttributes<HTMLTableCellElement> & { mono?: boolean }> = ({ mono, ...p }) => (
+const TD: React.FC<React.TdHTMLAttributes<HTMLTableCellElement> & { mono?: boolean }> = ({ mono, ...p }) => (
   <td {...p} className={`px-3 py-2 text-[12px] border-b border-slate-100 ${mono ? "font-mono tabular-nums" : ""} ${p.className || ""}`} />
 );
 
