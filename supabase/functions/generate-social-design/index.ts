@@ -38,13 +38,27 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(supabaseUrl, serviceKey);
 
-    const provider = model === "unite_gpt" ? "openai" : "gemini";
+    let provider = model === "unite_gpt" ? "openai" : "gemini";
     const { data: keyRow } = await admin
       .from("api_keys")
       .select("api_key")
       .eq("provider", provider)
       .maybeSingle();
-    const adminKey: string | undefined = keyRow?.api_key;
+    let adminKey: string | undefined = keyRow?.api_key;
+
+    // If user picked Unite GPT but no OpenAI key is configured, transparently
+    // fall back to Unite Flash (Lovable AI) so the feature still works.
+    let effectiveModel: Model = model;
+    if (model === "unite_gpt" && !adminKey && !Deno.env.get("OPENAI_API_KEY")) {
+      effectiveModel = "unite_flash";
+      provider = "gemini";
+      const { data: gemRow } = await admin
+        .from("api_keys")
+        .select("api_key")
+        .eq("provider", "gemini")
+        .maybeSingle();
+      adminKey = gemRow?.api_key;
+    }
 
     const fullPrompt = `${prompt.trim()}
 
@@ -52,7 +66,7 @@ Design a social media graphic for ${spec.label}. Modern, eye-catching, print-qua
 
     let imageDataUrl: string | null = null;
 
-    if (model === "unite_gpt") {
+    if (effectiveModel === "unite_gpt") {
       // OpenAI gpt-image-1
       const apiKey = adminKey || Deno.env.get("OPENAI_API_KEY");
       if (!apiKey) throw new Error("Unite GPT (OpenAI) key not configured. Ask an admin to paste it on the Admin page.");
