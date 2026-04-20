@@ -201,6 +201,9 @@ const CommunityProposalEditor: React.FC = () => {
             <ArrowLeft className="h-4 w-4" /> All proposals
           </Button>
           <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={generateCover} disabled={generatingCover}>
+              {generatingCover ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />} {coverImageUrl ? "Regenerate cover" : "Generate cover"}
+            </Button>
             <Button variant="outline" onClick={generate} disabled={generating}>
               {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Generate slides (AI)
             </Button>
@@ -304,7 +307,7 @@ const CommunityProposalEditor: React.FC = () => {
             ) : (
               <div className="overflow-auto rounded-lg border bg-muted p-4">
                 <div style={{ transform: "scale(0.55)", transformOrigin: "top left", width: "fit-content" }}>
-                  <CommunitySlideDeck inputs={inputs} computed={computed} recommendation={recommendation} slides={slides} />
+                  <CommunitySlideDeck inputs={inputs} computed={computed} recommendation={recommendation} slides={slides} coverImageUrl={coverImageUrl} />
                 </div>
               </div>
             )}
