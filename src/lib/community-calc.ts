@@ -16,6 +16,14 @@ export interface CommunityInputs {
   target_savings_pct?: number;
   investor_required?: boolean;
   theme?: CommunityTheme;
+  /** ₹/unit energy charge actually offsettable by solar (excludes fixed/demand/taxes). If omitted, derived from bill. */
+  energy_charge_per_unit?: number;
+  /** Fixed (non-offsettable) monthly charges in ₹: demand charges, fixed charges, meter rent, etc. */
+  fixed_monthly_charges?: number;
+  /** Taxes & duties as % of energy charges (e.g. 5 for 5%). */
+  tax_pct?: number;
+  /** PPA tariff offered to community, ₹/unit. Default 7.25. */
+  ppa_tariff?: number;
 }
 
 export interface CommunityComputed {
@@ -35,6 +43,12 @@ export interface CommunityComputed {
   lifetimeSavings: number;
   co2TonsYear: number;
   treesEquivalent: number;
+  /** Average all-in tariff = bill / units (for reference only). */
+  avgTariff: number;
+  /** Effective offsettable energy charge ₹/unit including taxes. */
+  effectiveEnergyCharge: number;
+  /** Fixed (non-offsettable) monthly charges. */
+  fixedMonthlyCharges: number;
 }
 
 const n = (v: any) => (Number.isFinite(+v) ? +v : 0);
@@ -45,8 +59,21 @@ export function computeCommunity(input: CommunityInputs): CommunityComputed {
   const monthlyBill = n(input.monthly_bill);
   const targetPct = Math.min(Math.max(n(input.target_savings_pct) || 75, 30), 100) / 100;
 
-  const ebTariff = monthlyUnits > 0 ? monthlyBill / monthlyUnits : 9;
-  const solarTariff = 7.25; // mid of ₹6.5–₹8 PPA tariff
+  const avgTariff = monthlyUnits > 0 ? monthlyBill / monthlyUnits : 0;
+  const fixedMonthlyCharges = Math.max(0, n(input.fixed_monthly_charges));
+  const taxPct = Math.max(0, n(input.tax_pct)); // %
+
+  // Energy charge per unit (offsettable). Either explicit, or derived from bill minus fixed & taxes.
+  let baseEnergyCharge = n(input.energy_charge_per_unit);
+  if (!baseEnergyCharge) {
+    // bill = energyCharges*(1+tax) + fixed  =>  energyCharges = (bill - fixed) / (1+tax)
+    const energyOnlyBill = Math.max(0, monthlyBill - fixedMonthlyCharges) / (1 + taxPct / 100);
+    baseEnergyCharge = monthlyUnits > 0 ? energyOnlyBill / monthlyUnits : 0;
+  }
+  // Effective ₹/unit savings includes taxes solar will avoid.
+  const effectiveEnergyCharge = +(baseEnergyCharge * (1 + taxPct / 100)).toFixed(2);
+  const ebTariff = effectiveEnergyCharge || avgTariff || 9;
+  const solarTariff = n(input.ppa_tariff) || 7.25;
 
   // Capacity: prefer the smaller of (rooftop-derived) and (consumption-derived * targetPct buffer)
   const capacityFromRoof = sft / 100; // 1 kW / 100 sft
@@ -62,7 +89,11 @@ export function computeCommunity(input: CommunityInputs): CommunityComputed {
   const solarOffsetPct = monthlyUnits > 0 ? Math.min(100, (monthlyGenerationUnits / monthlyUnits) * 100) : 0;
 
   const projectCost = Math.round(recommendedCapacityKw * 45000); // mid ₹40k–₹50k/kW
-  const monthlySavings = Math.round(monthlyGenerationUnits * (ebTariff - solarTariff));
+  // CAPEX: every offset unit saves the full effective energy charge.
+  // PPA: community pays solarTariff, so saves (effectiveEnergyCharge - solarTariff) per unit.
+  // We report PPA-style savings (more conservative) when a PPA tariff is implied.
+  const perUnitSaving = Math.max(0, ebTariff - solarTariff);
+  const monthlySavings = Math.round(monthlyGenerationUnits * perUnitSaving);
   const annualSavings = monthlySavings * 12;
   const paybackYears = annualSavings > 0 ? +(projectCost / annualSavings).toFixed(1) : 0;
 
@@ -90,6 +121,9 @@ export function computeCommunity(input: CommunityInputs): CommunityComputed {
     lifetimeSavings,
     co2TonsYear,
     treesEquivalent,
+    avgTariff: +avgTariff.toFixed(2),
+    effectiveEnergyCharge,
+    fixedMonthlyCharges,
   };
 }
 
