@@ -60,7 +60,13 @@ ${JSON.stringify(inputs, null, 2)}
 COMPUTED FINANCIALS (use these exact numbers in the deck):
 ${JSON.stringify(computed, null, 2)}
 
-Recommended Model: ${recommendation}`;
+Recommended Model: ${recommendation}
+
+IMPORTANT — when discussing the three business models, use these per-model numbers exactly:
+• BOOT: ${computed.bootPeriodYears}-year boot period, tariff ₹${computed.bootTariff}/unit (community pays the same as today; investor receives ~₹${(computed.bootTotalRevenue || 0).toLocaleString("en-IN")} over the boot period).
+• PPA: ${computed.ppaDiscountPct}% discount on current tariff (effective ₹${computed.ppaEffectiveTariff}/unit), ${computed.ppaTermYears}-year term, monthly savings ₹${(computed.ppaMonthlySavings || 0).toLocaleString("en-IN")}.
+• Community Self-Invest (SPV): ${computed.selfInvestorCount} investors × ₹${(computed.selfTicketSize || 0).toLocaleString("en-IN")} ticket = ₹${(computed.selfTotalCapital || 0).toLocaleString("en-IN")} capital, target IRR ${computed.selfTargetIrr}%, full monthly saving ₹${(computed.selfMonthlySavings || 0).toLocaleString("en-IN")}.
+State / CMD rule applied: ${(inputs.state || "Other")} cap ${computed.cmdCapPct}% of sanctioned load (${computed.cmdCapKw} kW).`;
 
     const slideSchema = {
       type: "object",

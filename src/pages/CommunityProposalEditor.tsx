@@ -10,9 +10,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Image as ImageIcon, Loader2, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Image as ImageIcon, Images, Loader2, Save, Sparkles, Upload } from "lucide-react";
 import {
-  computeCommunity, recommendModel, type CommunityInputs, type CommunityComputed,
+  computeCommunity, recommendModel, STATE_CMD_CAP, type CommunityInputs, type CommunityComputed,
   type CommunityTheme, inr,
 } from "@/lib/community-calc";
 import CommunitySlideDeck, { type SlideContent } from "@/components/community/CommunitySlideDeck";
@@ -20,7 +20,7 @@ import SlideEditor from "@/components/community/SlideEditor";
 import { exportCommunityDeckPdf } from "@/lib/community-export";
 
 const empty: CommunityInputs = {
-  community_name: "", location: "", blocks: 4,
+  community_name: "", location: "", state: "Telangana", blocks: 4,
   rooftop_area_sft: 80000, monthly_units: 271236, monthly_bill: 3036352,
   sanction_load_kw: 0, roof_type: "Flat",
   preferred_model: "Hybrid", target_savings_pct: 75,
@@ -29,6 +29,13 @@ const empty: CommunityInputs = {
   fixed_monthly_charges: 0,
   tax_pct: 5,
   ppa_tariff: 7.25,
+  boot_tariff: undefined,
+  boot_period_years: 6,
+  ppa_discount_pct: 25,
+  ppa_term_years: 20,
+  self_investor_count: 10,
+  self_ticket_size: undefined,
+  self_target_irr: 18,
 };
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -51,6 +58,8 @@ const CommunityProposalEditor: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
+  const [generatingBgs, setGeneratingBgs] = useState(false);
+  const [extractingBill, setExtractingBill] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [regenIdx, setRegenIdx] = useState<number | null>(null);
 
@@ -74,6 +83,7 @@ const CommunityProposalEditor: React.FC = () => {
       setInputs({
         community_name: data.community_name || "",
         location: data.location || "",
+        state: (data.computed as any)?.stateInput || "Telangana",
         blocks: data.blocks || 0,
         rooftop_area_sft: Number(data.rooftop_area_sft) || 0,
         monthly_units: Number(data.monthly_units) || 0,
@@ -88,6 +98,13 @@ const CommunityProposalEditor: React.FC = () => {
         fixed_monthly_charges: (data.computed as any)?.fixedMonthlyCharges ?? 0,
         tax_pct: (data.computed as any)?.taxPctInput ?? 5,
         ppa_tariff: (data.computed as any)?.solarTariff || 7.25,
+        boot_tariff: (data.computed as any)?.bootTariff || undefined,
+        boot_period_years: (data.computed as any)?.bootPeriodYears || 6,
+        ppa_discount_pct: (data.computed as any)?.ppaDiscountPct || 25,
+        ppa_term_years: (data.computed as any)?.ppaTermYears || 20,
+        self_investor_count: (data.computed as any)?.selfInvestorCount || 10,
+        self_ticket_size: (data.computed as any)?.selfTicketSize || undefined,
+        self_target_irr: (data.computed as any)?.selfTargetIrr || 18,
       });
       setSlides(Array.isArray(data.slides) ? (data.slides as any) : []);
       setCoverImageUrl(data.cover_image_url || null);
@@ -148,6 +165,73 @@ const CommunityProposalEditor: React.FC = () => {
     }
   };
 
+  const generateAllBackgrounds = async () => {
+    if (slides.length === 0) { toast.error("Generate the deck first"); return; }
+    setGeneratingBgs(true);
+    let done = 0;
+    try {
+      const updated: SlideContent[] = [...slides];
+      for (let i = 0; i < updated.length; i++) {
+        if (updated[i].backgroundUrl) { done++; continue; }
+        try {
+          const { data, error } = await supabase.functions.invoke("generate-slide-background", {
+            body: { theme: inputs.theme, slideTitle: updated[i].title },
+          });
+          if (error) throw error;
+          if ((data as any)?.error) throw new Error((data as any).error);
+          updated[i] = { ...updated[i], backgroundUrl: (data as any).image };
+          setSlides([...updated]);
+          done++;
+          // Tiny delay to be polite to the gateway
+          await new Promise((r) => setTimeout(r, 400));
+        } catch (e: any) {
+          toast.error(`Slide ${i + 1}: ${e.message}`);
+          break;
+        }
+      }
+      toast.success(`Generated ${done}/${updated.length} backgrounds`);
+    } finally {
+      setGeneratingBgs(false);
+    }
+  };
+
+  const onUploadBill = async (file: File) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("File too large (max 10 MB)"); return; }
+    setExtractingBill(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve((r.result as string).split(",")[1] || "");
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("extract-power-bill", {
+        body: { fileBase64: base64, mimeType: file.type || "application/pdf" },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const b = data as any;
+      setInputs((prev) => ({
+        ...prev,
+        community_name: prev.community_name || b.consumer_name || "",
+        location: prev.location || b.location || "",
+        state: b.state && STATE_CMD_CAP[b.state] !== undefined ? b.state : prev.state,
+        monthly_units: b.monthly_units || prev.monthly_units,
+        monthly_bill: b.monthly_bill || prev.monthly_bill,
+        energy_charge_per_unit: b.energy_charge_per_unit || prev.energy_charge_per_unit,
+        fixed_monthly_charges: b.fixed_monthly_charges ?? prev.fixed_monthly_charges,
+        tax_pct: b.tax_pct ?? prev.tax_pct,
+        sanction_load_kw: b.sanction_load_kw || prev.sanction_load_kw,
+      }));
+      toast.success(`Bill extracted (${b.confidence || "ok"})`);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to extract bill");
+    } finally {
+      setExtractingBill(false);
+    }
+  };
+
   const regenerateSlide = async (index: number, instruction?: string) => {
     setRegenIdx(index);
     try {
@@ -193,6 +277,7 @@ const CommunityProposalEditor: React.FC = () => {
       theme: inputs.theme || "Dark Premium",
       computed: {
         ...computed,
+        stateInput: inputs.state ?? null,
         energyChargeInput: inputs.energy_charge_per_unit ?? null,
         taxPctInput: inputs.tax_pct ?? null,
       },
@@ -244,6 +329,9 @@ const CommunityProposalEditor: React.FC = () => {
             <Button variant="outline" onClick={generate} disabled={generating}>
               {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Generate slides (AI)
             </Button>
+            <Button variant="outline" onClick={generateAllBackgrounds} disabled={generatingBgs || slides.length === 0}>
+              {generatingBgs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Images className="h-4 w-4" />} AI backgrounds (all slides)
+            </Button>
             <Button variant="outline" onClick={save} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
             </Button>
@@ -266,6 +354,37 @@ const CommunityProposalEditor: React.FC = () => {
               <Field label="Location *">
                 <Input value={inputs.location || ""} onChange={(e) => set("location", e.target.value)} />
               </Field>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="State (CMD cap)">
+                  <Select value={inputs.state} onValueChange={(v) => set("state", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(STATE_CMD_CAP).map((s) => (
+                        <SelectItem key={s} value={s}>{s} ({STATE_CMD_CAP[s]}%)</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Sanctioned load (kW)">
+                  <Input type="number" value={inputs.sanction_load_kw ?? ""} onChange={setNum("sanction_load_kw")} />
+                </Field>
+              </div>
+              <div className="rounded-md border border-dashed p-2.5 bg-muted/10">
+                <Label className="text-xs font-semibold mb-1.5 block">Upload power bill (PDF / JPG / PNG)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg,image/webp"
+                    disabled={extractingBill}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) onUploadBill(f); e.target.value = ""; }}
+                    className="text-xs"
+                  />
+                  {extractingBill && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
+                  AI extracts units, energy charge, fixed charges, taxes & sanctioned load and auto-fills the form.
+                </p>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Blocks"><Input type="number" value={inputs.blocks ?? ""} onChange={setNum("blocks")} /></Field>
                 <Field label="Roof type">
@@ -308,10 +427,9 @@ const CommunityProposalEditor: React.FC = () => {
                   Solar only offsets energy charges & related taxes — never fixed/demand charges.
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Field label="Sanction load (kW)"><Input type="number" value={inputs.sanction_load_kw ?? ""} onChange={setNum("sanction_load_kw")} /></Field>
-                <Field label="Target savings %"><Input type="number" value={inputs.target_savings_pct ?? ""} onChange={setNum("target_savings_pct")} /></Field>
-              </div>
+              <Field label="Target savings %">
+                <Input type="number" value={inputs.target_savings_pct ?? ""} onChange={setNum("target_savings_pct")} />
+              </Field>
               <Field label="Preferred model">
                 <Select value={inputs.preferred_model} onValueChange={(v) => set("preferred_model", v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -326,6 +444,44 @@ const CommunityProposalEditor: React.FC = () => {
                 <Label className="text-xs">Investor option required</Label>
                 <Switch checked={!!inputs.investor_required} onCheckedChange={(v) => set("investor_required", v)} />
               </div>
+
+              <div className="rounded-md border p-2.5 space-y-2 bg-muted/20">
+                <div className="text-xs font-semibold text-muted-foreground">BOOT model</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="BOOT tariff ₹/unit">
+                    <Input type="number" step="0.05" placeholder={`${computed.ebTariff}`} value={inputs.boot_tariff ?? ""} onChange={setNum("boot_tariff")} />
+                  </Field>
+                  <Field label="BOOT period (yrs)">
+                    <Input type="number" value={inputs.boot_period_years ?? ""} onChange={setNum("boot_period_years")} />
+                  </Field>
+                </div>
+              </div>
+
+              <div className="rounded-md border p-2.5 space-y-2 bg-muted/20">
+                <div className="text-xs font-semibold text-muted-foreground">PPA model</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Discount %">
+                    <Input type="number" step="1" value={inputs.ppa_discount_pct ?? ""} onChange={setNum("ppa_discount_pct")} />
+                  </Field>
+                  <Field label="Term (yrs)">
+                    <Input type="number" value={inputs.ppa_term_years ?? ""} onChange={setNum("ppa_term_years")} />
+                  </Field>
+                </div>
+              </div>
+
+              <div className="rounded-md border p-2.5 space-y-2 bg-muted/20">
+                <div className="text-xs font-semibold text-muted-foreground">Self-Invest (community SPV)</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Investors"><Input type="number" value={inputs.self_investor_count ?? ""} onChange={setNum("self_investor_count")} /></Field>
+                  <Field label="Ticket ₹">
+                    <Input type="number" placeholder="auto" value={inputs.self_ticket_size ?? ""} onChange={setNum("self_ticket_size")} />
+                  </Field>
+                </div>
+                <Field label="Target IRR %">
+                  <Input type="number" step="0.5" value={inputs.self_target_irr ?? ""} onChange={setNum("self_target_irr")} />
+                </Field>
+              </div>
+
               <Field label="Theme">
                 <Select value={inputs.theme} onValueChange={(v) => set("theme", v as CommunityTheme)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -341,13 +497,21 @@ const CommunityProposalEditor: React.FC = () => {
               <div className="rounded-md border p-3 space-y-1.5 bg-muted/30 mt-3">
                 <div className="text-xs font-semibold text-muted-foreground">Live Computed</div>
                 <div className="text-xs flex justify-between"><span>Recommended capacity</span><span className="font-bold">{computed.recommendedCapacityKw} kW</span></div>
+                {computed.cmdCapKw > 0 && (
+                  <div className="text-xs flex justify-between"><span>CMD cap ({computed.cmdCapPct}%)</span><span>{computed.cmdCapKw} kW</span></div>
+                )}
                 <div className="text-xs flex justify-between"><span>Solar offset</span><span className="font-bold">{computed.solarOffsetPct}%</span></div>
                 <div className="text-xs flex justify-between"><span>Avg bill tariff</span><span>{computed.avgTariff} ₹/u</span></div>
                 <div className="text-xs flex justify-between"><span>Effective energy ₹/u</span><span className="font-medium">{computed.effectiveEnergyCharge} ₹/u</span></div>
                 <div className="text-xs flex justify-between"><span>PPA tariff</span><span>{computed.solarTariff} ₹/u</span></div>
                 <div className="text-xs flex justify-between"><span>Project cost</span><span className="font-bold">{inr(computed.projectCost)}</span></div>
-                <div className="text-xs flex justify-between"><span>Monthly savings</span><span className="font-bold">{inr(computed.monthlySavings)}</span></div>
-                <div className="text-xs flex justify-between"><span>Payback</span><span className="font-bold">{computed.paybackYears} yrs</span></div>
+                <div className="border-t pt-1.5 mt-1.5 space-y-1">
+                  <div className="text-[10px] font-semibold uppercase text-muted-foreground">Monthly savings by model</div>
+                  <div className="text-xs flex justify-between"><span>BOOT ({computed.bootPeriodYears}y @ ₹{computed.bootTariff})</span><span className="font-bold">{inr(computed.bootMonthlySavings)}</span></div>
+                  <div className="text-xs flex justify-between"><span>PPA (-{computed.ppaDiscountPct}%, {computed.ppaTermYears}y)</span><span className="font-bold">{inr(computed.ppaMonthlySavings)}</span></div>
+                  <div className="text-xs flex justify-between"><span>Self-Invest (full saving)</span><span className="font-bold">{inr(computed.selfMonthlySavings)}</span></div>
+                </div>
+                <div className="text-xs flex justify-between"><span>Payback (CAPEX)</span><span className="font-bold">{computed.paybackYears} yrs</span></div>
                 <div className="text-xs flex justify-between"><span>Recommended model</span><span className="font-bold text-primary">{recommendation}</span></div>
               </div>
             </CardContent>

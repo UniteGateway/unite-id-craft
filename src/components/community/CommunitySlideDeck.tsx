@@ -1,11 +1,14 @@
 import React from "react";
 import { THEME_STYLES, type CommunityTheme, inr, num, type CommunityComputed, type CommunityInputs } from "@/lib/community-calc";
+import logoUrl from "@/assets/unite-solar-logo.png";
 
 export interface SlideContent {
   title: string;
   subtitle?: string;
   bullets: string[];
   highlight?: { label: string; value: string };
+  /** Optional AI-generated background image (data URL or https URL) for this slide. */
+  backgroundUrl?: string;
 }
 
 interface Props {
@@ -66,6 +69,32 @@ const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation,
     </div>
   );
 
+  const LogoBadge = () => (
+    <div style={{
+      position: "absolute", top: "6mm", right: "10mm", zIndex: 5,
+      background: "rgba(255,255,255,0.92)", padding: "4px 10px",
+      borderRadius: 6, boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+    }}>
+      <img src={logoUrl} alt="Unite Solar" crossOrigin="anonymous" style={{ height: 22, display: "block" }} />
+    </div>
+  );
+
+  const Background: React.FC<{ url?: string | null }> = ({ url }) => {
+    if (!url) return null;
+    return (
+      <>
+        <img src={url} alt="" crossOrigin="anonymous" style={{
+          position: "absolute", inset: 0, width: "100%", height: "100%",
+          objectFit: "cover", zIndex: 0,
+        }} />
+        <div style={{
+          position: "absolute", inset: 0, zIndex: 1,
+          background: `linear-gradient(110deg, ${t.bg} 0%, ${t.bg}e6 40%, ${t.bg}80 70%, ${t.bg}33 100%)`,
+        }} />
+      </>
+    );
+  };
+
   const Stat = ({ label, value }: { label: string; value: string }) => (
     <div style={{
       background: t.panel, border: `1px solid ${t.border}`, borderRadius: 10,
@@ -104,6 +133,9 @@ const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation,
 
   const SlideShell: React.FC<{ slide: SlideContent; idx: number; children?: React.ReactNode }> = ({ slide, idx, children }) => (
     <div className="pdf-page" style={slideStyle}>
+      <Background url={slide.backgroundUrl} />
+      <LogoBadge />
+      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={subtitleStyle}>Slide {idx + 1} · {slide.subtitle || ""}</div>
       <h1 style={{ ...headingStyle, marginTop: 6 }}>{slide.title}</h1>
       <div style={{ height: 3, width: 64, background: t.accent, margin: "10px 0 18px", borderRadius: 2 }} />
@@ -114,6 +146,7 @@ const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation,
         </ul>
         {children && <div style={{ flex: 1 }}>{children}</div>}
       </div>
+      </div>
       <Footer />
     </div>
   );
@@ -121,10 +154,10 @@ const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation,
   // Cover slide gets its own treatment.
   const Cover = () => (
     <div className="pdf-page" style={{ ...slideStyle, justifyContent: "space-between" }}>
-      {coverImageUrl && (
+      {(coverImageUrl || slides[0]?.backgroundUrl) && (
         <>
           <img
-            src={coverImageUrl}
+            src={coverImageUrl || slides[0]?.backgroundUrl}
             alt=""
             crossOrigin="anonymous"
             style={{
@@ -138,6 +171,7 @@ const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation,
           }} />
         </>
       )}
+      <LogoBadge />
       <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontSize: 11, letterSpacing: 2, opacity: 0.8 }}>UNITE SOLAR · COMMUNITY PROPOSAL</div>
