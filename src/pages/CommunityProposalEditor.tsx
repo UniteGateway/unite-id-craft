@@ -80,6 +80,7 @@ const CommunityProposalEditor: React.FC = () => {
         theme: (data.theme as CommunityTheme) || "Dark Premium",
       });
       setSlides(Array.isArray(data.slides) ? (data.slides as any) : []);
+      setCoverImageUrl(data.cover_image_url || null);
     });
   }, [id, user, nav]);
 
@@ -113,6 +114,30 @@ const CommunityProposalEditor: React.FC = () => {
     }
   };
 
+  const generateCover = async () => {
+    const err = validate();
+    if (err) { toast.error(err); return; }
+    setGeneratingCover(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-community-cover", {
+        body: {
+          theme: inputs.theme,
+          communityName: inputs.community_name,
+          location: inputs.location,
+          capacityKw: computed.recommendedCapacityKw,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setCoverImageUrl((data as any).image);
+      toast.success("Cover image generated");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate cover");
+    } finally {
+      setGeneratingCover(false);
+    }
+  };
+
   const save = async () => {
     if (!user) { toast.error("Please sign in"); return; }
     const err = validate();
@@ -135,6 +160,7 @@ const CommunityProposalEditor: React.FC = () => {
       theme: inputs.theme || "Dark Premium",
       computed,
       slides,
+      cover_image_url: coverImageUrl,
     };
     const op = id && id !== "new"
       ? supabase.from("community_proposals").update(payload).eq("id", id).select().single()
