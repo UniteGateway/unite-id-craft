@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Key, ImagePlus, Trash2, ShieldCheck, Loader2, Palette, Plus, Users, UserPlus, UserMinus } from "lucide-react";
+import { Key, ImagePlus, Trash2, ShieldCheck, Loader2, Palette, Plus, Users, UserPlus, UserMinus, Search } from "lucide-react";
 
 interface BrandAsset { id: string; name: string; asset_type: string; image_url: string; storage_path: string | null; }
 interface ApiKeyRow { provider: string; label: string | null; updated_at: string; }
