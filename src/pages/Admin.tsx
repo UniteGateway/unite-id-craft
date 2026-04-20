@@ -10,11 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Key, ImagePlus, Trash2, ShieldCheck, Loader2, Palette, Plus } from "lucide-react";
+import { Key, ImagePlus, Trash2, ShieldCheck, Loader2, Palette, Plus, Users, UserPlus, UserMinus } from "lucide-react";
 
 interface BrandAsset { id: string; name: string; asset_type: string; image_url: string; storage_path: string | null; }
 interface ApiKeyRow { provider: string; label: string | null; updated_at: string; }
 interface BrandPalette { id: string; name: string; colors: string[]; }
+interface ManagedUser { id: string; email: string; created_at: string; roles: string[]; }
 
 const AdminPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -33,6 +34,11 @@ const AdminPage: React.FC = () => {
   const [newPaletteName, setNewPaletteName] = useState("");
   const [newPaletteColors, setNewPaletteColors] = useState("#f08c00, #3a3a3a, #1a3c6e");
   const [savingPalette, setSavingPalette] = useState(false);
+
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [grantEmail, setGrantEmail] = useState("");
+  const [granting, setGranting] = useState(false);
 
   // Self-claim admin if no admin exists yet (bootstrap)
   const [bootstrapping, setBootstrapping] = useState(false);
@@ -68,7 +74,38 @@ const AdminPage: React.FC = () => {
     setPalettes((pals ?? []).map((p: any) => ({ ...p, colors: Array.isArray(p.colors) ? p.colors : [] })));
   };
 
-  useEffect(() => { if (isAdmin) loadAdminData(); }, [isAdmin]);
+  const loadUsers = async () => {
+    setUsersLoading(true);
+    const { data, error } = await supabase.functions.invoke("admin-manage-roles", { body: { action: "list" } });
+    setUsersLoading(false);
+    if (error) { toast.error(error.message); return; }
+    setManagedUsers(data?.users ?? []);
+  };
+
+  const grantAdmin = async () => {
+    if (!grantEmail.trim()) { toast.error("Enter an email"); return; }
+    setGranting(true);
+    const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
+      body: { action: "grant", email: grantEmail.trim() },
+    });
+    setGranting(false);
+    if (error || data?.error) { toast.error(error?.message || data?.error); return; }
+    toast.success(`Admin granted to ${grantEmail}`);
+    setGrantEmail("");
+    loadUsers();
+  };
+
+  const revokeAdmin = async (email: string) => {
+    if (!confirm(`Revoke admin from ${email}?`)) return;
+    const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
+      body: { action: "revoke", email },
+    });
+    if (error || data?.error) { toast.error(error?.message || data?.error); return; }
+    toast.success("Admin revoked");
+    loadUsers();
+  };
+
+  useEffect(() => { if (isAdmin) { loadAdminData(); loadUsers(); } }, [isAdmin]);
 
   const saveKey = async (provider: "openai" | "gemini", apiKey: string, label: string) => {
     if (!apiKey.trim()) { toast.error("Paste an API key first"); return; }
@@ -325,6 +362,65 @@ const AdminPage: React.FC = () => {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Admin Users</CardTitle>
+            <CardDescription>Grant or revoke admin access by email. The person must have signed in at least once before they can be granted.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid sm:grid-cols-[1fr,auto] gap-2 items-end">
+              <div className="space-y-1">
+                <Label className="text-xs">Email of user to make admin</Label>
+                <Input
+                  type="email"
+                  placeholder="person@company.com"
+                  value={grantEmail}
+                  onChange={(e) => setGrantEmail(e.target.value)}
+                />
+              </div>
+              <Button onClick={grantAdmin} disabled={granting}>
+                {granting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserPlus className="h-4 w-4 mr-1" /> Grant admin</>}
+              </Button>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs">All users</Label>
+                <Button variant="ghost" size="sm" onClick={loadUsers} disabled={usersLoading}>
+                  {usersLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
+                </Button>
+              </div>
+              {managedUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No users loaded.</p>
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {managedUsers.map(u => {
+                    const isAdminUser = u.roles.includes("admin");
+                    return (
+                      <div key={u.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{u.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {isAdminUser ? <span className="text-primary font-medium">Admin</span> : "User"}
+                          </p>
+                        </div>
+                        {isAdminUser && u.id !== user?.id && (
+                          <Button variant="ghost" size="sm" onClick={() => revokeAdmin(u.email)}>
+                            <UserMinus className="h-4 w-4 mr-1" /> Revoke
+                          </Button>
+                        )}
+                        {isAdminUser && u.id === user?.id && (
+                          <span className="text-xs text-muted-foreground">(you)</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </main>
