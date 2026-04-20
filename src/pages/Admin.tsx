@@ -120,7 +120,35 @@ const AdminPage: React.FC = () => {
     loadAdminData();
   };
 
-  if (authLoading || roleLoading) {
+  const parseHexes = (raw: string): string[] =>
+    raw.split(/[, \n]+/).map(s => s.trim()).filter(s => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s));
+
+  const savePalette = async () => {
+    const colors = parseHexes(newPaletteColors);
+    if (!newPaletteName.trim() || colors.length === 0) {
+      toast.error("Add a name and at least one valid #hex color");
+      return;
+    }
+    setSavingPalette(true);
+    const { error } = await supabase.from("brand_palettes").insert({
+      name: newPaletteName.trim(), colors, created_by: user!.id,
+    });
+    setSavingPalette(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Palette added");
+    setNewPaletteName("");
+    setNewPaletteColors("#f08c00, #3a3a3a, #1a3c6e");
+    loadAdminData();
+  };
+
+  const deletePalette = async (p: BrandPalette) => {
+    if (!confirm(`Delete palette "${p.name}"?`)) return;
+    const { error } = await supabase.from("brand_palettes").delete().eq("id", p.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Palette removed");
+    loadAdminData();
+  };
+
     return <div className="min-h-screen grid place-items-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   }
   if (!user) return <Navigate to="/auth" replace />;
