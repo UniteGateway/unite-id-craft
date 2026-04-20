@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Upload, Sparkles, Save, Download, Plus, LibraryBig, Trash2, FileImage, BookOpen, Presentation } from "lucide-react";
+import { Loader2, Upload, Sparkles, Save, Download, Plus, LibraryBig, Trash2, FileImage, BookOpen, Presentation, Mail, Receipt, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import DesignPreview from "@/components/designs/DesignPreview";
 import ZoneEditor from "@/components/visiting/ZoneEditor";
@@ -19,25 +19,39 @@ import { useUndoableState } from "@/hooks/useUndoableState";
 
 const KIND_META: Record<DesignKind, { title: string; subtitle: string; icon: React.ElementType; bucket: string; defaultPrompt: string }> = {
   flyer: {
-    title: "Flyers",
-    subtitle: "Single-page A4 promos — pick a template, edit text, export.",
-    icon: FileImage,
-    bucket: "design-templates",
+    title: "Flyers", subtitle: "Single-page A4 promos — pick a template, edit text, export.",
+    icon: FileImage, bucket: "design-templates",
     defaultPrompt: "Modern A4 flyer for a solar EPC company, sun gradient, headline space top",
   },
   brochure: {
-    title: "Brochures",
-    subtitle: "A4 landscape brochure pages — multi-page support coming soon.",
-    icon: BookOpen,
-    bucket: "design-templates",
+    title: "Brochures", subtitle: "A4 landscape brochure pages — multi-page support coming soon.",
+    icon: BookOpen, bucket: "design-templates",
     defaultPrompt: "Clean tri-fold brochure panel, solar imagery, plenty of white space",
   },
   presentation: {
-    title: "Presentations",
-    subtitle: "16:9 slide templates — pick, edit, export PNG/PDF.",
-    icon: Presentation,
-    bucket: "design-templates",
+    title: "Presentations", subtitle: "16:9 slide templates — pick, edit, export PNG/PDF.",
+    icon: Presentation, bucket: "design-templates",
     defaultPrompt: "Modern 16:9 pitch deck slide background, blue solar accent, headline area",
+  },
+  letterhead: {
+    title: "Letterheads", subtitle: "A4 corporate stationery — header, footer, body area.",
+    icon: Mail, bucket: "design-templates",
+    defaultPrompt: "Professional A4 letterhead for a solar company, logo top-left, slim footer band, plenty of white space for body text",
+  },
+  envelope: {
+    title: "Envelopes", subtitle: "#10 business envelope (9.5\" x 4.125\") — return address, recipient block.",
+    icon: Mail, bucket: "design-templates",
+    defaultPrompt: "Clean #10 business envelope design, return address top-left, subtle solar accent strip on right edge",
+  },
+  billbook: {
+    title: "Billbooks", subtitle: "A4 invoice / bill template — header, line items area, totals.",
+    icon: Receipt, bucket: "design-templates",
+    defaultPrompt: "Professional A4 invoice template for a solar company, header with logo, table area for line items, totals block at bottom-right",
+  },
+  voucher: {
+    title: "Vouchers", subtitle: "Coupon / gift voucher (8\" x 3.5\") — bold offer, terms strip.",
+    icon: Ticket, bucket: "design-templates",
+    defaultPrompt: "Premium gift voucher for a solar company, bold offer area on left, decorative pattern on right, terms strip at bottom",
   },
 };
 

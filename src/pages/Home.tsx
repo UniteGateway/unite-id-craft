@@ -10,6 +10,8 @@ import {
   Presentation,
   FileSignature,
   Mail,
+  Receipt,
+  Ticket,
   LibraryBig,
   LayoutDashboard,
   Sparkles,
@@ -36,7 +38,13 @@ const designTiles: Tile[] = [
   { icon: BookOpen, title: "Brochures", desc: "Tri-fold layouts", to: "/designs/brochure", hue: "from-emerald-500 to-teal-400", ready: true },
   { icon: Presentation, title: "Presentations", desc: "Pitch decks", to: "/designs/presentation", hue: "from-violet-600 to-fuchsia-400", ready: true },
   { icon: FileSignature, title: "Proposals", desc: "Solar project proposals", to: "/proposals", hue: "from-indigo-600 to-blue-400", ready: true },
-  { icon: Mail, title: "Letterheads", desc: "Stationery", to: "/coming-soon?type=letterheads", hue: "from-yellow-500 to-orange-400" },
+];
+
+const stationeryTiles: Tile[] = [
+  { icon: Mail, title: "Letterheads", desc: "Corporate stationery", to: "/designs/letterhead", hue: "from-yellow-500 to-orange-400", ready: true },
+  { icon: Mail, title: "Envelopes", desc: "#10 business envelopes", to: "/designs/envelope", hue: "from-amber-500 to-orange-500", ready: true },
+  { icon: Receipt, title: "Billbooks", desc: "Invoices & bills", to: "/designs/billbook", hue: "from-sky-600 to-blue-500", ready: true },
+  { icon: Ticket, title: "Vouchers", desc: "Coupons & gift vouchers", to: "/designs/voucher", hue: "from-rose-500 to-red-400", ready: true },
 ];
 
 const workTiles: Tile[] = [
@@ -94,6 +102,17 @@ const Home: React.FC = () => {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {designTiles.map((t) => (
+              <Tile key={t.title} tile={t} onClick={() => nav(t.to)} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+            Stationery
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {stationeryTiles.map((t) => (
               <Tile key={t.title} tile={t} onClick={() => nav(t.to)} />
             ))}
           </div>
