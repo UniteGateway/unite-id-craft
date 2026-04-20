@@ -42,7 +42,17 @@ Deno.serve(async (req) => {
     const action = body.action as "list" | "grant" | "revoke";
 
     if (action === "list") {
-      const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const allUsers: any[] = [];
+      let page = 1;
+      const perPage = 1000;
+      while (true) {
+        const { data: list } = await admin.auth.admin.listUsers({ page, perPage });
+        const users = list?.users ?? [];
+        allUsers.push(...users);
+        if (users.length < perPage) break;
+        page++;
+        if (page > 50) break;
+      }
       const { data: roles } = await admin.from("user_roles").select("user_id, role");
       const roleMap = new Map<string, string[]>();
       (roles ?? []).forEach((r: any) => {
@@ -50,7 +60,7 @@ Deno.serve(async (req) => {
         arr.push(r.role);
         roleMap.set(r.user_id, arr);
       });
-      const users = (list?.users ?? []).map((u: any) => ({
+      const users = allUsers.map((u: any) => ({
         id: u.id,
         email: u.email,
         created_at: u.created_at,
