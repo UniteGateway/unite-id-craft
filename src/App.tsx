@@ -15,6 +15,7 @@ import ComingSoon from "./pages/ComingSoon.tsx";
 import SocialMedia from "./pages/SocialMedia.tsx";
 import Admin from "./pages/Admin.tsx";
 import Proposals from "./pages/Proposals.tsx";
+import Designs from "./pages/Designs.tsx";
 import ProposalEditor from "./pages/ProposalEditor.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
@@ -85,6 +86,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ProposalEditor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/designs/:kind"
+              element={
+                <ProtectedRoute>
+                  <Designs />
                 </ProtectedRoute>
               }
             />
