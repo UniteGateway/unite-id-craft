@@ -329,6 +329,9 @@ const CommunityProposalEditor: React.FC = () => {
             <Button variant="outline" onClick={generate} disabled={generating}>
               {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Generate slides (AI)
             </Button>
+            <Button variant="outline" onClick={generateAllBackgrounds} disabled={generatingBgs || slides.length === 0}>
+              {generatingBgs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Images className="h-4 w-4" />} AI backgrounds (all slides)
+            </Button>
             <Button variant="outline" onClick={save} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
             </Button>
@@ -351,6 +354,37 @@ const CommunityProposalEditor: React.FC = () => {
               <Field label="Location *">
                 <Input value={inputs.location || ""} onChange={(e) => set("location", e.target.value)} />
               </Field>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="State (CMD cap)">
+                  <Select value={inputs.state} onValueChange={(v) => set("state", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(STATE_CMD_CAP).map((s) => (
+                        <SelectItem key={s} value={s}>{s} ({STATE_CMD_CAP[s]}%)</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Sanctioned load (kW)">
+                  <Input type="number" value={inputs.sanction_load_kw ?? ""} onChange={setNum("sanction_load_kw")} />
+                </Field>
+              </div>
+              <div className="rounded-md border border-dashed p-2.5 bg-muted/10">
+                <Label className="text-xs font-semibold mb-1.5 block">Upload power bill (PDF / JPG / PNG)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg,image/webp"
+                    disabled={extractingBill}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) onUploadBill(f); e.target.value = ""; }}
+                    className="text-xs"
+                  />
+                  {extractingBill && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
+                  AI extracts units, energy charge, fixed charges, taxes & sanctioned load and auto-fills the form.
+                </p>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Blocks"><Input type="number" value={inputs.blocks ?? ""} onChange={setNum("blocks")} /></Field>
                 <Field label="Roof type">
