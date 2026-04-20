@@ -84,6 +84,10 @@ const CommunityProposalEditor: React.FC = () => {
         target_savings_pct: Number(data.target_savings_pct) || 75,
         investor_required: !!data.investor_required,
         theme: (data.theme as CommunityTheme) || "Dark Premium",
+        energy_charge_per_unit: (data.computed as any)?.energyChargeInput || undefined,
+        fixed_monthly_charges: (data.computed as any)?.fixedMonthlyCharges ?? 0,
+        tax_pct: (data.computed as any)?.taxPctInput ?? 5,
+        ppa_tariff: (data.computed as any)?.solarTariff || 7.25,
       });
       setSlides(Array.isArray(data.slides) ? (data.slides as any) : []);
       setCoverImageUrl(data.cover_image_url || null);
