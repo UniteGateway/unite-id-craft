@@ -427,10 +427,9 @@ const CommunityProposalEditor: React.FC = () => {
                   Solar only offsets energy charges & related taxes — never fixed/demand charges.
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Field label="Sanction load (kW)"><Input type="number" value={inputs.sanction_load_kw ?? ""} onChange={setNum("sanction_load_kw")} /></Field>
-                <Field label="Target savings %"><Input type="number" value={inputs.target_savings_pct ?? ""} onChange={setNum("target_savings_pct")} /></Field>
-              </div>
+              <Field label="Target savings %">
+                <Input type="number" value={inputs.target_savings_pct ?? ""} onChange={setNum("target_savings_pct")} />
+              </Field>
               <Field label="Preferred model">
                 <Select value={inputs.preferred_model} onValueChange={(v) => set("preferred_model", v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -445,6 +444,44 @@ const CommunityProposalEditor: React.FC = () => {
                 <Label className="text-xs">Investor option required</Label>
                 <Switch checked={!!inputs.investor_required} onCheckedChange={(v) => set("investor_required", v)} />
               </div>
+
+              <div className="rounded-md border p-2.5 space-y-2 bg-muted/20">
+                <div className="text-xs font-semibold text-muted-foreground">BOOT model</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="BOOT tariff ₹/unit">
+                    <Input type="number" step="0.05" placeholder={`${computed.ebTariff}`} value={inputs.boot_tariff ?? ""} onChange={setNum("boot_tariff")} />
+                  </Field>
+                  <Field label="BOOT period (yrs)">
+                    <Input type="number" value={inputs.boot_period_years ?? ""} onChange={setNum("boot_period_years")} />
+                  </Field>
+                </div>
+              </div>
+
+              <div className="rounded-md border p-2.5 space-y-2 bg-muted/20">
+                <div className="text-xs font-semibold text-muted-foreground">PPA model</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Discount %">
+                    <Input type="number" step="1" value={inputs.ppa_discount_pct ?? ""} onChange={setNum("ppa_discount_pct")} />
+                  </Field>
+                  <Field label="Term (yrs)">
+                    <Input type="number" value={inputs.ppa_term_years ?? ""} onChange={setNum("ppa_term_years")} />
+                  </Field>
+                </div>
+              </div>
+
+              <div className="rounded-md border p-2.5 space-y-2 bg-muted/20">
+                <div className="text-xs font-semibold text-muted-foreground">Self-Invest (community SPV)</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Investors"><Input type="number" value={inputs.self_investor_count ?? ""} onChange={setNum("self_investor_count")} /></Field>
+                  <Field label="Ticket ₹">
+                    <Input type="number" placeholder="auto" value={inputs.self_ticket_size ?? ""} onChange={setNum("self_ticket_size")} />
+                  </Field>
+                </div>
+                <Field label="Target IRR %">
+                  <Input type="number" step="0.5" value={inputs.self_target_irr ?? ""} onChange={setNum("self_target_irr")} />
+                </Field>
+              </div>
+
               <Field label="Theme">
                 <Select value={inputs.theme} onValueChange={(v) => set("theme", v as CommunityTheme)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
