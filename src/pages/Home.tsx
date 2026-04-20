@@ -107,6 +107,17 @@ const Home: React.FC = () => {
           </div>
         </section>
 
+        <section className="mb-10">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+            Stationery
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {stationeryTiles.map((t) => (
+              <Tile key={t.title} tile={t} onClick={() => nav(t.to)} />
+            ))}
+          </div>
+        </section>
+
         <section className="mb-12">
           <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
             Your work
