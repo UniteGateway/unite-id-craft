@@ -13,11 +13,12 @@ interface Props {
   computed: CommunityComputed;
   recommendation: string;
   slides: SlideContent[];
+  coverImageUrl?: string | null;
 }
 
 /** Renders 16 themed A4-landscape slides into one #community-deck container.
  *  Used both for on-screen preview and for html2canvas → jsPDF export. */
-const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation, slides }) => {
+const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation, slides, coverImageUrl }) => {
   const theme = (inputs.theme || "Dark Premium") as CommunityTheme;
   const t = THEME_STYLES[theme];
 
