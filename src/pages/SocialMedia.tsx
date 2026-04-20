@@ -8,19 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Sparkles, Image as ImageIcon, Square, Smartphone, Wand2, Loader2, Download, Save, Upload, Trash2 } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Wand2, Loader2, Download, Save, Upload, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SOCIAL_FORMATS, FORMAT_BY_ID, type SocialFormat } from "@/lib/social-formats";
 
-type Format = "instagram_post" | "instagram_story";
+type Format = SocialFormat;
 type Model = "unite_gpt" | "unite_flash";
 
 interface BrandAsset { id: string; name: string; asset_type: string; image_url: string; }
 interface SavedDesign { id: string; title: string; format: string; image_url: string; created_at: string; }
 
-const FORMAT_INFO: Record<Format, { label: string; w: number; h: number; aspect: string; icon: any }> = {
-  instagram_post: { label: "Instagram Post", w: 1080, h: 1080, aspect: "aspect-square", icon: Square },
-  instagram_story: { label: "Instagram Story", w: 1080, h: 1920, aspect: "aspect-[9/16]", icon: Smartphone },
-};
+const FORMAT_INFO = FORMAT_BY_ID;
 
 const SocialMedia: React.FC = () => {
   const { user, loading } = useAuth();
