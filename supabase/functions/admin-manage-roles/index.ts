@@ -42,7 +42,17 @@ Deno.serve(async (req) => {
     const action = body.action as "list" | "grant" | "revoke";
 
     if (action === "list") {
-      const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const allUsers: any[] = [];
+      let page = 1;
+      const perPage = 1000;
+      while (true) {
+        const { data: list } = await admin.auth.admin.listUsers({ page, perPage });
+        const users = list?.users ?? [];
+        allUsers.push(...users);
+        if (users.length < perPage) break;
+        page++;
+        if (page > 50) break;
+      }
       const { data: roles } = await admin.from("user_roles").select("user_id, role");
       const roleMap = new Map<string, string[]>();
       (roles ?? []).forEach((r: any) => {
@@ -50,7 +60,7 @@ Deno.serve(async (req) => {
         arr.push(r.role);
         roleMap.set(r.user_id, arr);
       });
-      const users = (list?.users ?? []).map((u: any) => ({
+      const users = allUsers.map((u: any) => ({
         id: u.id,
         email: u.email,
         created_at: u.created_at,
@@ -62,8 +72,22 @@ Deno.serve(async (req) => {
     if (action === "grant" || action === "revoke") {
       const email = String(body.email ?? "").trim().toLowerCase();
       if (!email) return new Response(JSON.stringify({ error: "Email required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-      const target = list?.users?.find((u: any) => (u.email ?? "").toLowerCase() === email);
+
+      // Paginate through all users to find the target email (listUsers caps at ~1000/page)
+      let target: any = null;
+      let page = 1;
+      const perPage = 1000;
+      while (!target) {
+        const { data: list, error: listErr } = await admin.auth.admin.listUsers({ page, perPage });
+        if (listErr) {
+          return new Response(JSON.stringify({ error: listErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const users = list?.users ?? [];
+        target = users.find((u: any) => (u.email ?? "").toLowerCase() === email);
+        if (target || users.length < perPage) break;
+        page++;
+        if (page > 50) break; // safety cap (50k users)
+      }
       if (!target) return new Response(JSON.stringify({ error: "User not found. They must sign up first." }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
       if (action === "grant") {
