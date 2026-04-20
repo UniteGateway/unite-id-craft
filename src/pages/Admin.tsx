@@ -392,39 +392,94 @@ const AdminPage: React.FC = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-xs">All users</Label>
-                <Button variant="ghost" size="sm" onClick={loadUsers} disabled={usersLoading}>
-                  {usersLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
-                </Button>
-              </div>
-              {managedUsers.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No users loaded.</p>
-              ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {managedUsers.map(u => {
-                    const isAdminUser = u.roles.includes("admin");
-                    return (
-                      <div key={u.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{u.email}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {isAdminUser ? <span className="text-primary font-medium">Admin</span> : "User"}
-                          </p>
-                        </div>
-                        {isAdminUser && u.id !== user?.id && (
-                          <Button variant="ghost" size="sm" onClick={() => revokeAdmin(u.email)}>
-                            <UserMinus className="h-4 w-4 mr-1" /> Revoke
-                          </Button>
-                        )}
-                        {isAdminUser && u.id === user?.id && (
-                          <span className="text-xs text-muted-foreground">(you)</span>
-                        )}
-                      </div>
-                    );
-                  })}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs">All users</Label>
+                  <span className="text-xs text-muted-foreground">({managedUsers.length})</span>
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Search by email..."
+                    value={userSearchQuery}
+                    onChange={(e) => { setUserSearchQuery(e.target.value); setUserPage(1); }}
+                    className="h-8 w-40 sm:w-48 text-sm"
+                  />
+                  <Button variant="ghost" size="sm" onClick={loadUsers} disabled={usersLoading}>
+                    {usersLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
+                  </Button>
+                </div>
+              </div>
+
+              {(() => {
+                const filteredUsers = managedUsers.filter(u =>
+                  u.email.toLowerCase().includes(userSearchQuery.toLowerCase())
+                );
+                const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+                const startIdx = (userPage - 1) * USERS_PER_PAGE;
+                const pageUsers = filteredUsers.slice(startIdx, startIdx + USERS_PER_PAGE);
+
+                return (
+                  <>
+                    {filteredUsers.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        {userSearchQuery ? "No users match your search." : "No users loaded."}
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {pageUsers.map(u => {
+                          const isAdminUser = u.roles.includes("admin");
+                          return (
+                            <div key={u.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">{u.email}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {isAdminUser ? <span className="text-primary font-medium">Admin</span> : "User"}
+                                </p>
+                              </div>
+                              {isAdminUser && u.id !== user?.id && (
+                                <Button variant="ghost" size="sm" onClick={() => revokeAdmin(u.email)}>
+                                  <UserMinus className="h-4 w-4 mr-1" /> Revoke
+                                </Button>
+                              )}
+                              {isAdminUser && u.id === user?.id && (
+                                <span className="text-xs text-muted-foreground">(you)</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-4 pt-2 border-t border-border">
+                        <span className="text-xs text-muted-foreground">
+                          Showing {startIdx + 1}-{Math.min(startIdx + USERS_PER_PAGE, filteredUsers.length)} of {filteredUsers.length}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setUserPage(p => Math.max(1, p - 1))}
+                            disabled={userPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <span className="text-sm px-2">{userPage} / {totalPages}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setUserPage(p => Math.min(totalPages, p + 1))}
+                            disabled={userPage === totalPages}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </CardContent>
         </Card>
