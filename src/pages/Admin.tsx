@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Key, ImagePlus, Trash2, ShieldCheck, Loader2 } from "lucide-react";
+import { Key, ImagePlus, Trash2, ShieldCheck, Loader2, Palette, Plus } from "lucide-react";
 
 interface BrandAsset { id: string; name: string; asset_type: string; image_url: string; storage_path: string | null; }
 interface ApiKeyRow { provider: string; label: string | null; updated_at: string; }
+interface BrandPalette { id: string; name: string; colors: string[]; }
 
 const AdminPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -27,6 +28,11 @@ const AdminPage: React.FC = () => {
   const [assets, setAssets] = useState<BrandAsset[]>([]);
   const [uploadType, setUploadType] = useState<"logo" | "image">("logo");
   const [uploading, setUploading] = useState(false);
+
+  const [palettes, setPalettes] = useState<BrandPalette[]>([]);
+  const [newPaletteName, setNewPaletteName] = useState("");
+  const [newPaletteColors, setNewPaletteColors] = useState("#f08c00, #3a3a3a, #1a3c6e");
+  const [savingPalette, setSavingPalette] = useState(false);
 
   // Self-claim admin if no admin exists yet (bootstrap)
   const [bootstrapping, setBootstrapping] = useState(false);
@@ -52,12 +58,14 @@ const AdminPage: React.FC = () => {
   };
 
   const loadAdminData = async () => {
-    const [{ data: keys }, { data: brand }] = await Promise.all([
+    const [{ data: keys }, { data: brand }, { data: pals }] = await Promise.all([
       supabase.from("api_keys").select("provider,label,updated_at"),
       supabase.from("brand_assets").select("*").order("created_at", { ascending: false }),
+      supabase.from("brand_palettes").select("id,name,colors").order("created_at", { ascending: true }),
     ]);
     setSavedKeys(keys ?? []);
     setAssets(brand ?? []);
+    setPalettes((pals ?? []).map((p: any) => ({ ...p, colors: Array.isArray(p.colors) ? p.colors : [] })));
   };
 
   useEffect(() => { if (isAdmin) loadAdminData(); }, [isAdmin]);
