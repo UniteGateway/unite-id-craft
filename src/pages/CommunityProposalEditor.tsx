@@ -16,6 +16,7 @@ import {
   type CommunityTheme, inr,
 } from "@/lib/community-calc";
 import CommunitySlideDeck, { type SlideContent } from "@/components/community/CommunitySlideDeck";
+import SlideEditor from "@/components/community/SlideEditor";
 import { exportCommunityDeckPdf } from "@/lib/community-export";
 
 const empty: CommunityInputs = {
@@ -47,6 +48,7 @@ const CommunityProposalEditor: React.FC = () => {
   const [generating, setGenerating] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [regenIdx, setRegenIdx] = useState<number | null>(null);
 
   const set = <K extends keyof CommunityInputs>(k: K, v: CommunityInputs[K]) =>
     setInputs((d) => ({ ...d, [k]: v }));
@@ -135,6 +137,29 @@ const CommunityProposalEditor: React.FC = () => {
       toast.error(e.message || "Failed to generate cover");
     } finally {
       setGeneratingCover(false);
+    }
+  };
+
+  const regenerateSlide = async (index: number, instruction?: string) => {
+    setRegenIdx(index);
+    try {
+      const { data, error } = await supabase.functions.invoke("regenerate-community-slide", {
+        body: {
+          inputs, computed, recommendation,
+          slideTitle: slides[index]?.title || `Slide ${index + 1}`,
+          currentSlide: slides[index],
+          instruction,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const slide = (data as any).slide as SlideContent;
+      setSlides((prev) => prev.map((s, i) => (i === index ? slide : s)));
+      toast.success(`Slide ${index + 1} regenerated`);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to regenerate slide");
+    } finally {
+      setRegenIdx(null);
     }
   };
 
@@ -305,11 +330,19 @@ const CommunityProposalEditor: React.FC = () => {
                 </Button>
               </CardContent></Card>
             ) : (
-              <div className="overflow-auto rounded-lg border bg-muted p-4">
-                <div style={{ transform: "scale(0.55)", transformOrigin: "top left", width: "fit-content" }}>
-                  <CommunitySlideDeck inputs={inputs} computed={computed} recommendation={recommendation} slides={slides} coverImageUrl={coverImageUrl} />
+              <>
+                <SlideEditor
+                  slides={slides}
+                  onChange={setSlides}
+                  onRegenerate={regenerateSlide}
+                  regeneratingIndex={regenIdx}
+                />
+                <div className="overflow-auto rounded-lg border bg-muted p-4">
+                  <div style={{ transform: "scale(0.55)", transformOrigin: "top left", width: "fit-content" }}>
+                    <CommunitySlideDeck inputs={inputs} computed={computed} recommendation={recommendation} slides={slides} coverImageUrl={coverImageUrl} />
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
