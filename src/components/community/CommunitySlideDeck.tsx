@@ -13,11 +13,12 @@ interface Props {
   computed: CommunityComputed;
   recommendation: string;
   slides: SlideContent[];
+  coverImageUrl?: string | null;
 }
 
 /** Renders 16 themed A4-landscape slides into one #community-deck container.
  *  Used both for on-screen preview and for html2canvas → jsPDF export. */
-const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation, slides }) => {
+const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation, slides, coverImageUrl }) => {
   const theme = (inputs.theme || "Dark Premium") as CommunityTheme;
   const t = THEME_STYLES[theme];
 
@@ -120,6 +121,24 @@ const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation,
   // Cover slide gets its own treatment.
   const Cover = () => (
     <div className="pdf-page" style={{ ...slideStyle, justifyContent: "space-between" }}>
+      {coverImageUrl && (
+        <>
+          <img
+            src={coverImageUrl}
+            alt=""
+            crossOrigin="anonymous"
+            style={{
+              position: "absolute", inset: 0, width: "100%", height: "100%",
+              objectFit: "cover", zIndex: 0,
+            }}
+          />
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 1,
+            background: `linear-gradient(110deg, ${t.bg} 0%, ${t.bg}cc 45%, ${t.bg}33 75%, transparent 100%)`,
+          }} />
+        </>
+      )}
+      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontSize: 11, letterSpacing: 2, opacity: 0.8 }}>UNITE SOLAR · COMMUNITY PROPOSAL</div>
         <div style={{ fontSize: 11, opacity: 0.8 }}>{theme}</div>
@@ -144,6 +163,7 @@ const CommunitySlideDeck: React.FC<Props> = ({ inputs, computed, recommendation,
         <div style={{ textAlign: "right", color: t.accent }}>
           Sustainable Power · Investor Income · Community Savings
         </div>
+      </div>
       </div>
     </div>
   );
