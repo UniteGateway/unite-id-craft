@@ -40,6 +40,11 @@ const AdminPage: React.FC = () => {
   const [grantEmail, setGrantEmail] = useState("");
   const [granting, setGranting] = useState(false);
 
+  // Search and pagination for user list
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [userPage, setUserPage] = useState(1);
+  const USERS_PER_PAGE = 20;
+
   // Self-claim admin if no admin exists yet (bootstrap)
   const [bootstrapping, setBootstrapping] = useState(false);
   const [needsBootstrap, setNeedsBootstrap] = useState(false);
