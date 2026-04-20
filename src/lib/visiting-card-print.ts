@@ -1,16 +1,35 @@
-// Multi-up print sheet generator for standard 3.5" x 2" business cards on a
-// 13" x 19" sheet at 300 DPI with 3mm bleed and 0.25pt hairline crop marks.
+// Multi-up print sheet generator for standard 3.5" x 2" business cards.
+// Supports multiple sheet sizes with 3mm bleed and 0.25pt hairline crop marks.
 import jsPDF from "jspdf";
+import { ensureFontsReady } from "./google-fonts";
 
-export const SHEET_W_IN = 13;
-export const SHEET_H_IN = 19;
 export const CARD_W_IN = 3.5;
 export const CARD_H_IN = 2;
 export const BLEED_MM = 3;
 export const BLEED_IN = BLEED_MM / 25.4; // ~0.118"
 export const DPI = 300;
-export const CROP_MARK_IN = 0.125; // length of each crop mark
+export const CROP_MARK_IN = 0.125;
 export const HAIRLINE_PT = 0.25;
+
+export interface SheetSize {
+  id: string;
+  label: string;
+  widthIn: number;
+  heightIn: number;
+  marginIn: number;
+}
+
+export const SHEET_OPTIONS: SheetSize[] = [
+  { id: "13x19", label: '13" × 19" (24-up)', widthIn: 13, heightIn: 19, marginIn: 0.5 },
+  { id: "12x18", label: '12" × 18" (24-up)', widthIn: 12, heightIn: 18, marginIn: 0.4 },
+  { id: "19x25", label: '19" × 25" (32-up)', widthIn: 19, heightIn: 25, marginIn: 0.5 },
+  { id: "18x24", label: '18" × 24" (40-up)', widthIn: 18, heightIn: 24, marginIn: 0.4 },
+  { id: "a4", label: "A4 (10-up)", widthIn: 8.27, heightIn: 11.69, marginIn: 0.25 },
+];
+
+// Backwards-compat exports
+export const SHEET_W_IN = 13;
+export const SHEET_H_IN = 19;
 
 export interface CardZone {
   role: string;
@@ -21,6 +40,8 @@ export interface CardZone {
   font_size_pct: number;
   text_align: "left" | "center" | "right";
   color_hex: string;
+  font_family?: string;
+  font_weight?: number;
 }
 
 export interface RenderableCard {
@@ -45,10 +66,13 @@ export async function loadCard(
   values: Record<string, string>,
 ): Promise<RenderableCard> {
   const templateImage = await loadImage(imageUrl);
+  // Preload any custom Google Fonts referenced by zones so canvas draws sharp.
+  const families = zones.map((z) => z.font_family).filter(Boolean) as string[];
+  if (families.length) await ensureFontsReady(families);
   return { templateImage, zones, values };
 }
 
-/** Renders a single card (with bleed) onto its own canvas. */
+/** Renders a single card (with optional bleed) onto its own canvas. */
 export function renderCardCanvas(card: RenderableCard, withBleed = true): HTMLCanvasElement {
   const bleedIn = withBleed ? BLEED_IN : 0;
   const wIn = CARD_W_IN + bleedIn * 2;
@@ -60,10 +84,8 @@ export function renderCardCanvas(card: RenderableCard, withBleed = true): HTMLCa
   canvas.height = h;
   const ctx = canvas.getContext("2d")!;
 
-  // Fill background by stretching template into bleed area
   ctx.drawImage(card.templateImage, 0, 0, w, h);
 
-  // Draw text fields (positions are % of card body, not bleed)
   const bodyOffsetX = bleedIn * DPI;
   const bodyOffsetY = bleedIn * DPI;
   const bodyW = CARD_W_IN * DPI;
@@ -73,8 +95,10 @@ export function renderCardCanvas(card: RenderableCard, withBleed = true): HTMLCa
     const text = card.values[zone.role] || "";
     if (!text) continue;
     const fontPx = (zone.font_size_pct / 100) * bodyH;
+    const family = zone.font_family || "Inter";
+    const weight = zone.font_weight || 600;
     ctx.fillStyle = zone.color_hex || "#111111";
-    ctx.font = `600 ${fontPx}px Inter, system-ui, sans-serif`;
+    ctx.font = `${weight} ${fontPx}px "${family}", system-ui, sans-serif`;
     ctx.textBaseline = "top";
     ctx.textAlign = zone.text_align;
     const zx = bodyOffsetX + (zone.x / 100) * bodyW;
@@ -88,64 +112,70 @@ export function renderCardCanvas(card: RenderableCard, withBleed = true): HTMLCa
   return canvas;
 }
 
-/** Builds a 13x19" PDF with auto-fit grid + hairline crop marks. */
+export interface SheetExportOptions {
+  sheet?: SheetSize;
+  cropMarks?: boolean;
+  filename?: string;
+}
+
+/** Builds an n-up PDF with auto-fit grid + hairline crop marks. */
 export async function exportPrintSheet(
   cards: RenderableCard[],
-  filename = "visiting-cards-sheet.pdf",
+  filenameOrOpts: string | SheetExportOptions = "visiting-cards-sheet.pdf",
 ) {
-  const pdf = new jsPDF({ orientation: "portrait", unit: "in", format: [SHEET_W_IN, SHEET_H_IN] });
+  const opts: SheetExportOptions =
+    typeof filenameOrOpts === "string" ? { filename: filenameOrOpts } : filenameOrOpts;
+  const sheet = opts.sheet || SHEET_OPTIONS[0];
+  const cropMarks = opts.cropMarks !== false;
+  const filename = opts.filename || "visiting-cards-sheet.pdf";
+
+  const orientation = sheet.widthIn > sheet.heightIn ? "landscape" : "portrait";
+  const pdf = new jsPDF({ orientation, unit: "in", format: [sheet.widthIn, sheet.heightIn] });
   const cardWBleed = CARD_W_IN + BLEED_IN * 2;
   const cardHBleed = CARD_H_IN + BLEED_IN * 2;
-  const margin = 0.5; // outer margin
-  const cols = Math.floor((SHEET_W_IN - margin * 2) / cardWBleed);
-  const rows = Math.floor((SHEET_H_IN - margin * 2) / cardHBleed);
+  const cols = Math.floor((sheet.widthIn - sheet.marginIn * 2) / cardWBleed);
+  const rows = Math.floor((sheet.heightIn - sheet.marginIn * 2) / cardHBleed);
   const perSheet = cols * rows;
   if (perSheet === 0) throw new Error("Card too large for sheet");
 
   let placed = 0;
   let cardIdx = 0;
   while (cardIdx < cards.length) {
-    if (placed > 0) pdf.addPage([SHEET_W_IN, SHEET_H_IN], "portrait");
+    if (placed > 0) pdf.addPage([sheet.widthIn, sheet.heightIn], orientation);
     placed = 0;
     for (let r = 0; r < rows && cardIdx < cards.length; r++) {
       for (let c = 0; c < cols && cardIdx < cards.length; c++) {
         const card = cards[cardIdx++];
         const canvas = renderCardCanvas(card, true);
-        const x = margin + c * cardWBleed;
-        const y = margin + r * cardHBleed;
+        const x = sheet.marginIn + c * cardWBleed;
+        const y = sheet.marginIn + r * cardHBleed;
         pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", x, y, cardWBleed, cardHBleed);
 
-        // Trim box (inside the bleed)
-        const tx = x + BLEED_IN;
-        const ty = y + BLEED_IN;
-        const tw = CARD_W_IN;
-        const th = CARD_H_IN;
-
-        // Hairline crop marks at the 4 corners of the trim box
-        pdf.setLineWidth(HAIRLINE_PT / 72);
-        pdf.setDrawColor(0, 0, 0);
-        const m = CROP_MARK_IN;
-        const gap = 0.05; // small gap between trim and start of mark
-        // Top-left
-        pdf.line(tx - m - gap, ty, tx - gap, ty);
-        pdf.line(tx, ty - m - gap, tx, ty - gap);
-        // Top-right
-        pdf.line(tx + tw + gap, ty, tx + tw + m + gap, ty);
-        pdf.line(tx + tw, ty - m - gap, tx + tw, ty - gap);
-        // Bottom-left
-        pdf.line(tx - m - gap, ty + th, tx - gap, ty + th);
-        pdf.line(tx, ty + th + gap, tx, ty + th + m + gap);
-        // Bottom-right
-        pdf.line(tx + tw + gap, ty + th, tx + tw + m + gap, ty + th);
-        pdf.line(tx + tw, ty + th + gap, tx + tw, ty + th + m + gap);
-
+        if (cropMarks) {
+          const tx = x + BLEED_IN;
+          const ty = y + BLEED_IN;
+          const tw = CARD_W_IN;
+          const th = CARD_H_IN;
+          pdf.setLineWidth(HAIRLINE_PT / 72);
+          pdf.setDrawColor(0, 0, 0);
+          const m = CROP_MARK_IN;
+          const gap = 0.05;
+          pdf.line(tx - m - gap, ty, tx - gap, ty);
+          pdf.line(tx, ty - m - gap, tx, ty - gap);
+          pdf.line(tx + tw + gap, ty, tx + tw + m + gap, ty);
+          pdf.line(tx + tw, ty - m - gap, tx + tw, ty - gap);
+          pdf.line(tx - m - gap, ty + th, tx - gap, ty + th);
+          pdf.line(tx, ty + th + gap, tx, ty + th + m + gap);
+          pdf.line(tx + tw + gap, ty + th, tx + tw + m + gap, ty + th);
+          pdf.line(tx + tw, ty + th + gap, tx + tw, ty + th + m + gap);
+        }
         placed++;
       }
     }
   }
 
   pdf.save(filename);
-  return { cols, rows, perSheet };
+  return { cols, rows, perSheet, sheet };
 }
 
 /** Single card PDF export with bleed. */
