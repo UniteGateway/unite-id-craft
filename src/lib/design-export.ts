@@ -1,20 +1,26 @@
 import jsPDF from "jspdf";
 import type { CardZone } from "./visiting-card-print";
 
-export type DesignKind = "flyer" | "brochure" | "presentation";
+export type DesignKind =
+  | "flyer" | "brochure" | "presentation"
+  | "letterhead" | "envelope" | "billbook" | "voucher";
 
 export interface DesignFormat {
   kind: DesignKind;
   widthIn: number;
   heightIn: number;
-  aspectCss: string; // for CSS aspectRatio
+  aspectCss: string;
   label: string;
 }
 
 export const FORMATS: Record<DesignKind, DesignFormat> = {
-  flyer:        { kind: "flyer",        widthIn: 8.27,  heightIn: 11.69, aspectCss: "1 / 1.414", label: "A4 Portrait" },
-  brochure:     { kind: "brochure",     widthIn: 11.69, heightIn: 8.27,  aspectCss: "1.414 / 1", label: "A4 Landscape" },
-  presentation: { kind: "presentation", widthIn: 13.33, heightIn: 7.5,   aspectCss: "16 / 9",     label: "16:9 Slide" },
+  flyer:        { kind: "flyer",        widthIn: 8.27,  heightIn: 11.69, aspectCss: "1 / 1.414",   label: "A4 Portrait" },
+  brochure:     { kind: "brochure",     widthIn: 11.69, heightIn: 8.27,  aspectCss: "1.414 / 1",   label: "A4 Landscape" },
+  presentation: { kind: "presentation", widthIn: 13.33, heightIn: 7.5,   aspectCss: "16 / 9",      label: "16:9 Slide" },
+  letterhead:   { kind: "letterhead",   widthIn: 8.27,  heightIn: 11.69, aspectCss: "1 / 1.414",   label: "A4 Letterhead" },
+  envelope:     { kind: "envelope",     widthIn: 9.5,   heightIn: 4.125, aspectCss: "9.5 / 4.125", label: "#10 Envelope" },
+  billbook:     { kind: "billbook",     widthIn: 8.27,  heightIn: 11.69, aspectCss: "1 / 1.414",   label: "A4 Bill / Invoice" },
+  voucher:      { kind: "voucher",      widthIn: 8,     heightIn: 3.5,   aspectCss: "8 / 3.5",     label: "Voucher / Coupon" },
 };
 
 const DPI = 200;
