@@ -149,6 +149,7 @@ const AdminPage: React.FC = () => {
     loadAdminData();
   };
 
+  if (authLoading || roleLoading) {
     return <div className="min-h-screen grid place-items-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   }
   if (!user) return <Navigate to="/auth" replace />;
@@ -274,6 +275,52 @@ const AdminPage: React.FC = () => {
                       </button>
                     </div>
                     <span className="absolute top-1 left-1 text-[9px] uppercase tracking-wider bg-background/90 px-1.5 py-0.5 rounded">{a.asset_type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5" /> Brand Palettes</CardTitle>
+            <CardDescription>Define named color palettes. Designers can apply them with one click inside any editor (text colors, accents, backgrounds).</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid sm:grid-cols-[1fr,2fr,auto] gap-2 items-end">
+              <div className="space-y-1">
+                <Label className="text-xs">Palette name</Label>
+                <Input placeholder="e.g. Client A" value={newPaletteName} onChange={(e) => setNewPaletteName(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Hex colors (comma or space separated)</Label>
+                <Input placeholder="#f08c00, #3a3a3a, #1a3c6e" value={newPaletteColors} onChange={(e) => setNewPaletteColors(e.target.value)} />
+              </div>
+              <Button onClick={savePalette} disabled={savingPalette}>
+                {savingPalette ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Plus className="h-4 w-4 mr-1" /> Add</>}
+              </Button>
+            </div>
+
+            {palettes.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No palettes yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {palettes.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{p.name}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {p.colors.map((c, i) => (
+                          <div key={i} title={c}
+                            className="h-7 w-7 rounded-md border border-border shadow-sm"
+                            style={{ backgroundColor: c }} />
+                        ))}
+                      </div>
+                    </div>
+                    <button onClick={() => deletePalette(p)} className="text-destructive hover:bg-destructive/10 p-2 rounded">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 ))}
               </div>
