@@ -9,6 +9,7 @@ import type { CardZone } from "@/lib/visiting-card-print";
 import { GOOGLE_FONTS, injectGoogleFont } from "@/lib/google-fonts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PalettePicker from "@/components/PalettePicker";
 
 interface Props {
   imageUrl: string;
