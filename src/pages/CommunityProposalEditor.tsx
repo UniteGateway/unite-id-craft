@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Loader2, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Image as ImageIcon, Loader2, Save, Sparkles } from "lucide-react";
 import {
   computeCommunity, recommendModel, type CommunityInputs, type CommunityComputed,
   type CommunityTheme, inr,
@@ -41,9 +41,11 @@ const CommunityProposalEditor: React.FC = () => {
   const [inputs, setInputs] = useState<CommunityInputs>(empty);
   const [title, setTitle] = useState("Untitled Community Proposal");
   const [slides, setSlides] = useState<SlideContent[]>([]);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [generatingCover, setGeneratingCover] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   const set = <K extends keyof CommunityInputs>(k: K, v: CommunityInputs[K]) =>
