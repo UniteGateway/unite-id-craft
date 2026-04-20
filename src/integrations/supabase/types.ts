@@ -74,6 +74,95 @@ export type Database = {
         }
         Relationships: []
       }
+      design_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          field_zones: Json
+          height_px: number | null
+          id: string
+          image_url: string
+          kind: string
+          name: string
+          source: string
+          storage_path: string | null
+          updated_at: string
+          width_px: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          field_zones?: Json
+          height_px?: number | null
+          id?: string
+          image_url: string
+          kind: string
+          name: string
+          source?: string
+          storage_path?: string | null
+          updated_at?: string
+          width_px?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          field_zones?: Json
+          height_px?: number | null
+          id?: string
+          image_url?: string
+          kind?: string
+          name?: string
+          source?: string
+          storage_path?: string | null
+          updated_at?: string
+          width_px?: number | null
+        }
+        Relationships: []
+      }
+      designs: {
+        Row: {
+          created_at: string
+          field_values: Json
+          id: string
+          kind: string
+          pages: Json
+          template_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          field_values?: Json
+          id?: string
+          kind: string
+          pages?: Json
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          field_values?: Json
+          id?: string
+          kind?: string
+          pages?: Json
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "designs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "design_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
