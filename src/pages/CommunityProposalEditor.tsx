@@ -25,6 +25,10 @@ const empty: CommunityInputs = {
   sanction_load_kw: 0, roof_type: "Flat",
   preferred_model: "Hybrid", target_savings_pct: 75,
   investor_required: true, theme: "Dark Premium",
+  energy_charge_per_unit: undefined,
+  fixed_monthly_charges: 0,
+  tax_pct: 5,
+  ppa_tariff: 7.25,
 };
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
