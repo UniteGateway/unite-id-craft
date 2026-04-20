@@ -25,6 +25,10 @@ const empty: CommunityInputs = {
   sanction_load_kw: 0, roof_type: "Flat",
   preferred_model: "Hybrid", target_savings_pct: 75,
   investor_required: true, theme: "Dark Premium",
+  energy_charge_per_unit: undefined,
+  fixed_monthly_charges: 0,
+  tax_pct: 5,
+  ppa_tariff: 7.25,
 };
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -80,6 +84,10 @@ const CommunityProposalEditor: React.FC = () => {
         target_savings_pct: Number(data.target_savings_pct) || 75,
         investor_required: !!data.investor_required,
         theme: (data.theme as CommunityTheme) || "Dark Premium",
+        energy_charge_per_unit: (data.computed as any)?.energyChargeInput || undefined,
+        fixed_monthly_charges: (data.computed as any)?.fixedMonthlyCharges ?? 0,
+        tax_pct: (data.computed as any)?.taxPctInput ?? 5,
+        ppa_tariff: (data.computed as any)?.solarTariff || 7.25,
       });
       setSlides(Array.isArray(data.slides) ? (data.slides as any) : []);
       setCoverImageUrl(data.cover_image_url || null);
@@ -183,7 +191,11 @@ const CommunityProposalEditor: React.FC = () => {
       target_savings_pct: inputs.target_savings_pct ?? null,
       investor_required: !!inputs.investor_required,
       theme: inputs.theme || "Dark Premium",
-      computed,
+      computed: {
+        ...computed,
+        energyChargeInput: inputs.energy_charge_per_unit ?? null,
+        taxPctInput: inputs.tax_pct ?? null,
+      },
       slides,
       cover_image_url: coverImageUrl,
     };
@@ -273,6 +285,29 @@ const CommunityProposalEditor: React.FC = () => {
                 <Field label="Monthly units *"><Input type="number" value={inputs.monthly_units ?? ""} onChange={setNum("monthly_units")} /></Field>
                 <Field label="Monthly bill (₹) *"><Input type="number" value={inputs.monthly_bill ?? ""} onChange={setNum("monthly_bill")} /></Field>
               </div>
+              <div className="rounded-md border p-2.5 space-y-2 bg-muted/20">
+                <div className="text-xs font-semibold text-muted-foreground">Bill breakdown (for accurate savings)</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Energy charge ₹/unit">
+                    <Input type="number" step="0.01" placeholder="auto" value={inputs.energy_charge_per_unit ?? ""} onChange={setNum("energy_charge_per_unit")} />
+                  </Field>
+                  <Field label="Fixed charges ₹/mo">
+                    <Input type="number" value={inputs.fixed_monthly_charges ?? ""} onChange={setNum("fixed_monthly_charges")} />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Taxes & duty %">
+                    <Input type="number" step="0.1" value={inputs.tax_pct ?? ""} onChange={setNum("tax_pct")} />
+                  </Field>
+                  <Field label="PPA tariff ₹/unit">
+                    <Input type="number" step="0.05" value={inputs.ppa_tariff ?? ""} onChange={setNum("ppa_tariff")} />
+                  </Field>
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-snug">
+                  Leave energy charge blank to auto-derive: <code>(bill − fixed) ÷ (1 + tax%) ÷ units</code>.
+                  Solar only offsets energy charges & related taxes — never fixed/demand charges.
+                </p>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Sanction load (kW)"><Input type="number" value={inputs.sanction_load_kw ?? ""} onChange={setNum("sanction_load_kw")} /></Field>
                 <Field label="Target savings %"><Input type="number" value={inputs.target_savings_pct ?? ""} onChange={setNum("target_savings_pct")} /></Field>
@@ -307,6 +342,9 @@ const CommunityProposalEditor: React.FC = () => {
                 <div className="text-xs font-semibold text-muted-foreground">Live Computed</div>
                 <div className="text-xs flex justify-between"><span>Recommended capacity</span><span className="font-bold">{computed.recommendedCapacityKw} kW</span></div>
                 <div className="text-xs flex justify-between"><span>Solar offset</span><span className="font-bold">{computed.solarOffsetPct}%</span></div>
+                <div className="text-xs flex justify-between"><span>Avg bill tariff</span><span>{computed.avgTariff} ₹/u</span></div>
+                <div className="text-xs flex justify-between"><span>Effective energy ₹/u</span><span className="font-medium">{computed.effectiveEnergyCharge} ₹/u</span></div>
+                <div className="text-xs flex justify-between"><span>PPA tariff</span><span>{computed.solarTariff} ₹/u</span></div>
                 <div className="text-xs flex justify-between"><span>Project cost</span><span className="font-bold">{inr(computed.projectCost)}</span></div>
                 <div className="text-xs flex justify-between"><span>Monthly savings</span><span className="font-bold">{inr(computed.monthlySavings)}</span></div>
                 <div className="text-xs flex justify-between"><span>Payback</span><span className="font-bold">{computed.paybackYears} yrs</span></div>
