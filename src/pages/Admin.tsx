@@ -85,6 +85,7 @@ const AdminPage: React.FC = () => {
     setUsersLoading(false);
     if (error) { toast.error(error.message); return; }
     setManagedUsers(data?.users ?? []);
+    setUserPage(1); // Reset to first page when refreshing
   };
 
   const grantAdmin = async () => {
