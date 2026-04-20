@@ -101,6 +101,75 @@ export type Database = {
         }
         Relationships: []
       }
+      community_proposals: {
+        Row: {
+          blocks: number | null
+          community_name: string | null
+          computed: Json
+          cover_image_url: string | null
+          created_at: string
+          id: string
+          investor_required: boolean | null
+          location: string | null
+          monthly_bill: number | null
+          monthly_units: number | null
+          preferred_model: string | null
+          roof_type: string | null
+          rooftop_area_sft: number | null
+          sanction_load_kw: number | null
+          slides: Json
+          target_savings_pct: number | null
+          theme: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocks?: number | null
+          community_name?: string | null
+          computed?: Json
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          investor_required?: boolean | null
+          location?: string | null
+          monthly_bill?: number | null
+          monthly_units?: number | null
+          preferred_model?: string | null
+          roof_type?: string | null
+          rooftop_area_sft?: number | null
+          sanction_load_kw?: number | null
+          slides?: Json
+          target_savings_pct?: number | null
+          theme?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocks?: number | null
+          community_name?: string | null
+          computed?: Json
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          investor_required?: boolean | null
+          location?: string | null
+          monthly_bill?: number | null
+          monthly_units?: number | null
+          preferred_model?: string | null
+          roof_type?: string | null
+          rooftop_area_sft?: number | null
+          sanction_load_kw?: number | null
+          slides?: Json
+          target_savings_pct?: number | null
+          theme?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       design_templates: {
         Row: {
           created_at: string
