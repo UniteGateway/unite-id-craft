@@ -88,30 +88,57 @@ const AdminPage: React.FC = () => {
     setUsersLoading(false);
     if (error) { toast.error(error.message); return; }
     setManagedUsers(data?.users ?? []);
-    setUserPage(1); // Reset to first page when refreshing
+    setAdminCount(data?.adminCount ?? 0);
+    setMaxAdmins(data?.maxAdmins ?? 20);
+    setUserPage(1);
   };
 
   const grantAdmin = async () => {
-    if (!grantEmail.trim()) { toast.error("Enter an email"); return; }
+    const email = grantEmail.trim().toLowerCase();
+    if (!email) { toast.error("Enter an email"); return; }
+    if (adminCount >= maxAdmins) { toast.error(`Admin limit reached (${maxAdmins}). Revoke an existing admin first.`); return; }
     setGranting(true);
+    // Use "invite" action — creates user + sends verification/password setup email if new, else just grants admin.
     const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
-      body: { action: "grant", email: grantEmail.trim() },
+      body: { action: "invite", email, redirectTo: window.location.origin },
     });
     setGranting(false);
     if (error || data?.error) { toast.error(error?.message || data?.error); return; }
-    toast.success(`Admin granted to ${grantEmail}`);
+    toast.success(data?.message || `Admin granted to ${email}`);
     setGrantEmail("");
     loadUsers();
   };
 
   const revokeAdmin = async (email: string) => {
     if (!confirm(`Revoke admin from ${email}?`)) return;
+    setActioningEmail(email);
     const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
       body: { action: "revoke", email },
     });
+    setActioningEmail(null);
     if (error || data?.error) { toast.error(error?.message || data?.error); return; }
     toast.success("Admin revoked");
     loadUsers();
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    setActioningEmail(email);
+    const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
+      body: { action: "send_password_reset", email, redirectTo: `${window.location.origin}/reset-password` },
+    });
+    setActioningEmail(null);
+    if (error || data?.error) { toast.error(error?.message || data?.error); return; }
+    toast.success(data?.message || `Password reset email sent to ${email}`);
+  };
+
+  const resendVerification = async (email: string) => {
+    setActioningEmail(email);
+    const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
+      body: { action: "resend_verification", email, redirectTo: window.location.origin },
+    });
+    setActioningEmail(null);
+    if (error || data?.error) { toast.error(error?.message || data?.error); return; }
+    toast.success(data?.message || `Verification email sent to ${email}`);
   };
 
   useEffect(() => { if (isAdmin) { loadAdminData(); loadUsers(); } }, [isAdmin]);
