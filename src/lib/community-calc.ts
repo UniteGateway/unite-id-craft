@@ -3,9 +3,24 @@
 export type CommunityModel = "PPA" | "CAPEX" | "Hybrid";
 export type CommunityTheme = "Dark Premium" | "Corporate Blue" | "Green" | "Luxury Gold";
 
+/** Indian states with solar rooftop capacity caps as % of sanctioned/contract demand. */
+export const STATE_CMD_CAP: Record<string, number> = {
+  "Telangana": 80,
+  "Andhra Pradesh": 100,
+  "Karnataka": 100,
+  "Tamil Nadu": 100,
+  "Maharashtra": 100,
+  "Gujarat": 100,
+  "Kerala": 100,
+  "Delhi": 100,
+  "Other": 100,
+};
+
 export interface CommunityInputs {
   community_name?: string;
   location?: string;
+  /** State name — drives CMD cap (Telangana = 80%). */
+  state?: string;
   blocks?: number;
   rooftop_area_sft?: number;
   monthly_units?: number;
@@ -24,10 +39,32 @@ export interface CommunityInputs {
   tax_pct?: number;
   /** PPA tariff offered to community, ₹/unit. Default 7.25. */
   ppa_tariff?: number;
+
+  // ─── BOOT model inputs ─────────────────────────────────────
+  /** BOOT tariff charged to community ₹/unit (typically = current effective tariff). */
+  boot_tariff?: number;
+  /** BOOT lock-in period in years (5–7 typical). */
+  boot_period_years?: number;
+
+  // ─── PPA model inputs ──────────────────────────────────────
+  /** Discount % off effective tariff in PPA model (default 25). */
+  ppa_discount_pct?: number;
+  /** PPA term in years (typical 15–25). */
+  ppa_term_years?: number;
+
+  // ─── Self-Invest (community SPV) inputs ───────────────────
+  /** Number of investors within community SPV. */
+  self_investor_count?: number;
+  /** Average ticket size per investor in ₹. */
+  self_ticket_size?: number;
+  /** Target IRR % for investors. */
+  self_target_irr?: number;
 }
 
 export interface CommunityComputed {
   recommendedCapacityKw: number;
+  cmdCapKw: number;
+  cmdCapPct: number;
   monthlyGenerationUnits: number;
   solarOffsetPct: number;
   projectCost: number;
@@ -49,6 +86,21 @@ export interface CommunityComputed {
   effectiveEnergyCharge: number;
   /** Fixed (non-offsettable) monthly charges. */
   fixedMonthlyCharges: number;
+  // ─── Per-model savings ─────────────────────────────────────
+  bootMonthlySavings: number;
+  bootTotalRevenue: number;
+  bootTariff: number;
+  bootPeriodYears: number;
+  ppaMonthlySavings: number;
+  ppaEffectiveTariff: number;
+  ppaTermYears: number;
+  ppaDiscountPct: number;
+  selfMonthlySavings: number;
+  selfAnnualReturn: number;
+  selfTotalCapital: number;
+  selfInvestorCount: number;
+  selfTicketSize: number;
+  selfTargetIrr: number;
 }
 
 const n = (v: any) => (Number.isFinite(+v) ? +v : 0);
@@ -75,14 +127,18 @@ export function computeCommunity(input: CommunityInputs): CommunityComputed {
   const ebTariff = effectiveEnergyCharge || avgTariff || 9;
   const solarTariff = n(input.ppa_tariff) || 7.25;
 
-  // Capacity: prefer the smaller of (rooftop-derived) and (consumption-derived * targetPct buffer)
+  // ─── Capacity recommendation ────────────────────────────────
+  // 1. Roof-area cap: ~1 kW per 100 sft
+  // 2. Consumption-derived: monthly units * targetPct / 130 units/kW/month
+  // 3. CMD cap: state-driven % of sanctioned load (Telangana = 80%)
   const capacityFromRoof = sft / 100; // 1 kW / 100 sft
   const capacityFromLoad = (monthlyUnits * targetPct) / 130; // 130 units/kW/month
-  let recommendedCapacityKw = Math.min(
-    capacityFromRoof || capacityFromLoad,
-    capacityFromLoad || capacityFromRoof,
-  );
-  if (!recommendedCapacityKw) recommendedCapacityKw = capacityFromRoof || capacityFromLoad || 0;
+  const cmdCapPct = STATE_CMD_CAP[input.state || "Other"] ?? 100;
+  const sanctionLoad = n(input.sanction_load_kw);
+  const cmdCapKw = sanctionLoad > 0 ? +(sanctionLoad * (cmdCapPct / 100)).toFixed(1) : 0;
+
+  const candidates = [capacityFromRoof, capacityFromLoad, cmdCapKw].filter((v) => v > 0);
+  let recommendedCapacityKw = candidates.length ? Math.min(...candidates) : 0;
   recommendedCapacityKw = Math.round(recommendedCapacityKw / 5) * 5; // round to nearest 5 kW
 
   const monthlyGenerationUnits = Math.round(recommendedCapacityKw * 130);
@@ -104,8 +160,30 @@ export function computeCommunity(input: CommunityInputs): CommunityComputed {
   const co2TonsYear = +(monthlyGenerationUnits * 12 * 0.82 / 1000).toFixed(1);
   const treesEquivalent = Math.round((co2TonsYear * 1000) / 21);
 
+  // ─── BOOT model: investor charges 100% current tariff for boot period ─────
+  const bootTariff = n(input.boot_tariff) || ebTariff;
+  const bootPeriodYears = n(input.boot_period_years) || 6;
+  const bootMonthlySavings = 0; // community pays same tariff during BOOT
+  const bootTotalRevenue = Math.round(monthlyGenerationUnits * bootTariff * 12 * bootPeriodYears);
+
+  // ─── PPA model: 25% discount on current tariff over long term ────────────
+  const ppaDiscountPct = n(input.ppa_discount_pct) || 25;
+  const ppaTermYears = n(input.ppa_term_years) || 20;
+  const ppaEffectiveTariff = +(ebTariff * (1 - ppaDiscountPct / 100)).toFixed(2);
+  const ppaMonthlySavings = Math.round(monthlyGenerationUnits * (ebTariff - ppaEffectiveTariff));
+
+  // ─── Self-Invest (community SPV) ────────────────────────────────────────
+  const selfInvestorCount = n(input.self_investor_count) || 10;
+  const selfTicketSize = n(input.self_ticket_size) || (projectCost && selfInvestorCount ? Math.round(projectCost / selfInvestorCount) : 0);
+  const selfTargetIrr = n(input.self_target_irr) || 18;
+  const selfTotalCapital = selfInvestorCount * selfTicketSize;
+  const selfMonthlySavings = Math.round(monthlyGenerationUnits * ebTariff); // community gets full benefit
+  const selfAnnualReturn = Math.round(selfTotalCapital * (selfTargetIrr / 100));
+
   return {
     recommendedCapacityKw,
+    cmdCapKw,
+    cmdCapPct,
     monthlyGenerationUnits,
     solarOffsetPct: +solarOffsetPct.toFixed(1),
     projectCost,
@@ -124,6 +202,20 @@ export function computeCommunity(input: CommunityInputs): CommunityComputed {
     avgTariff: +avgTariff.toFixed(2),
     effectiveEnergyCharge,
     fixedMonthlyCharges,
+    bootMonthlySavings,
+    bootTotalRevenue,
+    bootTariff: +bootTariff.toFixed(2),
+    bootPeriodYears,
+    ppaMonthlySavings,
+    ppaEffectiveTariff,
+    ppaTermYears,
+    ppaDiscountPct,
+    selfMonthlySavings,
+    selfAnnualReturn,
+    selfTotalCapital,
+    selfInvestorCount,
+    selfTicketSize,
+    selfTargetIrr,
   };
 }
 
