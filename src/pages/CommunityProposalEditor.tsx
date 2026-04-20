@@ -330,11 +330,19 @@ const CommunityProposalEditor: React.FC = () => {
                 </Button>
               </CardContent></Card>
             ) : (
-              <div className="overflow-auto rounded-lg border bg-muted p-4">
-                <div style={{ transform: "scale(0.55)", transformOrigin: "top left", width: "fit-content" }}>
-                  <CommunitySlideDeck inputs={inputs} computed={computed} recommendation={recommendation} slides={slides} coverImageUrl={coverImageUrl} />
+              <>
+                <SlideEditor
+                  slides={slides}
+                  onChange={setSlides}
+                  onRegenerate={regenerateSlide}
+                  regeneratingIndex={regenIdx}
+                />
+                <div className="overflow-auto rounded-lg border bg-muted p-4">
+                  <div style={{ transform: "scale(0.55)", transformOrigin: "top left", width: "fit-content" }}>
+                    <CommunitySlideDeck inputs={inputs} computed={computed} recommendation={recommendation} slides={slides} coverImageUrl={coverImageUrl} />
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
