@@ -239,6 +239,7 @@ const Designs: React.FC = () => {
               imageUrl={imageUrl} aspect={fmt.aspectCss} zones={zones} values={values}
               selectedZone={selectedZone} onZoneClick={setSelectedZone}
               onValueChange={(role, v) => setValues({ ...values, [role]: v })}
+              onZoneChange={(idx, nz) => setZones(zones.map((x, j) => j === idx ? nz : x))}
             />
           ) : (
             <div className="rounded-lg border border-dashed border-border p-12 text-center text-muted-foreground"
