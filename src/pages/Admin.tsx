@@ -10,12 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Key, ImagePlus, Trash2, ShieldCheck, Loader2, Palette, Plus, Users, UserPlus, UserMinus, Search } from "lucide-react";
+import { Key, ImagePlus, Trash2, ShieldCheck, Loader2, Palette, Plus, Users, UserPlus, UserMinus, Search, Mail, KeyRound, CheckCircle2, Clock } from "lucide-react";
 
 interface BrandAsset { id: string; name: string; asset_type: string; image_url: string; storage_path: string | null; }
 interface ApiKeyRow { provider: string; label: string | null; updated_at: string; }
 interface BrandPalette { id: string; name: string; colors: string[]; }
-interface ManagedUser { id: string; email: string; created_at: string; roles: string[]; }
+interface ManagedUser { id: string; email: string; created_at: string; email_confirmed_at: string | null; roles: string[]; }
 
 const AdminPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -39,6 +39,9 @@ const AdminPage: React.FC = () => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [grantEmail, setGrantEmail] = useState("");
   const [granting, setGranting] = useState(false);
+  const [adminCount, setAdminCount] = useState(0);
+  const [maxAdmins, setMaxAdmins] = useState(20);
+  const [actioningEmail, setActioningEmail] = useState<string | null>(null);
 
   // Search and pagination for user list
   const [userSearchQuery, setUserSearchQuery] = useState("");
@@ -85,30 +88,57 @@ const AdminPage: React.FC = () => {
     setUsersLoading(false);
     if (error) { toast.error(error.message); return; }
     setManagedUsers(data?.users ?? []);
-    setUserPage(1); // Reset to first page when refreshing
+    setAdminCount(data?.adminCount ?? 0);
+    setMaxAdmins(data?.maxAdmins ?? 20);
+    setUserPage(1);
   };
 
   const grantAdmin = async () => {
-    if (!grantEmail.trim()) { toast.error("Enter an email"); return; }
+    const email = grantEmail.trim().toLowerCase();
+    if (!email) { toast.error("Enter an email"); return; }
+    if (adminCount >= maxAdmins) { toast.error(`Admin limit reached (${maxAdmins}). Revoke an existing admin first.`); return; }
     setGranting(true);
+    // Use "invite" action — creates user + sends verification/password setup email if new, else just grants admin.
     const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
-      body: { action: "grant", email: grantEmail.trim() },
+      body: { action: "invite", email, redirectTo: window.location.origin },
     });
     setGranting(false);
     if (error || data?.error) { toast.error(error?.message || data?.error); return; }
-    toast.success(`Admin granted to ${grantEmail}`);
+    toast.success(data?.message || `Admin granted to ${email}`);
     setGrantEmail("");
     loadUsers();
   };
 
   const revokeAdmin = async (email: string) => {
     if (!confirm(`Revoke admin from ${email}?`)) return;
+    setActioningEmail(email);
     const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
       body: { action: "revoke", email },
     });
+    setActioningEmail(null);
     if (error || data?.error) { toast.error(error?.message || data?.error); return; }
     toast.success("Admin revoked");
     loadUsers();
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    setActioningEmail(email);
+    const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
+      body: { action: "send_password_reset", email, redirectTo: `${window.location.origin}/reset-password` },
+    });
+    setActioningEmail(null);
+    if (error || data?.error) { toast.error(error?.message || data?.error); return; }
+    toast.success(data?.message || `Password reset email sent to ${email}`);
+  };
+
+  const resendVerification = async (email: string) => {
+    setActioningEmail(email);
+    const { data, error } = await supabase.functions.invoke("admin-manage-roles", {
+      body: { action: "resend_verification", email, redirectTo: window.location.origin },
+    });
+    setActioningEmail(null);
+    if (error || data?.error) { toast.error(error?.message || data?.error); return; }
+    toast.success(data?.message || `Verification email sent to ${email}`);
   };
 
   useEffect(() => { if (isAdmin) { loadAdminData(); loadUsers(); } }, [isAdmin]);
@@ -373,8 +403,15 @@ const AdminPage: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Admin Users</CardTitle>
-            <CardDescription>Grant or revoke admin access by email. The person must have signed in at least once before they can be granted.</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" /> Admin Users
+              <span className="ml-auto text-xs font-normal text-muted-foreground">
+                {adminCount} / {maxAdmins} admins
+              </span>
+            </CardTitle>
+            <CardDescription>
+              Grant admin by email — if the user doesn't exist, an invitation email is sent automatically with a link to verify their email and set a password. Up to {maxAdmins} admins.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="grid sm:grid-cols-[1fr,auto] gap-2 items-end">
@@ -385,12 +422,18 @@ const AdminPage: React.FC = () => {
                   placeholder="person@company.com"
                   value={grantEmail}
                   onChange={(e) => setGrantEmail(e.target.value)}
+                  disabled={adminCount >= maxAdmins}
                 />
               </div>
-              <Button onClick={grantAdmin} disabled={granting}>
-                {granting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserPlus className="h-4 w-4 mr-1" /> Grant admin</>}
+              <Button onClick={grantAdmin} disabled={granting || adminCount >= maxAdmins}>
+                {granting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserPlus className="h-4 w-4 mr-1" /> Grant & invite</>}
               </Button>
             </div>
+            {adminCount >= maxAdmins && (
+              <p className="text-xs text-destructive">
+                Admin limit reached. Revoke an existing admin to add a new one.
+              </p>
+            )}
 
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
@@ -430,25 +473,45 @@ const AdminPage: React.FC = () => {
                         {userSearchQuery ? "No users match your search." : "No users loaded."}
                       </p>
                     ) : (
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                      <div className="space-y-2 max-h-[28rem] overflow-y-auto">
                         {pageUsers.map(u => {
                           const isAdminUser = u.roles.includes("admin");
+                          const verified = !!u.email_confirmed_at;
+                          const isMe = u.id === user?.id;
+                          const busy = actioningEmail === u.email;
                           return (
-                            <div key={u.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card">
+                            <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg border border-border bg-card">
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium truncate">{u.email}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {isAdminUser ? <span className="text-primary font-medium">Admin</span> : "User"}
-                                </p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="text-sm font-medium truncate">{u.email}</p>
+                                  {isAdminUser && <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">Admin</span>}
+                                  {verified ? (
+                                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+                                      <CheckCircle2 className="h-3 w-3" /> Verified
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
+                                      <Clock className="h-3 w-3" /> Pending verification
+                                    </span>
+                                  )}
+                                  {isMe && <span className="text-[10px] text-muted-foreground">(you)</span>}
+                                </div>
                               </div>
-                              {isAdminUser && u.id !== user?.id && (
-                                <Button variant="ghost" size="sm" onClick={() => revokeAdmin(u.email)}>
-                                  <UserMinus className="h-4 w-4 mr-1" /> Revoke
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {!verified && (
+                                  <Button variant="ghost" size="sm" onClick={() => resendVerification(u.email)} disabled={busy}>
+                                    {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Mail className="h-3 w-3 mr-1" /> Resend verify</>}
+                                  </Button>
+                                )}
+                                <Button variant="ghost" size="sm" onClick={() => sendPasswordReset(u.email)} disabled={busy}>
+                                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <><KeyRound className="h-3 w-3 mr-1" /> Reset password</>}
                                 </Button>
-                              )}
-                              {isAdminUser && u.id === user?.id && (
-                                <span className="text-xs text-muted-foreground">(you)</span>
-                              )}
+                                {isAdminUser && !isMe && (
+                                  <Button variant="ghost" size="sm" onClick={() => revokeAdmin(u.email)} disabled={busy}>
+                                    <UserMinus className="h-3 w-3 mr-1" /> Revoke
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           );
                         })}
