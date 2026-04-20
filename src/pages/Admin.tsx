@@ -39,6 +39,9 @@ const AdminPage: React.FC = () => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [grantEmail, setGrantEmail] = useState("");
   const [granting, setGranting] = useState(false);
+  const [adminCount, setAdminCount] = useState(0);
+  const [maxAdmins, setMaxAdmins] = useState(20);
+  const [actioningEmail, setActioningEmail] = useState<string | null>(null);
 
   // Search and pagination for user list
   const [userSearchQuery, setUserSearchQuery] = useState("");
