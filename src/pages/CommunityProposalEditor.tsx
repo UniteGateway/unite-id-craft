@@ -10,9 +10,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Image as ImageIcon, Loader2, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Image as ImageIcon, Images, Loader2, Save, Sparkles, Upload } from "lucide-react";
 import {
-  computeCommunity, recommendModel, type CommunityInputs, type CommunityComputed,
+  computeCommunity, recommendModel, STATE_CMD_CAP, type CommunityInputs, type CommunityComputed,
   type CommunityTheme, inr,
 } from "@/lib/community-calc";
 import CommunitySlideDeck, { type SlideContent } from "@/components/community/CommunitySlideDeck";
@@ -20,7 +20,7 @@ import SlideEditor from "@/components/community/SlideEditor";
 import { exportCommunityDeckPdf } from "@/lib/community-export";
 
 const empty: CommunityInputs = {
-  community_name: "", location: "", blocks: 4,
+  community_name: "", location: "", state: "Telangana", blocks: 4,
   rooftop_area_sft: 80000, monthly_units: 271236, monthly_bill: 3036352,
   sanction_load_kw: 0, roof_type: "Flat",
   preferred_model: "Hybrid", target_savings_pct: 75,
@@ -29,6 +29,13 @@ const empty: CommunityInputs = {
   fixed_monthly_charges: 0,
   tax_pct: 5,
   ppa_tariff: 7.25,
+  boot_tariff: undefined,
+  boot_period_years: 6,
+  ppa_discount_pct: 25,
+  ppa_term_years: 20,
+  self_investor_count: 10,
+  self_ticket_size: undefined,
+  self_target_irr: 18,
 };
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -51,6 +58,8 @@ const CommunityProposalEditor: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatingCover, setGeneratingCover] = useState(false);
+  const [generatingBgs, setGeneratingBgs] = useState(false);
+  const [extractingBill, setExtractingBill] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [regenIdx, setRegenIdx] = useState<number | null>(null);
 
@@ -74,6 +83,7 @@ const CommunityProposalEditor: React.FC = () => {
       setInputs({
         community_name: data.community_name || "",
         location: data.location || "",
+        state: (data.computed as any)?.stateInput || "Telangana",
         blocks: data.blocks || 0,
         rooftop_area_sft: Number(data.rooftop_area_sft) || 0,
         monthly_units: Number(data.monthly_units) || 0,
@@ -88,6 +98,13 @@ const CommunityProposalEditor: React.FC = () => {
         fixed_monthly_charges: (data.computed as any)?.fixedMonthlyCharges ?? 0,
         tax_pct: (data.computed as any)?.taxPctInput ?? 5,
         ppa_tariff: (data.computed as any)?.solarTariff || 7.25,
+        boot_tariff: (data.computed as any)?.bootTariff || undefined,
+        boot_period_years: (data.computed as any)?.bootPeriodYears || 6,
+        ppa_discount_pct: (data.computed as any)?.ppaDiscountPct || 25,
+        ppa_term_years: (data.computed as any)?.ppaTermYears || 20,
+        self_investor_count: (data.computed as any)?.selfInvestorCount || 10,
+        self_ticket_size: (data.computed as any)?.selfTicketSize || undefined,
+        self_target_irr: (data.computed as any)?.selfTargetIrr || 18,
       });
       setSlides(Array.isArray(data.slides) ? (data.slides as any) : []);
       setCoverImageUrl(data.cover_image_url || null);
@@ -148,6 +165,73 @@ const CommunityProposalEditor: React.FC = () => {
     }
   };
 
+  const generateAllBackgrounds = async () => {
+    if (slides.length === 0) { toast.error("Generate the deck first"); return; }
+    setGeneratingBgs(true);
+    let done = 0;
+    try {
+      const updated: SlideContent[] = [...slides];
+      for (let i = 0; i < updated.length; i++) {
+        if (updated[i].backgroundUrl) { done++; continue; }
+        try {
+          const { data, error } = await supabase.functions.invoke("generate-slide-background", {
+            body: { theme: inputs.theme, slideTitle: updated[i].title },
+          });
+          if (error) throw error;
+          if ((data as any)?.error) throw new Error((data as any).error);
+          updated[i] = { ...updated[i], backgroundUrl: (data as any).image };
+          setSlides([...updated]);
+          done++;
+          // Tiny delay to be polite to the gateway
+          await new Promise((r) => setTimeout(r, 400));
+        } catch (e: any) {
+          toast.error(`Slide ${i + 1}: ${e.message}`);
+          break;
+        }
+      }
+      toast.success(`Generated ${done}/${updated.length} backgrounds`);
+    } finally {
+      setGeneratingBgs(false);
+    }
+  };
+
+  const onUploadBill = async (file: File) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("File too large (max 10 MB)"); return; }
+    setExtractingBill(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve((r.result as string).split(",")[1] || "");
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("extract-power-bill", {
+        body: { fileBase64: base64, mimeType: file.type || "application/pdf" },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const b = data as any;
+      setInputs((prev) => ({
+        ...prev,
+        community_name: prev.community_name || b.consumer_name || "",
+        location: prev.location || b.location || "",
+        state: b.state && STATE_CMD_CAP[b.state] !== undefined ? b.state : prev.state,
+        monthly_units: b.monthly_units || prev.monthly_units,
+        monthly_bill: b.monthly_bill || prev.monthly_bill,
+        energy_charge_per_unit: b.energy_charge_per_unit || prev.energy_charge_per_unit,
+        fixed_monthly_charges: b.fixed_monthly_charges ?? prev.fixed_monthly_charges,
+        tax_pct: b.tax_pct ?? prev.tax_pct,
+        sanction_load_kw: b.sanction_load_kw || prev.sanction_load_kw,
+      }));
+      toast.success(`Bill extracted (${b.confidence || "ok"})`);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to extract bill");
+    } finally {
+      setExtractingBill(false);
+    }
+  };
+
   const regenerateSlide = async (index: number, instruction?: string) => {
     setRegenIdx(index);
     try {
@@ -193,6 +277,7 @@ const CommunityProposalEditor: React.FC = () => {
       theme: inputs.theme || "Dark Premium",
       computed: {
         ...computed,
+        stateInput: inputs.state ?? null,
         energyChargeInput: inputs.energy_charge_per_unit ?? null,
         taxPctInput: inputs.tax_pct ?? null,
       },
