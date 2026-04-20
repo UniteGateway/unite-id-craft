@@ -191,7 +191,11 @@ const CommunityProposalEditor: React.FC = () => {
       target_savings_pct: inputs.target_savings_pct ?? null,
       investor_required: !!inputs.investor_required,
       theme: inputs.theme || "Dark Premium",
-      computed,
+      computed: {
+        ...computed,
+        energyChargeInput: inputs.energy_charge_per_unit ?? null,
+        taxPctInput: inputs.tax_pct ?? null,
+      },
       slides,
       cover_image_url: coverImageUrl,
     };
