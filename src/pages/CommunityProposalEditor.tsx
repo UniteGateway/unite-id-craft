@@ -497,13 +497,21 @@ const CommunityProposalEditor: React.FC = () => {
               <div className="rounded-md border p-3 space-y-1.5 bg-muted/30 mt-3">
                 <div className="text-xs font-semibold text-muted-foreground">Live Computed</div>
                 <div className="text-xs flex justify-between"><span>Recommended capacity</span><span className="font-bold">{computed.recommendedCapacityKw} kW</span></div>
+                {computed.cmdCapKw > 0 && (
+                  <div className="text-xs flex justify-between"><span>CMD cap ({computed.cmdCapPct}%)</span><span>{computed.cmdCapKw} kW</span></div>
+                )}
                 <div className="text-xs flex justify-between"><span>Solar offset</span><span className="font-bold">{computed.solarOffsetPct}%</span></div>
                 <div className="text-xs flex justify-between"><span>Avg bill tariff</span><span>{computed.avgTariff} ₹/u</span></div>
                 <div className="text-xs flex justify-between"><span>Effective energy ₹/u</span><span className="font-medium">{computed.effectiveEnergyCharge} ₹/u</span></div>
                 <div className="text-xs flex justify-between"><span>PPA tariff</span><span>{computed.solarTariff} ₹/u</span></div>
                 <div className="text-xs flex justify-between"><span>Project cost</span><span className="font-bold">{inr(computed.projectCost)}</span></div>
-                <div className="text-xs flex justify-between"><span>Monthly savings</span><span className="font-bold">{inr(computed.monthlySavings)}</span></div>
-                <div className="text-xs flex justify-between"><span>Payback</span><span className="font-bold">{computed.paybackYears} yrs</span></div>
+                <div className="border-t pt-1.5 mt-1.5 space-y-1">
+                  <div className="text-[10px] font-semibold uppercase text-muted-foreground">Monthly savings by model</div>
+                  <div className="text-xs flex justify-between"><span>BOOT ({computed.bootPeriodYears}y @ ₹{computed.bootTariff})</span><span className="font-bold">{inr(computed.bootMonthlySavings)}</span></div>
+                  <div className="text-xs flex justify-between"><span>PPA (-{computed.ppaDiscountPct}%, {computed.ppaTermYears}y)</span><span className="font-bold">{inr(computed.ppaMonthlySavings)}</span></div>
+                  <div className="text-xs flex justify-between"><span>Self-Invest (full saving)</span><span className="font-bold">{inr(computed.selfMonthlySavings)}</span></div>
+                </div>
+                <div className="text-xs flex justify-between"><span>Payback (CAPEX)</span><span className="font-bold">{computed.paybackYears} yrs</span></div>
                 <div className="text-xs flex justify-between"><span>Recommended model</span><span className="font-bold text-primary">{recommendation}</span></div>
               </div>
             </CardContent>
