@@ -225,6 +225,7 @@ const VisitingCards: React.FC = () => {
                     imageUrl={imageUrl} zones={zones} values={values}
                     selectedZone={selectedZone} onZoneClick={setSelectedZone}
                     onValueChange={(role, next) => setValues((v) => ({ ...v, [role]: next }))}
+                    onZoneChange={(idx, nz) => setZones((prev) => prev.map((p, i) => i === idx ? nz : p))}
                   />
                 ) : (
                   <div className="aspect-[3.5/2] rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground bg-muted/30">
@@ -237,7 +238,7 @@ const VisitingCards: React.FC = () => {
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Tip: click a field on the card to select it, then change its font / size / color on the right. Double-click to edit text inline.
+                  Tip: drag a field to reposition it, drag the corner handle to resize. Double-click to edit text inline.
                 </p>
               </section>
 
