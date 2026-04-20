@@ -7,12 +7,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-type Format = "instagram_post" | "instagram_story";
+type Format =
+  | "instagram_post"
+  | "instagram_story"
+  | "facebook_post"
+  | "linkedin_post"
+  | "x_post"
+  | "youtube_thumb";
 type Model = "unite_gpt" | "unite_flash";
 
 const FORMAT_SPECS: Record<Format, { size: string; w: number; h: number; label: string }> = {
-  instagram_post: { size: "1024x1024", w: 1080, h: 1080, label: "Instagram Post (1:1)" },
+  instagram_post:  { size: "1024x1024", w: 1080, h: 1080, label: "Instagram Post (1:1)" },
   instagram_story: { size: "1024x1792", w: 1080, h: 1920, label: "Instagram Story (9:16)" },
+  facebook_post:   { size: "1792x1024", w: 1200, h: 630,  label: "Facebook Post (1.91:1)" },
+  linkedin_post:   { size: "1792x1024", w: 1200, h: 627,  label: "LinkedIn Post (1.91:1)" },
+  x_post:          { size: "1792x1024", w: 1600, h: 900,  label: "X / Twitter Post (16:9)" },
+  youtube_thumb:   { size: "1792x1024", w: 1280, h: 720,  label: "YouTube Thumbnail (16:9)" },
 };
 
 serve(async (req) => {

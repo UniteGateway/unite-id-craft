@@ -127,8 +127,8 @@ const SocialMedia: React.FC = () => {
           image={BANNERS.social}
           eyebrow="Social Media Studio"
           icon={<Sparkles className="h-3.5 w-3.5" />}
-          title="Design for Instagram, in seconds"
-          subtitle="Generate Instagram-ready posts and stories with Unite GPT or Unite Flash."
+          title="Design for every social network"
+          subtitle="Generate ready-to-post graphics for Instagram, Facebook, LinkedIn, X and YouTube — sized perfectly out of the box."
           height="md"
         />
 
@@ -229,7 +229,7 @@ const SocialMedia: React.FC = () => {
                   <CardTitle className="text-base flex items-center gap-2"><FormatIcon className="h-4 w-4" /> Preview — {FORMAT_INFO[format].label}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`mx-auto ${format === "instagram_story" ? "max-w-xs" : "max-w-md"}`}>
+                  <div className={`mx-auto ${format === "instagram_story" ? "max-w-xs" : format === "instagram_post" ? "max-w-md" : "max-w-2xl"}`}>
                     <div className={`${FORMAT_INFO[format].aspect} rounded-xl border-2 border-dashed border-border bg-muted/30 overflow-hidden flex items-center justify-center`}>
                       {generated ? (
                         <img src={generated} alt="Generated design" className="w-full h-full object-cover" />
@@ -266,7 +266,7 @@ const SocialMedia: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {savedDesigns.map(d => (
                   <Card key={d.id} className="overflow-hidden group">
-                    <div className={`${d.format === "instagram_story" ? "aspect-[9/16]" : "aspect-square"} bg-muted/30 relative`}>
+                    <div className={`${FORMAT_INFO[d.format as Format]?.aspect ?? "aspect-square"} bg-muted/30 relative`}>
                       <img src={d.image_url} alt={d.title} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button size="sm" variant="secondary" onClick={() => downloadImage(d.image_url, d.title)}>
