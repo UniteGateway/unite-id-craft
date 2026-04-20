@@ -74,6 +74,33 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_palettes: {
+        Row: {
+          colors: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          colors?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          colors?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       design_templates: {
         Row: {
           created_at: string

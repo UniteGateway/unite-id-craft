@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Key, ImagePlus, Trash2, ShieldCheck, Loader2 } from "lucide-react";
+import { Key, ImagePlus, Trash2, ShieldCheck, Loader2, Palette, Plus } from "lucide-react";
 
 interface BrandAsset { id: string; name: string; asset_type: string; image_url: string; storage_path: string | null; }
 interface ApiKeyRow { provider: string; label: string | null; updated_at: string; }
+interface BrandPalette { id: string; name: string; colors: string[]; }
 
 const AdminPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -27,6 +28,11 @@ const AdminPage: React.FC = () => {
   const [assets, setAssets] = useState<BrandAsset[]>([]);
   const [uploadType, setUploadType] = useState<"logo" | "image">("logo");
   const [uploading, setUploading] = useState(false);
+
+  const [palettes, setPalettes] = useState<BrandPalette[]>([]);
+  const [newPaletteName, setNewPaletteName] = useState("");
+  const [newPaletteColors, setNewPaletteColors] = useState("#f08c00, #3a3a3a, #1a3c6e");
+  const [savingPalette, setSavingPalette] = useState(false);
 
   // Self-claim admin if no admin exists yet (bootstrap)
   const [bootstrapping, setBootstrapping] = useState(false);
@@ -52,12 +58,14 @@ const AdminPage: React.FC = () => {
   };
 
   const loadAdminData = async () => {
-    const [{ data: keys }, { data: brand }] = await Promise.all([
+    const [{ data: keys }, { data: brand }, { data: pals }] = await Promise.all([
       supabase.from("api_keys").select("provider,label,updated_at"),
       supabase.from("brand_assets").select("*").order("created_at", { ascending: false }),
+      supabase.from("brand_palettes").select("id,name,colors").order("created_at", { ascending: true }),
     ]);
     setSavedKeys(keys ?? []);
     setAssets(brand ?? []);
+    setPalettes((pals ?? []).map((p: any) => ({ ...p, colors: Array.isArray(p.colors) ? p.colors : [] })));
   };
 
   useEffect(() => { if (isAdmin) loadAdminData(); }, [isAdmin]);
@@ -109,6 +117,35 @@ const AdminPage: React.FC = () => {
     if (a.storage_path) await supabase.storage.from("brand-assets").remove([a.storage_path]);
     await supabase.from("brand_assets").delete().eq("id", a.id);
     toast.success("Removed");
+    loadAdminData();
+  };
+
+  const parseHexes = (raw: string): string[] =>
+    raw.split(/[, \n]+/).map(s => s.trim()).filter(s => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s));
+
+  const savePalette = async () => {
+    const colors = parseHexes(newPaletteColors);
+    if (!newPaletteName.trim() || colors.length === 0) {
+      toast.error("Add a name and at least one valid #hex color");
+      return;
+    }
+    setSavingPalette(true);
+    const { error } = await supabase.from("brand_palettes").insert({
+      name: newPaletteName.trim(), colors, created_by: user!.id,
+    });
+    setSavingPalette(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Palette added");
+    setNewPaletteName("");
+    setNewPaletteColors("#f08c00, #3a3a3a, #1a3c6e");
+    loadAdminData();
+  };
+
+  const deletePalette = async (p: BrandPalette) => {
+    if (!confirm(`Delete palette "${p.name}"?`)) return;
+    const { error } = await supabase.from("brand_palettes").delete().eq("id", p.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Palette removed");
     loadAdminData();
   };
 
@@ -238,6 +275,52 @@ const AdminPage: React.FC = () => {
                       </button>
                     </div>
                     <span className="absolute top-1 left-1 text-[9px] uppercase tracking-wider bg-background/90 px-1.5 py-0.5 rounded">{a.asset_type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5" /> Brand Palettes</CardTitle>
+            <CardDescription>Define named color palettes. Designers can apply them with one click inside any editor (text colors, accents, backgrounds).</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid sm:grid-cols-[1fr,2fr,auto] gap-2 items-end">
+              <div className="space-y-1">
+                <Label className="text-xs">Palette name</Label>
+                <Input placeholder="e.g. Client A" value={newPaletteName} onChange={(e) => setNewPaletteName(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Hex colors (comma or space separated)</Label>
+                <Input placeholder="#f08c00, #3a3a3a, #1a3c6e" value={newPaletteColors} onChange={(e) => setNewPaletteColors(e.target.value)} />
+              </div>
+              <Button onClick={savePalette} disabled={savingPalette}>
+                {savingPalette ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Plus className="h-4 w-4 mr-1" /> Add</>}
+              </Button>
+            </div>
+
+            {palettes.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No palettes yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {palettes.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{p.name}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {p.colors.map((c, i) => (
+                          <div key={i} title={c}
+                            className="h-7 w-7 rounded-md border border-border shadow-sm"
+                            style={{ backgroundColor: c }} />
+                        ))}
+                      </div>
+                    </div>
+                    <button onClick={() => deletePalette(p)} className="text-destructive hover:bg-destructive/10 p-2 rounded">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 ))}
               </div>

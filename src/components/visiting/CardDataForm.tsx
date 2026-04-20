@@ -9,6 +9,7 @@ import type { CardZone } from "@/lib/visiting-card-print";
 import { GOOGLE_FONTS, injectGoogleFont } from "@/lib/google-fonts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PalettePicker from "@/components/PalettePicker";
 
 interface Props {
   imageUrl: string;
@@ -166,6 +167,10 @@ const CardDataForm: React.FC<Props> = ({
                 value={zones[selectedZone].color_hex || "#111111"}
                 onChange={(e) => onZoneChange(selectedZone, { ...zones[selectedZone], color_hex: e.target.value })}
                 className="h-8 w-12 rounded border border-input"
+              />
+              <PalettePicker
+                compact
+                onPick={(c) => onZoneChange(selectedZone, { ...zones[selectedZone], color_hex: c })}
               />
             </div>
           </div>

@@ -8,19 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Sparkles, Image as ImageIcon, Square, Smartphone, Wand2, Loader2, Download, Save, Upload, Trash2 } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Wand2, Loader2, Download, Save, Upload, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SOCIAL_FORMATS, FORMAT_BY_ID, type SocialFormat } from "@/lib/social-formats";
 
-type Format = "instagram_post" | "instagram_story";
+type Format = SocialFormat;
 type Model = "unite_gpt" | "unite_flash";
 
 interface BrandAsset { id: string; name: string; asset_type: string; image_url: string; }
 interface SavedDesign { id: string; title: string; format: string; image_url: string; created_at: string; }
 
-const FORMAT_INFO: Record<Format, { label: string; w: number; h: number; aspect: string; icon: any }> = {
-  instagram_post: { label: "Instagram Post", w: 1080, h: 1080, aspect: "aspect-square", icon: Square },
-  instagram_story: { label: "Instagram Story", w: 1080, h: 1920, aspect: "aspect-[9/16]", icon: Smartphone },
-};
+const FORMAT_INFO = FORMAT_BY_ID;
 
 const SocialMedia: React.FC = () => {
   const { user, loading } = useAuth();
@@ -129,8 +127,8 @@ const SocialMedia: React.FC = () => {
           image={BANNERS.social}
           eyebrow="Social Media Studio"
           icon={<Sparkles className="h-3.5 w-3.5" />}
-          title="Design for Instagram, in seconds"
-          subtitle="Generate Instagram-ready posts and stories with Unite GPT or Unite Flash."
+          title="Design for every social network"
+          subtitle="Generate ready-to-post graphics for Instagram, Facebook, LinkedIn, X and YouTube — sized perfectly out of the box."
           height="md"
         />
 
@@ -145,17 +143,23 @@ const SocialMedia: React.FC = () => {
               {/* Controls */}
               <div className="space-y-4">
                 <Card>
-                  <CardHeader><CardTitle className="text-base">1. Format</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-base">1. Pick a format</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(Object.keys(FORMAT_INFO) as Format[]).map(f => {
-                        const Icon = FORMAT_INFO[f].icon;
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {SOCIAL_FORMATS.map((f) => {
+                        const Icon = f.icon;
+                        const PIcon = f.platformIcon;
+                        const active = format === f.id;
                         return (
-                          <button key={f} onClick={() => setFormat(f)}
-                            className={`p-3 rounded-lg border-2 transition-all text-left ${format === f ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
-                            <Icon className="h-5 w-5 text-primary mb-1" />
-                            <div className="font-semibold text-sm">{FORMAT_INFO[f].label}</div>
-                            <div className="text-xs text-muted-foreground">{FORMAT_INFO[f].w}×{FORMAT_INFO[f].h}</div>
+                          <button key={f.id} onClick={() => setFormat(f.id)}
+                            className={`p-3 rounded-lg border-2 transition-all text-left relative overflow-hidden group ${active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
+                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 bg-gradient-to-br ${f.hue}`} />
+                            <div className="relative flex items-center gap-2 mb-1">
+                              <PIcon className="h-4 w-4 text-primary" />
+                              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
+                            <div className="relative font-semibold text-xs leading-tight">{f.label}</div>
+                            <div className="relative text-[10px] text-muted-foreground">{f.w}×{f.h}</div>
                           </button>
                         );
                       })}
@@ -225,7 +229,7 @@ const SocialMedia: React.FC = () => {
                   <CardTitle className="text-base flex items-center gap-2"><FormatIcon className="h-4 w-4" /> Preview — {FORMAT_INFO[format].label}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`mx-auto ${format === "instagram_story" ? "max-w-xs" : "max-w-md"}`}>
+                  <div className={`mx-auto ${format === "instagram_story" ? "max-w-xs" : format === "instagram_post" ? "max-w-md" : "max-w-2xl"}`}>
                     <div className={`${FORMAT_INFO[format].aspect} rounded-xl border-2 border-dashed border-border bg-muted/30 overflow-hidden flex items-center justify-center`}>
                       {generated ? (
                         <img src={generated} alt="Generated design" className="w-full h-full object-cover" />
@@ -262,7 +266,7 @@ const SocialMedia: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {savedDesigns.map(d => (
                   <Card key={d.id} className="overflow-hidden group">
-                    <div className={`${d.format === "instagram_story" ? "aspect-[9/16]" : "aspect-square"} bg-muted/30 relative`}>
+                    <div className={`${FORMAT_INFO[d.format as Format]?.aspect ?? "aspect-square"} bg-muted/30 relative`}>
                       <img src={d.image_url} alt={d.title} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button size="sm" variant="secondary" onClick={() => downloadImage(d.image_url, d.title)}>
