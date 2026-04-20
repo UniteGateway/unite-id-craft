@@ -399,13 +399,16 @@ const AdminPage: React.FC = () => {
                   <span className="text-xs text-muted-foreground">({managedUsers.length})</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input
-                    type="text"
-                    placeholder="Search by email..."
-                    value={userSearchQuery}
-                    onChange={(e) => { setUserSearchQuery(e.target.value); setUserPage(1); }}
-                    className="h-8 w-40 sm:w-48 text-sm"
-                  />
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search by email..."
+                      value={userSearchQuery}
+                      onChange={(e) => { setUserSearchQuery(e.target.value); setUserPage(1); }}
+                      className="h-8 w-40 sm:w-48 text-sm pl-8"
+                    />
+                  </div>
                   <Button variant="ghost" size="sm" onClick={loadUsers} disabled={usersLoading}>
                     {usersLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
                   </Button>
