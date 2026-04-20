@@ -143,17 +143,23 @@ const SocialMedia: React.FC = () => {
               {/* Controls */}
               <div className="space-y-4">
                 <Card>
-                  <CardHeader><CardTitle className="text-base">1. Format</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-base">1. Pick a format</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(Object.keys(FORMAT_INFO) as Format[]).map(f => {
-                        const Icon = FORMAT_INFO[f].icon;
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {SOCIAL_FORMATS.map((f) => {
+                        const Icon = f.icon;
+                        const PIcon = f.platformIcon;
+                        const active = format === f.id;
                         return (
-                          <button key={f} onClick={() => setFormat(f)}
-                            className={`p-3 rounded-lg border-2 transition-all text-left ${format === f ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
-                            <Icon className="h-5 w-5 text-primary mb-1" />
-                            <div className="font-semibold text-sm">{FORMAT_INFO[f].label}</div>
-                            <div className="text-xs text-muted-foreground">{FORMAT_INFO[f].w}×{FORMAT_INFO[f].h}</div>
+                          <button key={f.id} onClick={() => setFormat(f.id)}
+                            className={`p-3 rounded-lg border-2 transition-all text-left relative overflow-hidden group ${active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
+                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 bg-gradient-to-br ${f.hue}`} />
+                            <div className="relative flex items-center gap-2 mb-1">
+                              <PIcon className="h-4 w-4 text-primary" />
+                              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
+                            <div className="relative font-semibold text-xs leading-tight">{f.label}</div>
+                            <div className="relative text-[10px] text-muted-foreground">{f.w}×{f.h}</div>
                           </button>
                         );
                       })}
