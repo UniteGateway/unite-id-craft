@@ -167,6 +167,10 @@ const CardDataForm: React.FC<Props> = ({
                 onChange={(e) => onZoneChange(selectedZone, { ...zones[selectedZone], color_hex: e.target.value })}
                 className="h-8 w-12 rounded border border-input"
               />
+              <PalettePicker
+                compact
+                onPick={(c) => onZoneChange(selectedZone, { ...zones[selectedZone], color_hex: c })}
+              />
             </div>
           </div>
         )}
