@@ -17,6 +17,7 @@ import Admin from "./pages/Admin.tsx";
 import Proposals from "./pages/Proposals.tsx";
 import Designs from "./pages/Designs.tsx";
 import ProposalEditor from "./pages/ProposalEditor.tsx";
+import CommunityProposalEditor from "./pages/CommunityProposalEditor.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
 const queryClient = new QueryClient();
@@ -86,6 +87,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ProposalEditor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proposals/community/:id"
+              element={
+                <ProtectedRoute>
+                  <CommunityProposalEditor />
                 </ProtectedRoute>
               }
             />

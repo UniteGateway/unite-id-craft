@@ -6,8 +6,9 @@ import AppNav from "@/components/AppNav";
 import PageBanner, { BANNERS } from "@/components/PageBanner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, FileSignature, Trash2, Loader2, Pencil, Copy } from "lucide-react";
+import { Plus, FileSignature, Trash2, Loader2, Pencil, Copy, Building2 } from "lucide-react";
 import { inr } from "@/lib/proposal-calc";
 
 interface Row {
@@ -20,22 +21,41 @@ interface Row {
   updated_at: string;
 }
 
+interface CommunityRow {
+  id: string;
+  title: string;
+  community_name: string | null;
+  location: string | null;
+  theme: string | null;
+  computed: any;
+  updated_at: string;
+}
+
 const ProposalsList: React.FC = () => {
   const nav = useNavigate();
   const { user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
+  const [communityRows, setCommunityRows] = useState<CommunityRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("proposals")
-      .select("id,title,client_name,client_location,capacity_kw,computed,updated_at")
-      .order("updated_at", { ascending: false });
+    const [{ data, error }, { data: cData, error: cErr }] = await Promise.all([
+      supabase
+        .from("proposals")
+        .select("id,title,client_name,client_location,capacity_kw,computed,updated_at")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("community_proposals")
+        .select("id,title,community_name,location,theme,computed,updated_at")
+        .order("updated_at", { ascending: false }),
+    ]);
     setLoading(false);
     if (error) { toast.error(error.message); return; }
+    if (cErr) { toast.error(cErr.message); return; }
     setRows((data as any) || []);
+    setCommunityRows((cData as any) || []);
   };
 
   useEffect(() => { load(); }, [user]);
@@ -43,6 +63,14 @@ const ProposalsList: React.FC = () => {
   const remove = async (id: string) => {
     if (!confirm("Delete this proposal?")) return;
     const { error } = await supabase.from("proposals").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted");
+    load();
+  };
+
+  const removeCommunity = async (id: string) => {
+    if (!confirm("Delete this community proposal?")) return;
+    const { error } = await supabase.from("community_proposals").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Deleted");
     load();
@@ -77,21 +105,31 @@ const ProposalsList: React.FC = () => {
               <FileSignature className="h-3.5 w-3.5" /> Solar Proposals
             </div>
             <h1 className="text-3xl font-extrabold">Project Proposals</h1>
-            <p className="text-sm text-muted-foreground">Generate professional 12-page solar proposals for your clients.</p>
+            <p className="text-sm text-muted-foreground">Industrial proposals and AI-generated decks for gated communities.</p>
           </div>
-          <Button onClick={() => nav("/proposals/new")}><Plus className="h-4 w-4" /> New proposal</Button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
-        ) : rows.length === 0 ? (
-          <Card><CardContent className="py-12 text-center">
-            <FileSignature className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground mb-4">No proposals yet.</p>
-            <Button onClick={() => nav("/proposals/new")}><Plus className="h-4 w-4" /> Create your first proposal</Button>
-          </CardContent></Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Tabs defaultValue="industrial" className="w-full">
+          <TabsList className="grid grid-cols-2 w-full max-w-md mb-6">
+            <TabsTrigger value="industrial"><FileSignature className="h-3.5 w-3.5 mr-1.5" /> Industrial</TabsTrigger>
+            <TabsTrigger value="community"><Building2 className="h-3.5 w-3.5 mr-1.5" /> Communities</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="industrial">
+            <div className="flex justify-end mb-4">
+              <Button onClick={() => nav("/proposals/new")}><Plus className="h-4 w-4" /> New proposal</Button>
+            </div>
+            {rows.length === 0 ? (
+              <Card><CardContent className="py-12 text-center">
+                <FileSignature className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground mb-4">No proposals yet.</p>
+                <Button onClick={() => nav("/proposals/new")}><Plus className="h-4 w-4" /> Create your first proposal</Button>
+              </CardContent></Card>
+            ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rows.map((r) => (
               <Card key={r.id} className="group hover:shadow-lg transition-shadow">
                 <CardContent className="p-5">
@@ -127,7 +165,60 @@ const ProposalsList: React.FC = () => {
                 </CardContent>
               </Card>
             ))}
-          </div>
+            </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="community">
+            <div className="flex justify-end mb-4">
+              <Button onClick={() => nav("/proposals/community/new")}>
+                <Plus className="h-4 w-4" /> New community proposal
+              </Button>
+            </div>
+            {communityRows.length === 0 ? (
+              <Card><CardContent className="py-12 text-center">
+                <Building2 className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground mb-4">No community proposals yet.</p>
+                <Button onClick={() => nav("/proposals/community/new")}>
+                  <Plus className="h-4 w-4" /> Create AI-generated community deck
+                </Button>
+              </CardContent></Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {communityRows.map((r) => (
+                  <Card key={r.id} className="group hover:shadow-lg transition-shadow">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="min-w-0">
+                          <h3 className="font-bold truncate">{r.title || "Untitled"}</h3>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {r.community_name || "—"} · {r.location || "—"}
+                          </p>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => removeCommunity(r.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs mb-4">
+                        <div className="rounded-md bg-muted p-2">
+                          <div className="text-muted-foreground">Capacity</div>
+                          <div className="font-bold">{r.computed?.recommendedCapacityKw || 0} kW</div>
+                        </div>
+                        <div className="rounded-md bg-muted p-2">
+                          <div className="text-muted-foreground">Theme</div>
+                          <div className="font-bold truncate">{r.theme || "—"}</div>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => nav(`/proposals/community/${r.id}`)}>
+                        <Pencil className="h-3.5 w-3.5" /> Open
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
         )}
       </main>
     </div>
