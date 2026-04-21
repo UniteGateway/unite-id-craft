@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, Trash2, Home, RefreshCw } from "lucide-react";
-import { BoqLine, blankBoqLine, recomputeBoqAmounts, computeResidential, inr, RESIDENTIAL_KW_OPTIONS } from "@/lib/residential-presets";
+import { Loader2, Save, Plus, Trash2, Home, RefreshCw, Copy } from "lucide-react";
+import { BoqLine, blankBoqLine, recomputeBoqAmounts, computeResidential, inr, RESIDENTIAL_KW_OPTIONS, scaleBoq } from "@/lib/residential-presets";
+import DuplicateToSizesDialog from "@/components/proposals/DuplicateToSizesDialog";
 
 interface Preset {
   id: string;
@@ -21,6 +23,7 @@ interface Preset {
   boq: BoqLine[];
   terms_and_conditions: string;
   notes: string | null;
+  subsidy_amount?: number;
 }
 
 const ResidentialPresetsManager: React.FC = () => {
@@ -28,6 +31,8 @@ const ResidentialPresetsManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [dupOpen, setDupOpen] = useState(false);
+  const [dupBusy, setDupBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -95,6 +100,29 @@ const ResidentialPresetsManager: React.FC = () => {
   };
 
   const computed = active ? computeResidential(recomputeBoqAmounts(active.boq), active.capacity_kw) : null;
+
+  const duplicateBoqToSizes = async (sizes: number[]) => {
+    if (!active) return;
+    setDupBusy(true);
+    const updates = sizes.map(async (kw) => {
+      const target = presets.find((p) => p.capacity_kw === kw);
+      if (!target) return null;
+      const scaled = recomputeBoqAmounts(scaleBoq(active.boq, active.capacity_kw, kw));
+      return supabase.from("residential_presets").update({
+        boq: scaled as any,
+        cost_per_kw: active.cost_per_kw,
+        terms_and_conditions: active.terms_and_conditions,
+        structure_type: active.structure_type,
+      }).eq("id", target.id);
+    });
+    const results = await Promise.all(updates);
+    setDupBusy(false);
+    setDupOpen(false);
+    const errs = results.filter((r) => r && (r as any).error).length;
+    if (errs) toast.error(`${errs} preset(s) failed to update`);
+    else toast.success(`BOQ duplicated to ${sizes.length} size${sizes.length === 1 ? "" : "s"}`);
+    load();
+  };
 
   return (
     <Card>
