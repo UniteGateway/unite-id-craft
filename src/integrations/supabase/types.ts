@@ -388,6 +388,143 @@ export type Database = {
         }
         Relationships: []
       }
+      residential_presets: {
+        Row: {
+          boq: Json
+          capacity_kw: number
+          cost_per_kw: number
+          created_at: string
+          id: string
+          inverter_capacity: number
+          label: string
+          notes: string | null
+          panel_count: number
+          panel_wattage: number
+          structure_type: string
+          terms_and_conditions: string
+          updated_at: string
+        }
+        Insert: {
+          boq?: Json
+          capacity_kw: number
+          cost_per_kw?: number
+          created_at?: string
+          id?: string
+          inverter_capacity?: number
+          label: string
+          notes?: string | null
+          panel_count?: number
+          panel_wattage?: number
+          structure_type?: string
+          terms_and_conditions?: string
+          updated_at?: string
+        }
+        Update: {
+          boq?: Json
+          capacity_kw?: number
+          cost_per_kw?: number
+          created_at?: string
+          id?: string
+          inverter_capacity?: number
+          label?: string
+          notes?: string | null
+          panel_count?: number
+          panel_wattage?: number
+          structure_type?: string
+          terms_and_conditions?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      residential_proposals: {
+        Row: {
+          boq: Json
+          capacity_kw: number | null
+          client_contact: string | null
+          client_email: string | null
+          client_location: string | null
+          client_name: string | null
+          computed: Json
+          cost_per_kw: number | null
+          cover_image_url: string | null
+          cover_source: string | null
+          created_at: string
+          id: string
+          inverter_capacity: number | null
+          is_customised: boolean
+          panel_count: number | null
+          panel_wattage: number | null
+          preset_id: string | null
+          proposal_number: string | null
+          status: string
+          structure_type: string | null
+          terms_and_conditions: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          boq?: Json
+          capacity_kw?: number | null
+          client_contact?: string | null
+          client_email?: string | null
+          client_location?: string | null
+          client_name?: string | null
+          computed?: Json
+          cost_per_kw?: number | null
+          cover_image_url?: string | null
+          cover_source?: string | null
+          created_at?: string
+          id?: string
+          inverter_capacity?: number | null
+          is_customised?: boolean
+          panel_count?: number | null
+          panel_wattage?: number | null
+          preset_id?: string | null
+          proposal_number?: string | null
+          status?: string
+          structure_type?: string | null
+          terms_and_conditions?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          boq?: Json
+          capacity_kw?: number | null
+          client_contact?: string | null
+          client_email?: string | null
+          client_location?: string | null
+          client_name?: string | null
+          computed?: Json
+          cost_per_kw?: number | null
+          cover_image_url?: string | null
+          cover_source?: string | null
+          created_at?: string
+          id?: string
+          inverter_capacity?: number | null
+          is_customised?: boolean
+          panel_count?: number | null
+          panel_wattage?: number | null
+          preset_id?: string | null
+          proposal_number?: string | null
+          status?: string
+          structure_type?: string | null
+          terms_and_conditions?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "residential_proposals_preset_id_fkey"
+            columns: ["preset_id"]
+            isOneToOne: false
+            referencedRelation: "residential_presets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_designs: {
         Row: {
           created_at: string
