@@ -203,6 +203,32 @@ const ResidentialDocument: React.FC<Props> = (props) => {
 
         <div className="mt-16 text-center text-[10px] text-slate-400">Powered by Unite Developers Global Inc</div>
       </Page>
+    </>
+  );
+
+  // Build sections after T&C above is closed; we'll instead inject the financial pages BEFORE T&C using a helper
+  // (kept lower than easy refactor, see note below)
+};
+
+export default ResidentialDocument;
+          <div className="text-xs text-slate-500">Terms & Conditions</div>
+        </div>
+        <h2 className="text-2xl font-extrabold mb-4" style={{ color: "#1a3c6e" }}>Terms & Conditions</h2>
+        <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans leading-relaxed">{terms}</pre>
+
+        <div className="mt-12 grid grid-cols-2 gap-8 text-xs">
+          <div>
+            <div className="border-t border-slate-400 pt-2">For Unite Solar</div>
+            <div className="text-slate-500">Authorised Signatory</div>
+          </div>
+          <div>
+            <div className="border-t border-slate-400 pt-2">Client Acceptance</div>
+            <div className="text-slate-500">{client.name || "—"}</div>
+          </div>
+        </div>
+
+        <div className="mt-16 text-center text-[10px] text-slate-400">Powered by Unite Developers Global Inc</div>
+      </Page>
     </div>
   );
 };
