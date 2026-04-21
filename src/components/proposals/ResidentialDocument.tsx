@@ -1,5 +1,5 @@
 import React from "react";
-import { BoqLine, ResidentialComputed, inr } from "@/lib/residential-presets";
+import { BoqLine, ResidentialComputed, FinanceComputed, inr } from "@/lib/residential-presets";
 import logoUrl from "@/assets/unite-solar-logo.png";
 
 type Props = {
@@ -15,6 +15,14 @@ type Props = {
   terms: string;
   computed: ResidentialComputed;
   coverUrl?: string | null;
+  category?: string;
+  finance?: FinanceComputed;
+  paymentMode?: "cash" | "loan" | string;
+  loanInterestRate?: number;
+  loanTenureYears?: number;
+  subsidyInLoan?: boolean;
+  offerLabel?: string | null;
+  offerDescription?: string | null;
 };
 
 const Page: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -39,7 +47,8 @@ const Logo: React.FC<{ small?: boolean }> = ({ small }) => (
 );
 
 const ResidentialDocument: React.FC<Props> = (props) => {
-  const { title, proposalNumber, client, capacityKw, panelCount, panelWattage, inverterCapacity, structureType, boq, terms, computed, coverUrl } = props;
+  const { title, proposalNumber, client, capacityKw, panelCount, panelWattage, inverterCapacity, structureType, boq, terms, computed, coverUrl,
+    category, finance, paymentMode, loanInterestRate, loanTenureYears, subsidyInLoan, offerLabel, offerDescription } = props;
 
   return (
     <div id="proposal-doc" className="space-y-6">
