@@ -189,6 +189,31 @@ const ResidentialDocument: React.FC<Props> = (props) => {
           </div>
         </div>
 
+        {generation && (
+          <div className="mb-6 p-4 rounded border-2" style={{ borderColor: "#f08c00", background: "#fff8e6" }}>
+            <div className="text-xs uppercase font-bold mb-2" style={{ color: "#1a3c6e" }}>
+              Estimated Solar Generation {locationCity ? `— ${locationCity}${locationState ? `, ${locationState}` : ""}` : ""}
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              <div>
+                <div className="text-xs text-slate-600">Daily</div>
+                <div className="text-lg font-extrabold" style={{ color: "#1a3c6e" }}>{generation.daily.toFixed(1)} kWh</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-600">Monthly</div>
+                <div className="text-lg font-extrabold" style={{ color: "#1a3c6e" }}>{Math.round(generation.monthly).toLocaleString("en-IN")} kWh</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-600">Annual</div>
+                <div className="text-lg font-extrabold" style={{ color: "#10b981" }}>{Math.round(generation.annual).toLocaleString("en-IN")} kWh</div>
+              </div>
+            </div>
+            <div className="text-[10px] text-slate-600 mt-2">
+              Based on local irradiance ~{dailyGenerationKwhPerKw} kWh/kW/day. Actual generation may vary ±10% with weather, shading, and tilt.
+            </div>
+          </div>
+        )}
+
         <div className="text-xs text-slate-600 leading-relaxed">
           This proposal covers the design, supply, installation and commissioning of a {capacityKw} kW grid-connected residential rooftop solar system, with Tier-1 components, in compliance with MNRE & local DISCOM standards.
         </div>
@@ -372,8 +397,22 @@ const ResidentialDocument: React.FC<Props> = (props) => {
       {/* T&C */}
       <Page>
         <PageHeader label="Terms & Conditions" />
-        <h2 className="text-2xl font-extrabold mb-4" style={{ color: "#1a3c6e" }}>Terms & Conditions</h2>
+        <h2 className="text-2xl font-extrabold mb-4" style={{ color: "#1a3c6e" }}>Terms &amp; Conditions</h2>
         <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans leading-relaxed">{terms}</pre>
+
+        {warranties && (
+          <>
+            <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: "#1a3c6e" }}>Warranties</h3>
+            <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans leading-relaxed">{warranties}</pre>
+          </>
+        )}
+
+        {serviceAmc && (
+          <>
+            <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: "#1a3c6e" }}>Service &amp; AMC</h3>
+            <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans leading-relaxed">{serviceAmc}</pre>
+          </>
+        )}
 
         <div className="mt-12 grid grid-cols-2 gap-8 text-xs">
           <div>
