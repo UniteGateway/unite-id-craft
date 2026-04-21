@@ -198,6 +198,7 @@ const ProposalsList: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="community">
+            {/* placeholder anchor — residential tab inserted just above */}
             <div className="flex justify-end mb-4">
               <Button onClick={() => nav("/proposals/community/new")}>
                 <Plus className="h-4 w-4" /> New community proposal
