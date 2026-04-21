@@ -61,6 +61,7 @@ const designTiles: Tile[] = [
   { icon: Presentation, title: "Presentations", desc: "Pitch decks", to: "/designs/presentation", hue: "from-violet-600 to-fuchsia-400", image: IMG.presentation, ready: true },
   { icon: FileSignature, title: "Proposals", desc: "Solar project proposals", to: "/proposals", hue: "from-indigo-600 to-blue-400", image: IMG.proposals, ready: true },
   { icon: Users, title: "CRM", desc: "Customer relationship manager", to: "https://crm.unitesolar.in", hue: "from-teal-600 to-emerald-400", image: IMG.crm, ready: true },
+  { icon: Users, title: "CRM Portal", desc: "Open crm.unitesolar.in", to: "https://crm.unitesolar.in", hue: "from-emerald-600 to-teal-500", image: IMG.crm, ready: true },
 ];
 
 const stationeryTiles: Tile[] = [
