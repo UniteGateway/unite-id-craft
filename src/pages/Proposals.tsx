@@ -95,6 +95,14 @@ const ProposalsList: React.FC = () => {
     load();
   };
 
+  const removeResidential = async (id: string) => {
+    if (!confirm("Delete this residential proposal?")) return;
+    const { error } = await supabase.from("residential_proposals").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted");
+    load();
+  };
+
   const duplicate = async (id: string) => {
     if (!user) return;
     const { data: src, error: fetchErr } = await supabase
@@ -131,9 +139,10 @@ const ProposalsList: React.FC = () => {
         {loading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
         ) : (
-        <Tabs defaultValue="industrial" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-md mb-6">
+        <Tabs defaultValue="residential" className="w-full">
+          <TabsList className="grid grid-cols-3 w-full max-w-2xl mb-6">
             <TabsTrigger value="industrial"><FileSignature className="h-3.5 w-3.5 mr-1.5" /> Industrial</TabsTrigger>
+            <TabsTrigger value="residential"><Home className="h-3.5 w-3.5 mr-1.5" /> Residential</TabsTrigger>
             <TabsTrigger value="community"><Building2 className="h-3.5 w-3.5 mr-1.5" /> Communities</TabsTrigger>
           </TabsList>
 
