@@ -297,7 +297,7 @@ const ResidentialProposalEditor: React.FC = () => {
   };
 
   // Duplicate current BOQ to N new proposals at other sizes
-  const duplicateToSizes = async (sizes: number[]) => {
+  const duplicateToSizes = async (sizes: number[]): Promise<void> => {
     if (!row || !user) return;
     setDupBusy(true);
     const baseKw = row.capacity_kw || 0;
@@ -327,7 +327,7 @@ const ResidentialProposalEditor: React.FC = () => {
     const { error } = await supabase.from("residential_proposals").insert(inserts as any);
     setDupBusy(false);
     setDupOpen(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`Created ${sizes.length} new proposal${sizes.length === 1 ? "" : "s"}`);
     nav("/proposals");
   };
