@@ -405,6 +405,8 @@ const AdminPage: React.FC = () => {
 
         <ResidentialPresetsManager />
 
+        <ResidentialOffersManager />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
