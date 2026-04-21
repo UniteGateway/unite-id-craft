@@ -9,8 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Loader2, Plus, Save, Trash2, Upload, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Plus, Save, Trash2, Upload, Image as ImageIcon, Copy, Gift, Wallet, FileDown } from "lucide-react";
 import {
   BoqLine,
   BUILTIN_RESIDENTIAL_COVERS,
@@ -19,8 +22,13 @@ import {
   computeResidential,
   inr,
   recomputeBoqAmounts,
+  computeFinance,
+  computeResidentialSubsidy,
+  scaleBoq,
+  PROPOSAL_CATEGORIES,
 } from "@/lib/residential-presets";
 import ResidentialDocument from "@/components/proposals/ResidentialDocument";
+import DuplicateToSizesDialog from "@/components/proposals/DuplicateToSizesDialog";
 import { exportProposalPdf } from "@/lib/proposal-export";
 
 type Row = {
@@ -29,6 +37,7 @@ type Row = {
   proposal_number: string | null;
   is_customised: boolean;
   preset_id: string | null;
+  category: string;
   client_name: string | null;
   client_location: string | null;
   client_contact: string | null;
@@ -43,12 +52,37 @@ type Row = {
   terms_and_conditions: string | null;
   cover_image_url: string | null;
   cover_source: string | null;
+  // subsidy
+  subsidy_amount: number;
+  subsidy_per_kw: number;
+  // offer
+  offer_id: string | null;
+  offer_discount: number;
+  offer_label: string | null;
+  // payment
+  payment_mode: "cash" | "loan";
+  loan_interest_rate: number;
+  loan_tenure_years: number;
+  subsidy_in_loan: boolean;
+  monthly_savings_per_kw: number;
+};
+
+type Offer = {
+  id: string;
+  name: string;
+  description: string | null;
+  min_kw: number;
+  max_kw: number;
+  discount_amount: number;
+  freebie_label: string | null;
+  flyer_image_url: string | null;
+  active: boolean;
 };
 
 const ResidentialProposalEditor: React.FC = () => {
   const { id } = useParams();
   const [params] = useSearchParams();
-  const presetKw = params.get("kw"); // "2".."10" or "custom"
+  const presetKw = params.get("kw");
   const nav = useNavigate();
   const { user } = useAuth();
 
@@ -56,18 +90,22 @@ const ResidentialProposalEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [dupOpen, setDupOpen] = useState(false);
+  const [dupBusy, setDupBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ---------- bootstrap ----------
   useEffect(() => {
     if (!user) return;
-    if (id !== "new") {
-      load(id!);
-    } else {
-      bootstrapNew();
-    }
+    (id !== "new" ? load(id!) : bootstrapNew());
+    loadOffers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, id]);
+
+  const loadOffers = async () => {
+    const { data } = await supabase.from("residential_offers").select("*").eq("active", true).order("name");
+    setOffers((data ?? []) as Offer[]);
+  };
 
   const load = async (rid: string) => {
     setLoading(true);
@@ -86,19 +124,23 @@ const ResidentialProposalEditor: React.FC = () => {
       const { data } = await supabase.from("residential_presets").select("*").eq("capacity_kw", Number(presetKw)).maybeSingle();
       preset = data;
     }
+    const cap = preset?.capacity_kw ?? (isCustom ? 5 : Number(presetKw));
     const insert = {
       user_id: user.id,
       title: isCustom ? "Custom Residential Proposal" : `${presetKw} kW Residential Solar Proposal`,
       is_customised: isCustom,
       preset_id: preset?.id || null,
-      capacity_kw: preset?.capacity_kw ?? (isCustom ? 5 : Number(presetKw)),
+      category: preset?.category || "Residential",
+      capacity_kw: cap,
       panel_wattage: preset?.panel_wattage ?? 550,
       panel_count: preset?.panel_count ?? 0,
-      inverter_capacity: preset?.inverter_capacity ?? (isCustom ? 5 : Number(presetKw)),
+      inverter_capacity: preset?.inverter_capacity ?? cap,
       structure_type: preset?.structure_type ?? "GI elevated rooftop structure",
       cost_per_kw: preset?.cost_per_kw ?? 55000,
       boq: preset?.boq ?? [],
       terms_and_conditions: preset?.terms_and_conditions ?? DEFAULT_RESIDENTIAL_TERMS,
+      subsidy_amount: preset?.subsidy_amount ?? computeResidentialSubsidy(cap),
+      subsidy_per_kw: preset?.subsidy_per_kw ?? 0,
     };
     const { data: created, error } = await supabase.from("residential_proposals").insert(insert).select("*").single();
     setLoading(false);
@@ -106,13 +148,25 @@ const ResidentialProposalEditor: React.FC = () => {
     nav(`/proposals/residential/${created.id}`, { replace: true });
   };
 
-  // ---------- computed ----------
   const computed = useMemo(() => {
     if (!row) return computeResidential([], 0);
     return computeResidential(row.boq || [], Number(row.capacity_kw) || 0);
   }, [row]);
 
-  // ---------- helpers ----------
+  const finance = useMemo(() => {
+    if (!row) return null;
+    const subsidyTotal = (row.subsidy_amount || 0) + (row.subsidy_per_kw || 0) * (row.capacity_kw || 0);
+    return computeFinance({
+      totalCost: computed.totalCost,
+      subsidy: subsidyTotal,
+      offerDiscount: row.offer_discount || 0,
+      capacityKw: row.capacity_kw || 0,
+      monthlySavingsPerKw: row.monthly_savings_per_kw || 1000,
+      loanInterestRate: row.loan_interest_rate || 0,
+      loanTenureYears: row.loan_tenure_years || 0,
+    });
+  }, [row, computed]);
+
   const update = (patch: Partial<Row>) => setRow((r) => (r ? { ...r, ...patch } : r));
   const updateBoqLine = (i: number, patch: Partial<BoqLine>) => {
     if (!row) return;
@@ -123,12 +177,57 @@ const ResidentialProposalEditor: React.FC = () => {
   const addBoqLine = () => row && update({ boq: [...row.boq, blankBoqLine()] });
   const removeBoqLine = (i: number) => row && update({ boq: row.boq.filter((_, idx) => idx !== i) });
 
+  // Auto-recompute residential subsidy when category=Residential and capacity changes
+  const onCapacityChange = (kw: number) => {
+    if (!row) return;
+    if (row.category === "Residential") {
+      update({ capacity_kw: kw, subsidy_amount: computeResidentialSubsidy(kw) });
+    } else {
+      update({ capacity_kw: kw });
+    }
+  };
+
+  const onCategoryChange = (cat: string) => {
+    if (!row) return;
+    if (cat === "Residential") {
+      update({ category: cat, subsidy_amount: computeResidentialSubsidy(row.capacity_kw || 0), subsidy_per_kw: 0 });
+    } else {
+      update({ category: cat });
+    }
+  };
+
+  const applyOffer = (offerId: string) => {
+    if (!row) return;
+    if (offerId === "none") {
+      update({ offer_id: null, offer_discount: 0, offer_label: null });
+      return;
+    }
+    const o = offers.find(x => x.id === offerId);
+    if (!o) return;
+    const cap = row.capacity_kw || 0;
+    if (cap < o.min_kw || cap > o.max_kw) {
+      toast.error(`Offer applies only to ${o.min_kw}–${o.max_kw} kW systems`);
+      return;
+    }
+    update({ offer_id: o.id, offer_discount: o.discount_amount || 0, offer_label: o.freebie_label || o.name });
+    toast.success(`Offer applied: ${o.name}`);
+  };
+
+  const eligibleOffers = useMemo(() => {
+    if (!row) return [];
+    const cap = row.capacity_kw || 0;
+    return offers.filter(o => cap >= o.min_kw && cap <= o.max_kw);
+  }, [offers, row]);
+
+  const selectedOffer = useMemo(() => offers.find(o => o.id === row?.offer_id) || null, [offers, row?.offer_id]);
+
   const save = async () => {
     if (!row) return;
     setSaving(true);
     const { error } = await supabase.from("residential_proposals").update({
       title: row.title,
       proposal_number: row.proposal_number,
+      category: row.category,
       client_name: row.client_name,
       client_location: row.client_location,
       client_contact: row.client_contact,
@@ -143,7 +242,17 @@ const ResidentialProposalEditor: React.FC = () => {
       terms_and_conditions: row.terms_and_conditions,
       cover_image_url: row.cover_image_url,
       cover_source: row.cover_source,
-      computed: computed as any,
+      subsidy_amount: row.subsidy_amount,
+      subsidy_per_kw: row.subsidy_per_kw,
+      offer_id: row.offer_id,
+      offer_discount: row.offer_discount,
+      offer_label: row.offer_label,
+      payment_mode: row.payment_mode,
+      loan_interest_rate: row.loan_interest_rate,
+      loan_tenure_years: row.loan_tenure_years,
+      subsidy_in_loan: row.subsidy_in_loan,
+      monthly_savings_per_kw: row.monthly_savings_per_kw,
+      computed: { ...computed, finance } as any,
     }).eq("id", row.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -153,8 +262,8 @@ const ResidentialProposalEditor: React.FC = () => {
   const onPickCover = (url: string, source: string) => update({ cover_image_url: url, cover_source: source });
 
   const onUploadCover = async (file: File) => {
-    if (!user) return;
-    const path = `${user.id}/residential-covers/${row?.id}-${Date.now()}-${file.name}`;
+    if (!user || !row) return;
+    const path = `${user.id}/residential-covers/${row.id}-${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("proposals").upload(path, file, { upsert: true, contentType: file.type });
     if (error) return toast.error(error.message);
     const { data: pub } = supabase.storage.from("proposals").getPublicUrl(path);
@@ -175,6 +284,54 @@ const ResidentialProposalEditor: React.FC = () => {
     }
   };
 
+  const downloadFlyer = () => {
+    if (!selectedOffer?.flyer_image_url) {
+      toast.error("No flyer available for this offer");
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = selectedOffer.flyer_image_url;
+    a.download = `${selectedOffer.name.replace(/\s+/g, "_")}_flyer`;
+    a.target = "_blank";
+    a.click();
+  };
+
+  // Duplicate current BOQ to N new proposals at other sizes
+  const duplicateToSizes = async (sizes: number[]) => {
+    if (!row || !user) return;
+    setDupBusy(true);
+    const baseKw = row.capacity_kw || 0;
+    const inserts = sizes.map((kw) => {
+      const scaled = recomputeBoqAmounts(scaleBoq(row.boq, baseKw, kw));
+      return {
+        user_id: user.id,
+        title: `${kw} kW ${row.category} Solar Proposal`,
+        is_customised: row.is_customised,
+        preset_id: null,
+        category: row.category,
+        capacity_kw: kw,
+        panel_wattage: row.panel_wattage,
+        panel_count: row.panel_count ? Math.ceil((row.panel_count / Math.max(1, baseKw)) * kw) : 0,
+        inverter_capacity: kw,
+        structure_type: row.structure_type,
+        cost_per_kw: row.cost_per_kw,
+        boq: scaled as any,
+        terms_and_conditions: row.terms_and_conditions,
+        subsidy_amount: row.category === "Residential" ? computeResidentialSubsidy(kw) : row.subsidy_amount,
+        subsidy_per_kw: row.subsidy_per_kw,
+        monthly_savings_per_kw: row.monthly_savings_per_kw,
+        cover_image_url: row.cover_image_url,
+        cover_source: row.cover_source,
+      };
+    });
+    const { error } = await supabase.from("residential_proposals").insert(inserts as any);
+    setDupBusy(false);
+    setDupOpen(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Created ${sizes.length} new proposal${sizes.length === 1 ? "" : "s"}`);
+    nav("/proposals");
+  };
+
   if (loading || !row) {
     return (
       <div className="min-h-screen bg-background">
@@ -190,7 +347,10 @@ const ResidentialProposalEditor: React.FC = () => {
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <Button variant="ghost" size="sm" onClick={() => nav("/proposals")}><ArrowLeft className="h-4 w-4" /> Back</Button>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="secondary" size="sm" onClick={() => setDupOpen(true)} disabled={!row.boq.length}>
+              <Copy className="h-4 w-4" /> Duplicate to sizes
+            </Button>
             <Button variant="outline" size="sm" onClick={save} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
             </Button>
@@ -201,7 +361,7 @@ const ResidentialProposalEditor: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
-          {/* LEFT: editor */}
+          {/* LEFT */}
           <div className="space-y-4">
             <Card>
               <CardHeader><CardTitle className="text-base">Proposal</CardTitle></CardHeader>
@@ -209,16 +369,27 @@ const ResidentialProposalEditor: React.FC = () => {
                 <div><Label>Title</Label><Input value={row.title} onChange={(e) => update({ title: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-2">
                   <div><Label>Proposal #</Label><Input value={row.proposal_number || ""} onChange={(e) => update({ proposal_number: e.target.value })} placeholder="US-RES-001" /></div>
-                  <div><Label>Capacity (kW)</Label><Input type="number" value={row.capacity_kw || 0} onChange={(e) => update({ capacity_kw: +e.target.value })} disabled={!row.is_customised} /></div>
+                  <div><Label>Capacity (kW)</Label><Input type="number" value={row.capacity_kw || 0} onChange={(e) => onCapacityChange(+e.target.value)} disabled={!row.is_customised} /></div>
+                </div>
+                <div>
+                  <Label>Category</Label>
+                  <Select value={row.category} onValueChange={onCategoryChange}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PROPOSAL_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>
 
             <Tabs defaultValue="client">
-              <TabsList className="grid grid-cols-4 w-full">
+              <TabsList className="grid grid-cols-6 w-full text-[11px]">
                 <TabsTrigger value="client">Client</TabsTrigger>
                 <TabsTrigger value="system">System</TabsTrigger>
                 <TabsTrigger value="boq">BOQ</TabsTrigger>
+                <TabsTrigger value="finance">Finance</TabsTrigger>
+                <TabsTrigger value="offers">Offers</TabsTrigger>
                 <TabsTrigger value="cover">Cover</TabsTrigger>
               </TabsList>
 
@@ -241,20 +412,24 @@ const ResidentialProposalEditor: React.FC = () => {
                 <div><Label>Structure</Label><Input value={row.structure_type || ""} onChange={(e) => update({ structure_type: e.target.value })} /></div>
                 <div>
                   <Label>Terms & Conditions</Label>
-                  <Textarea rows={10} value={row.terms_and_conditions || ""} onChange={(e) => update({ terms_and_conditions: e.target.value })} />
+                  <Textarea rows={8} value={row.terms_and_conditions || ""} onChange={(e) => update({ terms_and_conditions: e.target.value })} />
                 </div>
               </TabsContent>
 
               <TabsContent value="boq" className="space-y-2 mt-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground">Edit each line. Amount auto = qty × rate.</div>
+                  <div className="text-xs text-muted-foreground">Tick "Fixed" for items that don't scale with kW.</div>
                   <Button size="sm" variant="outline" onClick={addBoqLine}><Plus className="h-3.5 w-3.5" /> Add</Button>
                 </div>
                 <div className="space-y-2 max-h-[420px] overflow-auto pr-1">
                   {row.boq.map((l, i) => (
                     <div key={i} className="rounded border p-2 space-y-1">
-                      <div className="flex gap-2">
-                        <Input className="text-xs" value={l.item} onChange={(e) => updateBoqLine(i, { item: e.target.value })} placeholder="Item description" />
+                      <div className="flex gap-2 items-center">
+                        <Input className="text-xs flex-1" value={l.item} onChange={(e) => updateBoqLine(i, { item: e.target.value })} placeholder="Item description" />
+                        <label className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Checkbox checked={!!l.is_fixed} onCheckedChange={(v) => updateBoqLine(i, { is_fixed: !!v })} />
+                          Fixed
+                        </label>
                         <Button size="icon" variant="ghost" onClick={() => removeBoqLine(i)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                       </div>
                       <div className="grid grid-cols-4 gap-1">
@@ -271,6 +446,111 @@ const ResidentialProposalEditor: React.FC = () => {
                   <div className="flex justify-between"><span>GST</span><b>{inr(computed.gstTotal)}</b></div>
                   <div className="flex justify-between text-sm"><span>Total</span><b className="text-primary">{inr(computed.totalCost)}</b></div>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="finance" className="space-y-3 mt-3">
+                <Card>
+                  <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wide">Subsidy</CardTitle></CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Subsidy (₹)</Label>
+                        <Input type="number" value={row.subsidy_amount} onChange={(e) => update({ subsidy_amount: +e.target.value })} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Per-kW subsidy (₹)</Label>
+                        <Input type="number" value={row.subsidy_per_kw} onChange={(e) => update({ subsidy_per_kw: +e.target.value })} disabled={row.category === "Residential"} />
+                      </div>
+                    </div>
+                    {row.category === "Residential" && (
+                      <p className="text-[11px] text-muted-foreground">Auto-set by Residential rule (1kW=₹30k, 2kW=₹60k, 3kW+=₹78k). Edit to override.</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wide flex items-center gap-1"><Wallet className="h-3 w-3"/> Payment Mode</CardTitle></CardHeader>
+                  <CardContent className="space-y-2">
+                    <Select value={row.payment_mode} onValueChange={(v: any) => update({ payment_mode: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="loan">Loan (100%)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {row.payment_mode === "loan" && (
+                      <>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <div><Label className="text-xs">Interest Rate (% p.a.)</Label><Input type="number" step="0.1" value={row.loan_interest_rate} onChange={(e) => update({ loan_interest_rate: +e.target.value })} /></div>
+                          <div><Label className="text-xs">Tenure (years)</Label><Input type="number" value={row.loan_tenure_years} onChange={(e) => update({ loan_tenure_years: +e.target.value })} /></div>
+                        </div>
+                        <label className="flex items-center gap-2 text-xs pt-1">
+                          <Switch checked={row.subsidy_in_loan} onCheckedChange={(v) => update({ subsidy_in_loan: v })} />
+                          Include subsidy in loan reduction
+                        </label>
+                      </>
+                    )}
+                    <div className="pt-2">
+                      <Label className="text-xs">Monthly savings per kW (₹)</Label>
+                      <Input type="number" value={row.monthly_savings_per_kw} onChange={(e) => update({ monthly_savings_per_kw: +e.target.value })} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {finance && (
+                  <Card>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wide">Live calculation</CardTitle></CardHeader>
+                    <CardContent className="text-xs space-y-1">
+                      <div className="flex justify-between"><span>Total cost</span><b>{inr(finance.totalCost)}</b></div>
+                      <div className="flex justify-between"><span>− Offer discount</span><b className="text-emerald-600">{inr(finance.offerDiscount)}</b></div>
+                      <div className="flex justify-between"><span>− Subsidy</span><b className="text-emerald-600">{inr(finance.subsidy)}</b></div>
+                      <div className="flex justify-between border-t pt-1"><span>Net cost</span><b className="text-primary">{inr(Math.max(0, finance.netCost - finance.subsidy))}</b></div>
+                      <div className="flex justify-between pt-1"><span>Monthly savings</span><b className="text-emerald-600">{inr(finance.monthlySavings)}</b></div>
+                      {row.payment_mode === "loan" && (
+                        <>
+                          <div className="flex justify-between pt-1"><span>EMI (full)</span><b>{inr(finance.emiFull)}</b></div>
+                          <div className="flex justify-between"><span>EMI (after subsidy)</span><b>{inr(finance.emiAfterSubsidy)}</b></div>
+                          <div className="flex justify-between"><span>Net impact (before)</span><b className={finance.netImpactBefore >= 0 ? "text-emerald-600" : "text-destructive"}>{inr(finance.netImpactBefore)}</b></div>
+                          <div className="flex justify-between"><span>Net impact (after)</span><b className={finance.netImpactAfter >= 0 ? "text-emerald-600" : "text-destructive"}>{inr(finance.netImpactAfter)}</b></div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="offers" className="space-y-3 mt-3">
+                <Card>
+                  <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wide flex items-center gap-1"><Gift className="h-3 w-3"/> Apply Offer</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    <Select value={row.offer_id || "none"} onValueChange={applyOffer}>
+                      <SelectTrigger><SelectValue placeholder="No offer" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No offer</SelectItem>
+                        {eligibleOffers.map(o => (
+                          <SelectItem key={o.id} value={o.id}>{o.name} {o.discount_amount > 0 ? `(− ${inr(o.discount_amount)})` : ""}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedOffer && (
+                      <div className="rounded border p-3 bg-muted/40 text-xs space-y-2">
+                        <div className="font-bold">{selectedOffer.name}</div>
+                        {selectedOffer.description && <div>{selectedOffer.description}</div>}
+                        {selectedOffer.freebie_label && <div className="text-primary">🎁 {selectedOffer.freebie_label}</div>}
+                        {selectedOffer.discount_amount > 0 && <div>Discount: <b>{inr(selectedOffer.discount_amount)}</b></div>}
+                        {selectedOffer.flyer_image_url && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <img src={selectedOffer.flyer_image_url} alt="flyer" className="h-16 w-16 object-cover rounded" />
+                            <Button size="sm" variant="outline" onClick={downloadFlyer}><FileDown className="h-3.5 w-3.5 mr-1" /> Download flyer</Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {eligibleOffers.length === 0 && (
+                      <p className="text-[11px] text-muted-foreground">No offers match current capacity ({row.capacity_kw} kW).</p>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="cover" className="space-y-3 mt-3">
@@ -301,7 +581,7 @@ const ResidentialProposalEditor: React.FC = () => {
             </Tabs>
           </div>
 
-          {/* RIGHT: live document */}
+          {/* RIGHT */}
           <div className="bg-muted/40 rounded-lg p-4 overflow-auto">
             <div style={{ transform: "scale(0.72)", transformOrigin: "top center" }}>
               <ResidentialDocument
@@ -317,11 +597,29 @@ const ResidentialProposalEditor: React.FC = () => {
                 terms={row.terms_and_conditions || DEFAULT_RESIDENTIAL_TERMS}
                 computed={computed}
                 coverUrl={row.cover_image_url || undefined}
+                category={row.category}
+                finance={finance || undefined}
+                paymentMode={row.payment_mode}
+                loanInterestRate={row.loan_interest_rate}
+                loanTenureYears={row.loan_tenure_years}
+                subsidyInLoan={row.subsidy_in_loan}
+                offerLabel={row.offer_label}
+                offerDescription={selectedOffer?.description || null}
               />
             </div>
           </div>
         </div>
       </main>
+
+      <DuplicateToSizesDialog
+        open={dupOpen}
+        onOpenChange={setDupOpen}
+        baseKw={row.capacity_kw || 0}
+        busy={dupBusy}
+        onConfirm={duplicateToSizes}
+        title={`Duplicate this proposal to other sizes`}
+        description={`Creates new proposals at the selected kW sizes with this BOQ scaled. Items marked Fixed are kept as-is; panels round up; cables get +10%.`}
+      />
     </div>
   );
 };
