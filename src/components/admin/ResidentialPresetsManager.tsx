@@ -272,6 +272,17 @@ const ResidentialPresetsManager: React.FC = () => {
           </>
         )}
       </CardContent>
+      {active && (
+        <DuplicateToSizesDialog
+          open={dupOpen}
+          onOpenChange={setDupOpen}
+          baseKw={active.capacity_kw}
+          busy={dupBusy}
+          onConfirm={duplicateBoqToSizes}
+          title={`Duplicate ${active.capacity_kw} kW BOQ to other sizes`}
+          description={`Scale this BOQ from ${active.capacity_kw} kW to selected sizes. Items marked Fixed stay the same; panels round up; cables get a +10% buffer.`}
+        />
+      )}
     </Card>
   );
 };
