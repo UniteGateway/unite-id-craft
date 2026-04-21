@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Loader2, Plus, Save, Trash2, Upload, Image as ImageIcon, Copy, Gift, Wallet, FileDown } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Plus, Save, Trash2, Upload, Image as ImageIcon, Copy, Gift, Wallet, FileDown, FileUp, Sparkles } from "lucide-react";
 import {
   BoqLine,
   BUILTIN_RESIDENTIAL_COVERS,
@@ -94,6 +94,9 @@ const ResidentialProposalEditor: React.FC = () => {
   const [dupOpen, setDupOpen] = useState(false);
   const [dupBusy, setDupBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const billInputRef = useRef<HTMLInputElement>(null);
+  const [billBusy, setBillBusy] = useState(false);
+  const [billInfo, setBillInfo] = useState<{ units: number; tariff: number; bill: number } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -296,6 +299,44 @@ const ResidentialProposalEditor: React.FC = () => {
     a.click();
   };
 
+  // Power bill upload → Lovable AI extraction → fill monthly_savings_per_kw
+  const onUploadBill = async (file: File) => {
+    if (!row) return;
+    setBillBusy(true);
+    try {
+      const fileBase64: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve((r.result as string).split(",")[1] || "");
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("extract-power-bill", {
+        body: { fileBase64, mimeType: file.type || "application/octet-stream" },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const units = Number((data as any).monthly_units) || 0;
+      const bill = Number((data as any).monthly_bill) || 0;
+      let tariff = Number((data as any).energy_charge_per_unit) || 0;
+      if (!tariff && units > 0 && bill > 0) tariff = +(bill / units).toFixed(2);
+      const cap = Number(row.capacity_kw) || 1;
+      // Savings per kW = (units × tariff) ÷ kW  (caps at the customer's actual bill)
+      const totalSavings = units * tariff;
+      const perKw = cap > 0 ? Math.round(totalSavings / cap) : 0;
+      setBillInfo({ units, tariff, bill });
+      if (perKw > 0) {
+        update({ monthly_savings_per_kw: perKw });
+        toast.success(`Bill parsed: ${units} units @ ₹${tariff}/u → ₹${perKw}/kW/mo`);
+      } else {
+        toast.warning("Couldn't compute savings — check the extracted values.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to parse bill");
+    } finally {
+      setBillBusy(false);
+    }
+  };
+
   // Duplicate current BOQ to N new proposals at other sizes
   const duplicateToSizes = async (sizes: number[]): Promise<void> => {
     if (!row || !user) return;
@@ -449,6 +490,44 @@ const ResidentialProposalEditor: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="finance" className="space-y-3 mt-3">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-wide flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" /> Power Bill (AI auto-fill)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <p className="text-[11px] text-muted-foreground">
+                      Upload the customer's electricity bill (PDF or image). We'll extract units & tariff and set savings per kW.
+                    </p>
+                    <input
+                      ref={billInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      hidden
+                      onChange={(e) => e.target.files?.[0] && onUploadBill(e.target.files[0])}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => billInputRef.current?.click()}
+                      disabled={billBusy}
+                    >
+                      {billBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />}
+                      {billBusy ? "Parsing bill…" : "Upload power bill"}
+                    </Button>
+                    {billInfo && (
+                      <div className="rounded border p-2 bg-muted/40 text-[11px] space-y-0.5">
+                        <div className="flex justify-between"><span>Monthly units</span><b>{billInfo.units}</b></div>
+                        <div className="flex justify-between"><span>Tariff</span><b>₹{billInfo.tariff}/unit</b></div>
+                        <div className="flex justify-between"><span>Bill amount</span><b>{inr(billInfo.bill)}</b></div>
+                        <div className="flex justify-between border-t pt-1"><span>Savings / kW / month</span><b className="text-primary">{inr(row.monthly_savings_per_kw)}</b></div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wide">Subsidy</CardTitle></CardHeader>
                   <CardContent className="space-y-2">
