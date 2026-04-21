@@ -17,6 +17,7 @@ import {
   Sparkles,
   Instagram,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import PageBanner, { BANNERS } from "@/components/PageBanner";
@@ -48,6 +49,7 @@ const IMG = {
   library: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=800&q=70",
   dashboard: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=70",
   admin: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=70",
+  crm: "https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&w=800&q=70",
 };
 
 const designTiles: Tile[] = [
@@ -58,6 +60,7 @@ const designTiles: Tile[] = [
   { icon: BookOpen, title: "Brochures", desc: "Tri-fold layouts", to: "/designs/brochure", hue: "from-emerald-500 to-teal-400", image: IMG.brochure, ready: true },
   { icon: Presentation, title: "Presentations", desc: "Pitch decks", to: "/designs/presentation", hue: "from-violet-600 to-fuchsia-400", image: IMG.presentation, ready: true },
   { icon: FileSignature, title: "Proposals", desc: "Solar project proposals", to: "/proposals", hue: "from-indigo-600 to-blue-400", image: IMG.proposals, ready: true },
+  { icon: Users, title: "CRM", desc: "Customer relationship manager", to: "https://crm.unitesolar.in", hue: "from-teal-600 to-emerald-400", image: IMG.crm, ready: true },
 ];
 
 const stationeryTiles: Tile[] = [
@@ -138,7 +141,15 @@ const Home: React.FC = () => {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {designTiles.map((t) => (
-              <Tile key={t.title} tile={t} onClick={() => nav(t.to)} />
+              <Tile
+                key={t.title}
+                tile={t}
+                onClick={() =>
+                  t.to.startsWith("http")
+                    ? window.open(t.to, "_blank", "noopener,noreferrer")
+                    : nav(t.to)
+                }
+              />
             ))}
           </div>
         </section>
