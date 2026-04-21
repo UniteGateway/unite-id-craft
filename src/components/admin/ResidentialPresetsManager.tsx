@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, Trash2, Home, RefreshCw } from "lucide-react";
-import { BoqLine, blankBoqLine, recomputeBoqAmounts, computeResidential, inr, RESIDENTIAL_KW_OPTIONS } from "@/lib/residential-presets";
+import { Loader2, Save, Plus, Trash2, Home, RefreshCw, Copy } from "lucide-react";
+import { BoqLine, blankBoqLine, recomputeBoqAmounts, computeResidential, inr, RESIDENTIAL_KW_OPTIONS, scaleBoq } from "@/lib/residential-presets";
+import DuplicateToSizesDialog from "@/components/proposals/DuplicateToSizesDialog";
 
 interface Preset {
   id: string;
@@ -21,6 +23,7 @@ interface Preset {
   boq: BoqLine[];
   terms_and_conditions: string;
   notes: string | null;
+  subsidy_amount?: number;
 }
 
 const ResidentialPresetsManager: React.FC = () => {
@@ -28,6 +31,8 @@ const ResidentialPresetsManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [dupOpen, setDupOpen] = useState(false);
+  const [dupBusy, setDupBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -95,6 +100,29 @@ const ResidentialPresetsManager: React.FC = () => {
   };
 
   const computed = active ? computeResidential(recomputeBoqAmounts(active.boq), active.capacity_kw) : null;
+
+  const duplicateBoqToSizes = async (sizes: number[]) => {
+    if (!active) return;
+    setDupBusy(true);
+    const updates = sizes.map(async (kw) => {
+      const target = presets.find((p) => p.capacity_kw === kw);
+      if (!target) return null;
+      const scaled = recomputeBoqAmounts(scaleBoq(active.boq, active.capacity_kw, kw));
+      return supabase.from("residential_presets").update({
+        boq: scaled as any,
+        cost_per_kw: active.cost_per_kw,
+        terms_and_conditions: active.terms_and_conditions,
+        structure_type: active.structure_type,
+      }).eq("id", target.id);
+    });
+    const results = await Promise.all(updates);
+    setDupBusy(false);
+    setDupOpen(false);
+    const errs = results.filter((r) => r && (r as any).error).length;
+    if (errs) toast.error(`${errs} preset(s) failed to update`);
+    else toast.success(`BOQ duplicated to ${sizes.length} size${sizes.length === 1 ? "" : "s"}`);
+    load();
+  };
 
   return (
     <Card>
@@ -164,11 +192,17 @@ const ResidentialPresetsManager: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-semibold">Bill of Quantities</Label>
-                    <Button size="sm" variant="outline" onClick={addBoqRow}><Plus className="h-3.5 w-3.5 mr-1" /> Add row</Button>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => setDupOpen(true)} disabled={!active.boq.length}>
+                        <Copy className="h-3.5 w-3.5 mr-1" /> Duplicate to all sizes
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={addBoqRow}><Plus className="h-3.5 w-3.5 mr-1" /> Add row</Button>
+                    </div>
                   </div>
                   <div className="border border-border rounded-lg overflow-hidden">
                     <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/40 text-[11px] font-semibold uppercase tracking-wide">
-                      <div className="col-span-5">Item</div>
+                      <div className="col-span-4">Item</div>
+                      <div className="col-span-1 text-center">Fixed</div>
                       <div className="col-span-1 text-right">Qty</div>
                       <div className="col-span-2">Unit</div>
                       <div className="col-span-2 text-right">Rate (₹)</div>
@@ -177,7 +211,10 @@ const ResidentialPresetsManager: React.FC = () => {
                     </div>
                     {active.boq.map((l, i) => (
                       <div key={i} className="grid grid-cols-12 gap-2 px-3 py-2 border-t border-border items-center">
-                        <Input className="col-span-5 h-8 text-sm" value={l.item} onChange={(e) => updateBoqRow(i, { item: e.target.value })} />
+                        <Input className="col-span-4 h-8 text-sm" value={l.item} onChange={(e) => updateBoqRow(i, { item: e.target.value })} />
+                        <div className="col-span-1 flex justify-center">
+                          <Checkbox checked={!!l.is_fixed} onCheckedChange={(v) => updateBoqRow(i, { is_fixed: !!v })} />
+                        </div>
                         <Input className="col-span-1 h-8 text-sm text-right" type="number" value={l.qty} onChange={(e) => updateBoqRow(i, { qty: +e.target.value })} />
                         <Input className="col-span-2 h-8 text-sm" value={l.unit} onChange={(e) => updateBoqRow(i, { unit: e.target.value })} />
                         <Input className="col-span-2 h-8 text-sm text-right" type="number" value={l.rate} onChange={(e) => updateBoqRow(i, { rate: +e.target.value })} />
@@ -235,6 +272,17 @@ const ResidentialPresetsManager: React.FC = () => {
           </>
         )}
       </CardContent>
+      {active && (
+        <DuplicateToSizesDialog
+          open={dupOpen}
+          onOpenChange={setDupOpen}
+          baseKw={active.capacity_kw}
+          busy={dupBusy}
+          onConfirm={duplicateBoqToSizes}
+          title={`Duplicate ${active.capacity_kw} kW BOQ to other sizes`}
+          description={`Scale this BOQ from ${active.capacity_kw} kW to selected sizes. Items marked Fixed stay the same; panels round up; cables get a +10% buffer.`}
+        />
+      )}
     </Card>
   );
 };

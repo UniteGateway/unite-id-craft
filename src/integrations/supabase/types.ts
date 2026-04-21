@@ -388,10 +388,59 @@ export type Database = {
         }
         Relationships: []
       }
+      residential_offers: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          discount_amount: number
+          flyer_image_url: string | null
+          flyer_storage_path: string | null
+          freebie_label: string | null
+          id: string
+          max_kw: number
+          min_kw: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_amount?: number
+          flyer_image_url?: string | null
+          flyer_storage_path?: string | null
+          freebie_label?: string | null
+          id?: string
+          max_kw?: number
+          min_kw?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_amount?: number
+          flyer_image_url?: string | null
+          flyer_storage_path?: string | null
+          freebie_label?: string | null
+          id?: string
+          max_kw?: number
+          min_kw?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       residential_presets: {
         Row: {
           boq: Json
           capacity_kw: number
+          category: string
           cost_per_kw: number
           created_at: string
           id: string
@@ -401,12 +450,15 @@ export type Database = {
           panel_count: number
           panel_wattage: number
           structure_type: string
+          subsidy_amount: number
+          subsidy_per_kw: number
           terms_and_conditions: string
           updated_at: string
         }
         Insert: {
           boq?: Json
           capacity_kw: number
+          category?: string
           cost_per_kw?: number
           created_at?: string
           id?: string
@@ -416,12 +468,15 @@ export type Database = {
           panel_count?: number
           panel_wattage?: number
           structure_type?: string
+          subsidy_amount?: number
+          subsidy_per_kw?: number
           terms_and_conditions?: string
           updated_at?: string
         }
         Update: {
           boq?: Json
           capacity_kw?: number
+          category?: string
           cost_per_kw?: number
           created_at?: string
           id?: string
@@ -431,6 +486,8 @@ export type Database = {
           panel_count?: number
           panel_wattage?: number
           structure_type?: string
+          subsidy_amount?: number
+          subsidy_per_kw?: number
           terms_and_conditions?: string
           updated_at?: string
         }
@@ -440,6 +497,7 @@ export type Database = {
         Row: {
           boq: Json
           capacity_kw: number | null
+          category: string
           client_contact: string | null
           client_email: string | null
           client_location: string | null
@@ -452,12 +510,22 @@ export type Database = {
           id: string
           inverter_capacity: number | null
           is_customised: boolean
+          loan_interest_rate: number
+          loan_tenure_years: number
+          monthly_savings_per_kw: number
+          offer_discount: number
+          offer_id: string | null
+          offer_label: string | null
           panel_count: number | null
           panel_wattage: number | null
+          payment_mode: string
           preset_id: string | null
           proposal_number: string | null
           status: string
           structure_type: string | null
+          subsidy_amount: number
+          subsidy_in_loan: boolean
+          subsidy_per_kw: number
           terms_and_conditions: string | null
           title: string
           updated_at: string
@@ -466,6 +534,7 @@ export type Database = {
         Insert: {
           boq?: Json
           capacity_kw?: number | null
+          category?: string
           client_contact?: string | null
           client_email?: string | null
           client_location?: string | null
@@ -478,12 +547,22 @@ export type Database = {
           id?: string
           inverter_capacity?: number | null
           is_customised?: boolean
+          loan_interest_rate?: number
+          loan_tenure_years?: number
+          monthly_savings_per_kw?: number
+          offer_discount?: number
+          offer_id?: string | null
+          offer_label?: string | null
           panel_count?: number | null
           panel_wattage?: number | null
+          payment_mode?: string
           preset_id?: string | null
           proposal_number?: string | null
           status?: string
           structure_type?: string | null
+          subsidy_amount?: number
+          subsidy_in_loan?: boolean
+          subsidy_per_kw?: number
           terms_and_conditions?: string | null
           title?: string
           updated_at?: string
@@ -492,6 +571,7 @@ export type Database = {
         Update: {
           boq?: Json
           capacity_kw?: number | null
+          category?: string
           client_contact?: string | null
           client_email?: string | null
           client_location?: string | null
@@ -504,12 +584,22 @@ export type Database = {
           id?: string
           inverter_capacity?: number | null
           is_customised?: boolean
+          loan_interest_rate?: number
+          loan_tenure_years?: number
+          monthly_savings_per_kw?: number
+          offer_discount?: number
+          offer_id?: string | null
+          offer_label?: string | null
           panel_count?: number | null
           panel_wattage?: number | null
+          payment_mode?: string
           preset_id?: string | null
           proposal_number?: string | null
           status?: string
           structure_type?: string | null
+          subsidy_amount?: number
+          subsidy_in_loan?: boolean
+          subsidy_per_kw?: number
           terms_and_conditions?: string | null
           title?: string
           updated_at?: string
