@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Loader2, Plus, Save, Trash2, Upload, Image as ImageIcon, Copy, Gift, Wallet, FileDown } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Plus, Save, Trash2, Upload, Image as ImageIcon, Copy, Gift, Wallet, FileDown, FileUp, Sparkles } from "lucide-react";
 import {
   BoqLine,
   BUILTIN_RESIDENTIAL_COVERS,
