@@ -192,11 +192,17 @@ const ResidentialPresetsManager: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-semibold">Bill of Quantities</Label>
-                    <Button size="sm" variant="outline" onClick={addBoqRow}><Plus className="h-3.5 w-3.5 mr-1" /> Add row</Button>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => setDupOpen(true)} disabled={!active.boq.length}>
+                        <Copy className="h-3.5 w-3.5 mr-1" /> Duplicate to all sizes
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={addBoqRow}><Plus className="h-3.5 w-3.5 mr-1" /> Add row</Button>
+                    </div>
                   </div>
                   <div className="border border-border rounded-lg overflow-hidden">
                     <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/40 text-[11px] font-semibold uppercase tracking-wide">
-                      <div className="col-span-5">Item</div>
+                      <div className="col-span-4">Item</div>
+                      <div className="col-span-1 text-center">Fixed</div>
                       <div className="col-span-1 text-right">Qty</div>
                       <div className="col-span-2">Unit</div>
                       <div className="col-span-2 text-right">Rate (₹)</div>
@@ -205,7 +211,10 @@ const ResidentialPresetsManager: React.FC = () => {
                     </div>
                     {active.boq.map((l, i) => (
                       <div key={i} className="grid grid-cols-12 gap-2 px-3 py-2 border-t border-border items-center">
-                        <Input className="col-span-5 h-8 text-sm" value={l.item} onChange={(e) => updateBoqRow(i, { item: e.target.value })} />
+                        <Input className="col-span-4 h-8 text-sm" value={l.item} onChange={(e) => updateBoqRow(i, { item: e.target.value })} />
+                        <div className="col-span-1 flex justify-center">
+                          <Checkbox checked={!!l.is_fixed} onCheckedChange={(v) => updateBoqRow(i, { is_fixed: !!v })} />
+                        </div>
                         <Input className="col-span-1 h-8 text-sm text-right" type="number" value={l.qty} onChange={(e) => updateBoqRow(i, { qty: +e.target.value })} />
                         <Input className="col-span-2 h-8 text-sm" value={l.unit} onChange={(e) => updateBoqRow(i, { unit: e.target.value })} />
                         <Input className="col-span-2 h-8 text-sm text-right" type="number" value={l.rate} onChange={(e) => updateBoqRow(i, { rate: +e.target.value })} />
