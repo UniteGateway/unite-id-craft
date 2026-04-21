@@ -30,6 +30,7 @@ import {
 import ResidentialDocument from "@/components/proposals/ResidentialDocument";
 import DuplicateToSizesDialog from "@/components/proposals/DuplicateToSizesDialog";
 import { exportProposalPdf } from "@/lib/proposal-export";
+import { INDIAN_STATES, INDIA_CITY_SOLAR, citiesByState, lookupCity, DEFAULT_KWH_PER_KW_PER_DAY } from "@/lib/india-solar";
 
 type Row = {
   id: string;
@@ -65,6 +66,13 @@ type Row = {
   loan_tenure_years: number;
   subsidy_in_loan: boolean;
   monthly_savings_per_kw: number;
+  // new
+  bill_summary: any;
+  warranties: string | null;
+  service_amc: string | null;
+  location_city: string | null;
+  location_state: string | null;
+  daily_generation_kwh_per_kw: number | null;
 };
 
 type Offer = {
@@ -127,6 +135,12 @@ const ResidentialProposalEditor: React.FC = () => {
       const { data } = await supabase.from("residential_presets").select("*").eq("capacity_kw", Number(presetKw)).maybeSingle();
       preset = data;
     }
+    // Pull global defaults (warranties / AMC / general terms) from admin settings.
+    const { data: settings } = await supabase
+      .from("proposal_settings")
+      .select("warranties, service_amc, general_terms")
+      .limit(1)
+      .maybeSingle();
     const cap = preset?.capacity_kw ?? (isCustom ? 5 : Number(presetKw));
     const insert = {
       user_id: user.id,
@@ -141,9 +155,12 @@ const ResidentialProposalEditor: React.FC = () => {
       structure_type: preset?.structure_type ?? "GI elevated rooftop structure",
       cost_per_kw: preset?.cost_per_kw ?? 55000,
       boq: preset?.boq ?? [],
-      terms_and_conditions: preset?.terms_and_conditions ?? DEFAULT_RESIDENTIAL_TERMS,
+      terms_and_conditions: settings?.general_terms || preset?.terms_and_conditions || DEFAULT_RESIDENTIAL_TERMS,
+      warranties: settings?.warranties || null,
+      service_amc: settings?.service_amc || null,
       subsidy_amount: preset?.subsidy_amount ?? computeResidentialSubsidy(cap),
       subsidy_per_kw: preset?.subsidy_per_kw ?? 0,
+      daily_generation_kwh_per_kw: DEFAULT_KWH_PER_KW_PER_DAY,
     };
     const { data: created, error } = await supabase.from("residential_proposals").insert(insert).select("*").single();
     setLoading(false);
@@ -255,6 +272,12 @@ const ResidentialProposalEditor: React.FC = () => {
       loan_tenure_years: row.loan_tenure_years,
       subsidy_in_loan: row.subsidy_in_loan,
       monthly_savings_per_kw: row.monthly_savings_per_kw,
+      bill_summary: row.bill_summary || {},
+      warranties: row.warranties,
+      service_amc: row.service_amc,
+      location_city: row.location_city,
+      location_state: row.location_state,
+      daily_generation_kwh_per_kw: row.daily_generation_kwh_per_kw,
       computed: { ...computed, finance } as any,
     }).eq("id", row.id);
     setSaving(false);
@@ -324,6 +347,17 @@ const ResidentialProposalEditor: React.FC = () => {
       const totalSavings = units * tariff;
       const perKw = cap > 0 ? Math.round(totalSavings / cap) : 0;
       setBillInfo({ units, tariff, bill });
+      // Persist the parsed bill on the proposal so it shows on the PDF cover.
+      const summary = {
+        consumer_name: (data as any).consumer_name || "",
+        state: (data as any).state || "",
+        billing_month: (data as any).billing_month || "",
+        monthly_units: units,
+        monthly_bill: bill,
+        energy_charge_per_unit: tariff,
+        sanction_load_kw: Number((data as any).sanction_load_kw) || 0,
+      };
+      update({ bill_summary: summary });
       if (perKw > 0) {
         update({ monthly_savings_per_kw: perKw });
         toast.success(`Bill parsed: ${units} units @ ₹${tariff}/u → ₹${perKw}/kW/mo`);
@@ -441,6 +475,40 @@ const ResidentialProposalEditor: React.FC = () => {
                   <div><Label>Contact</Label><Input value={row.client_contact || ""} onChange={(e) => update({ client_contact: e.target.value })} /></div>
                   <div><Label>Email</Label><Input value={row.client_email || ""} onChange={(e) => update({ client_email: e.target.value })} /></div>
                 </div>
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                  <div>
+                    <Label className="text-xs">State (for solar generation)</Label>
+                    <Select value={row.location_state || ""} onValueChange={(v) => update({ location_state: v, location_city: null, daily_generation_kwh_per_kw: DEFAULT_KWH_PER_KW_PER_DAY })}>
+                      <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {INDIAN_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">City</Label>
+                    <Select
+                      value={row.location_city || ""}
+                      onValueChange={(v) => {
+                        const c = lookupCity(v);
+                        update({ location_city: v, daily_generation_kwh_per_kw: c?.kWhPerKwPerDay ?? DEFAULT_KWH_PER_KW_PER_DAY });
+                      }}
+                      disabled={!row.location_state}
+                    >
+                      <SelectTrigger><SelectValue placeholder={row.location_state ? "Select city" : "Pick state first"} /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {(row.location_state ? citiesByState(row.location_state) : []).map(c => (
+                          <SelectItem key={c.city} value={c.city}>{c.city} ({c.kWhPerKwPerDay} kWh/kW/day)</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {row.location_city && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Estimated generation: <b>{((row.daily_generation_kwh_per_kw || 0) * (row.capacity_kw || 0)).toFixed(1)} kWh/day</b> ({Math.round((row.daily_generation_kwh_per_kw || 0) * (row.capacity_kw || 0) * 365).toLocaleString("en-IN")} kWh/year)
+                  </p>
+                )}
               </TabsContent>
 
               <TabsContent value="system" className="space-y-3 mt-3">
@@ -454,6 +522,14 @@ const ResidentialProposalEditor: React.FC = () => {
                 <div>
                   <Label>Terms & Conditions</Label>
                   <Textarea rows={8} value={row.terms_and_conditions || ""} onChange={(e) => update({ terms_and_conditions: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Warranties</Label>
+                  <Textarea rows={6} value={row.warranties || ""} onChange={(e) => update({ warranties: e.target.value })} placeholder="Modules, inverter, structure, workmanship…" />
+                </div>
+                <div>
+                  <Label>Service & AMC</Label>
+                  <Textarea rows={6} value={row.service_amc || ""} onChange={(e) => update({ service_amc: e.target.value })} placeholder="AMC plans, visit frequency, response time…" />
                 </div>
               </TabsContent>
 
@@ -684,6 +760,12 @@ const ResidentialProposalEditor: React.FC = () => {
                 subsidyInLoan={row.subsidy_in_loan}
                 offerLabel={row.offer_label}
                 offerDescription={selectedOffer?.description || null}
+                billSummary={row.bill_summary}
+                warranties={row.warranties}
+                serviceAmc={row.service_amc}
+                locationCity={row.location_city}
+                locationState={row.location_state}
+                dailyGenerationKwhPerKw={row.daily_generation_kwh_per_kw}
               />
             </div>
           </div>

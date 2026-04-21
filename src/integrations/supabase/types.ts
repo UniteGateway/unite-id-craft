@@ -289,6 +289,39 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_settings: {
+        Row: {
+          created_at: string
+          general_terms: string
+          id: string
+          service_amc: string
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+          warranties: string
+        }
+        Insert: {
+          created_at?: string
+          general_terms?: string
+          id?: string
+          service_amc?: string
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          warranties?: string
+        }
+        Update: {
+          created_at?: string
+          general_terms?: string
+          id?: string
+          service_amc?: string
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          warranties?: string
+        }
+        Relationships: []
+      }
       proposals: {
         Row: {
           addons: Json
@@ -495,6 +528,7 @@ export type Database = {
       }
       residential_proposals: {
         Row: {
+          bill_summary: Json
           boq: Json
           capacity_kw: number | null
           category: string
@@ -507,11 +541,14 @@ export type Database = {
           cover_image_url: string | null
           cover_source: string | null
           created_at: string
+          daily_generation_kwh_per_kw: number | null
           id: string
           inverter_capacity: number | null
           is_customised: boolean
           loan_interest_rate: number
           loan_tenure_years: number
+          location_city: string | null
+          location_state: string | null
           monthly_savings_per_kw: number
           offer_discount: number
           offer_id: string | null
@@ -521,6 +558,7 @@ export type Database = {
           payment_mode: string
           preset_id: string | null
           proposal_number: string | null
+          service_amc: string | null
           status: string
           structure_type: string | null
           subsidy_amount: number
@@ -530,8 +568,10 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          warranties: string | null
         }
         Insert: {
+          bill_summary?: Json
           boq?: Json
           capacity_kw?: number | null
           category?: string
@@ -544,11 +584,14 @@ export type Database = {
           cover_image_url?: string | null
           cover_source?: string | null
           created_at?: string
+          daily_generation_kwh_per_kw?: number | null
           id?: string
           inverter_capacity?: number | null
           is_customised?: boolean
           loan_interest_rate?: number
           loan_tenure_years?: number
+          location_city?: string | null
+          location_state?: string | null
           monthly_savings_per_kw?: number
           offer_discount?: number
           offer_id?: string | null
@@ -558,6 +601,7 @@ export type Database = {
           payment_mode?: string
           preset_id?: string | null
           proposal_number?: string | null
+          service_amc?: string | null
           status?: string
           structure_type?: string | null
           subsidy_amount?: number
@@ -567,8 +611,10 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id: string
+          warranties?: string | null
         }
         Update: {
+          bill_summary?: Json
           boq?: Json
           capacity_kw?: number | null
           category?: string
@@ -581,11 +627,14 @@ export type Database = {
           cover_image_url?: string | null
           cover_source?: string | null
           created_at?: string
+          daily_generation_kwh_per_kw?: number | null
           id?: string
           inverter_capacity?: number | null
           is_customised?: boolean
           loan_interest_rate?: number
           loan_tenure_years?: number
+          location_city?: string | null
+          location_state?: string | null
           monthly_savings_per_kw?: number
           offer_discount?: number
           offer_id?: string | null
@@ -595,6 +644,7 @@ export type Database = {
           payment_mode?: string
           preset_id?: string | null
           proposal_number?: string | null
+          service_amc?: string | null
           status?: string
           structure_type?: string | null
           subsidy_amount?: number
@@ -604,6 +654,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          warranties?: string | null
         }
         Relationships: [
           {
