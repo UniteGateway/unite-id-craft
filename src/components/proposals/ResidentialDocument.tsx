@@ -1,6 +1,17 @@
 import React from "react";
 import { BoqLine, ResidentialComputed, FinanceComputed, inr } from "@/lib/residential-presets";
 import logoUrl from "@/assets/unite-solar-logo.png";
+import { buildRoiSeries, generationFor } from "@/lib/india-solar";
+
+export type BillSummary = {
+  consumer_name?: string;
+  state?: string;
+  billing_month?: string;
+  monthly_units?: number;
+  monthly_bill?: number;
+  energy_charge_per_unit?: number;
+  sanction_load_kw?: number;
+};
 
 type Props = {
   title: string;
@@ -23,6 +34,13 @@ type Props = {
   subsidyInLoan?: boolean;
   offerLabel?: string | null;
   offerDescription?: string | null;
+  // New
+  billSummary?: BillSummary | null;
+  warranties?: string | null;
+  serviceAmc?: string | null;
+  locationCity?: string | null;
+  locationState?: string | null;
+  dailyGenerationKwhPerKw?: number | null;
 };
 
 const Page: React.FC<{ children: React.ReactNode }> = ({ children }) => (
