@@ -94,6 +94,9 @@ const ResidentialProposalEditor: React.FC = () => {
   const [dupOpen, setDupOpen] = useState(false);
   const [dupBusy, setDupBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const billInputRef = useRef<HTMLInputElement>(null);
+  const [billBusy, setBillBusy] = useState(false);
+  const [billInfo, setBillInfo] = useState<{ units: number; tariff: number; bill: number } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -294,6 +297,44 @@ const ResidentialProposalEditor: React.FC = () => {
     a.download = `${selectedOffer.name.replace(/\s+/g, "_")}_flyer`;
     a.target = "_blank";
     a.click();
+  };
+
+  // Power bill upload → Lovable AI extraction → fill monthly_savings_per_kw
+  const onUploadBill = async (file: File) => {
+    if (!row) return;
+    setBillBusy(true);
+    try {
+      const fileBase64: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve((r.result as string).split(",")[1] || "");
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("extract-power-bill", {
+        body: { fileBase64, mimeType: file.type || "application/octet-stream" },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const units = Number((data as any).monthly_units) || 0;
+      const bill = Number((data as any).monthly_bill) || 0;
+      let tariff = Number((data as any).energy_charge_per_unit) || 0;
+      if (!tariff && units > 0 && bill > 0) tariff = +(bill / units).toFixed(2);
+      const cap = Number(row.capacity_kw) || 1;
+      // Savings per kW = (units × tariff) ÷ kW  (caps at the customer's actual bill)
+      const totalSavings = units * tariff;
+      const perKw = cap > 0 ? Math.round(totalSavings / cap) : 0;
+      setBillInfo({ units, tariff, bill });
+      if (perKw > 0) {
+        update({ monthly_savings_per_kw: perKw });
+        toast.success(`Bill parsed: ${units} units @ ₹${tariff}/u → ₹${perKw}/kW/mo`);
+      } else {
+        toast.warning("Couldn't compute savings — check the extracted values.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to parse bill");
+    } finally {
+      setBillBusy(false);
+    }
   };
 
   // Duplicate current BOQ to N new proposals at other sizes
