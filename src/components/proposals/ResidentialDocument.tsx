@@ -394,6 +394,103 @@ const ResidentialDocument: React.FC<Props> = (props) => {
         </Page>
       )}
 
+      {/* ROI — Cumulative Savings vs Net Cost */}
+      {roi && finance && finance.monthlySavings > 0 && (
+        <Page>
+          <PageHeader label="Return on Investment" />
+          <h2 className="text-2xl font-extrabold mb-2" style={{ color: "#1a3c6e" }}>Return on Investment</h2>
+          <p className="text-xs text-slate-600 mb-4">
+            Cumulative savings vs net system cost over 25 years. Assumes 2.5% annual tariff escalation and 0.6% panel degradation.
+          </p>
+
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="p-3 rounded text-white" style={{ background: "#1a3c6e" }}>
+              <div className="text-xs opacity-90">Net Cost</div>
+              <div className="text-lg font-extrabold">{inr(Math.max(0, finance.netCost - finance.subsidy))}</div>
+            </div>
+            <div className="p-3 rounded text-white" style={{ background: "#f08c00" }}>
+              <div className="text-xs opacity-90">Payback Period</div>
+              <div className="text-lg font-extrabold">{roi.paybackYear ? `${roi.paybackYear} years` : "> 25 yrs"}</div>
+            </div>
+            <div className="p-3 rounded text-white" style={{ background: "#10b981" }}>
+              <div className="text-xs opacity-90">25-yr Lifetime Savings</div>
+              <div className="text-lg font-extrabold">{inr(roi.lifetimeSavings)}</div>
+            </div>
+          </div>
+
+          {/* Inline SVG chart — cumulative savings line, net cost as horizontal break-even */}
+          {(() => {
+            const W = 640, H = 280, padL = 60, padR = 20, padT = 20, padB = 36;
+            const innerW = W - padL - padR;
+            const innerH = H - padT - padB;
+            const yMax = Math.max(roi.lifetimeSavings, Math.max(0, finance.netCost - finance.subsidy)) * 1.05;
+            const xFor = (y: number) => padL + ((y - 1) / (roi.series.length - 1)) * innerW;
+            const yFor = (v: number) => padT + innerH - (v / yMax) * innerH;
+            const path = roi.series.map((p, i) => `${i === 0 ? "M" : "L"} ${xFor(p.year).toFixed(1)} ${yFor(p.cumulative).toFixed(1)}`).join(" ");
+            const breakEvenY = yFor(Math.max(0, finance.netCost - finance.subsidy));
+            const ticksX = [1, 5, 10, 15, 20, 25];
+            const ticksY = 5;
+            return (
+              <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="280" style={{ background: "#f8fafc", borderRadius: 8 }}>
+                {/* gridlines */}
+                {Array.from({ length: ticksY + 1 }).map((_, i) => {
+                  const v = (yMax / ticksY) * i;
+                  const y = yFor(v);
+                  return (
+                    <g key={i}>
+                      <line x1={padL} x2={W - padR} y1={y} y2={y} stroke="#e2e8f0" strokeWidth={1} />
+                      <text x={padL - 6} y={y + 3} fontSize="9" textAnchor="end" fill="#64748b">
+                        {v >= 100000 ? `₹${(v / 100000).toFixed(1)}L` : `₹${Math.round(v / 1000)}k`}
+                      </text>
+                    </g>
+                  );
+                })}
+                {/* x ticks */}
+                {ticksX.map((tk) => (
+                  <g key={tk}>
+                    <line x1={xFor(tk)} x2={xFor(tk)} y1={padT + innerH} y2={padT + innerH + 4} stroke="#94a3b8" />
+                    <text x={xFor(tk)} y={padT + innerH + 16} fontSize="10" textAnchor="middle" fill="#64748b">Yr {tk}</text>
+                  </g>
+                ))}
+                {/* break-even line */}
+                <line x1={padL} x2={W - padR} y1={breakEvenY} y2={breakEvenY} stroke="#1a3c6e" strokeDasharray="4 4" strokeWidth={1.5} />
+                <text x={W - padR - 4} y={breakEvenY - 4} fontSize="10" textAnchor="end" fill="#1a3c6e" fontWeight="bold">
+                  Net Cost {inr(Math.max(0, finance.netCost - finance.subsidy))}
+                </text>
+                {/* cumulative area */}
+                <path d={`${path} L ${xFor(roi.series.length).toFixed(1)} ${yFor(0).toFixed(1)} L ${xFor(1).toFixed(1)} ${yFor(0).toFixed(1)} Z`}
+                      fill="#10b98122" />
+                {/* cumulative line */}
+                <path d={path} fill="none" stroke="#10b981" strokeWidth={2.5} />
+                {/* payback marker */}
+                {roi.paybackYear && (
+                  <g>
+                    <circle cx={xFor(roi.paybackYear)} cy={breakEvenY} r={5} fill="#f08c00" stroke="#fff" strokeWidth={2} />
+                    <text x={xFor(roi.paybackYear)} y={breakEvenY - 12} fontSize="11" textAnchor="middle" fill="#f08c00" fontWeight="bold">
+                      Payback: Year {roi.paybackYear}
+                    </text>
+                  </g>
+                )}
+                {/* axes */}
+                <line x1={padL} x2={padL} y1={padT} y2={padT + innerH} stroke="#94a3b8" />
+                <line x1={padL} x2={W - padR} y1={padT + innerH} y2={padT + innerH} stroke="#94a3b8" />
+              </svg>
+            );
+          })()}
+
+          <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
+            <div className="p-3 rounded border border-slate-200">
+              <div className="font-bold mb-1" style={{ color: "#1a3c6e" }}>Year 1</div>
+              <div>Savings: <b>{inr(roi.series[0].yearly)}</b></div>
+            </div>
+            <div className="p-3 rounded border border-slate-200">
+              <div className="font-bold mb-1" style={{ color: "#10b981" }}>Year 25 cumulative</div>
+              <div>Total: <b>{inr(roi.series[roi.series.length - 1].cumulative)}</b></div>
+            </div>
+          </div>
+        </Page>
+      )}
+
       {/* T&C */}
       <Page>
         <PageHeader label="Terms & Conditions" />
