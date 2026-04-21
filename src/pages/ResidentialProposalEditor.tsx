@@ -491,6 +491,44 @@ const ResidentialProposalEditor: React.FC = () => {
 
               <TabsContent value="finance" className="space-y-3 mt-3">
                 <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-wide flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" /> Power Bill (AI auto-fill)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <p className="text-[11px] text-muted-foreground">
+                      Upload the customer's electricity bill (PDF or image). We'll extract units & tariff and set savings per kW.
+                    </p>
+                    <input
+                      ref={billInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      hidden
+                      onChange={(e) => e.target.files?.[0] && onUploadBill(e.target.files[0])}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => billInputRef.current?.click()}
+                      disabled={billBusy}
+                    >
+                      {billBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />}
+                      {billBusy ? "Parsing bill…" : "Upload power bill"}
+                    </Button>
+                    {billInfo && (
+                      <div className="rounded border p-2 bg-muted/40 text-[11px] space-y-0.5">
+                        <div className="flex justify-between"><span>Monthly units</span><b>{billInfo.units}</b></div>
+                        <div className="flex justify-between"><span>Tariff</span><b>₹{billInfo.tariff}/unit</b></div>
+                        <div className="flex justify-between"><span>Bill amount</span><b>{inr(billInfo.bill)}</b></div>
+                        <div className="flex justify-between border-t pt-1"><span>Savings / kW / month</span><b className="text-primary">{inr(row.monthly_savings_per_kw)}</b></div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
                   <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wide">Subsidy</CardTitle></CardHeader>
                   <CardContent className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
