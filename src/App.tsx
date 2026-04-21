@@ -18,6 +18,7 @@ import Proposals from "./pages/Proposals.tsx";
 import Designs from "./pages/Designs.tsx";
 import ProposalEditor from "./pages/ProposalEditor.tsx";
 import CommunityProposalEditor from "./pages/CommunityProposalEditor.tsx";
+import ResidentialProposalEditor from "./pages/ResidentialProposalEditor.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
 const queryClient = new QueryClient();
@@ -95,6 +96,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CommunityProposalEditor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proposals/residential/:id"
+              element={
+                <ProtectedRoute>
+                  <ResidentialProposalEditor />
                 </ProtectedRoute>
               }
             />

@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, FileSignature, Trash2, Loader2, Pencil, Copy, Building2 } from "lucide-react";
+import { Plus, FileSignature, Trash2, Loader2, Pencil, Copy, Building2, Home, Sparkles } from "lucide-react";
 import { inr } from "@/lib/proposal-calc";
+import { RESIDENTIAL_KW_OPTIONS } from "@/lib/residential-presets";
 
 interface Row {
   id: string;
@@ -31,17 +32,29 @@ interface CommunityRow {
   updated_at: string;
 }
 
+interface ResidentialRow {
+  id: string;
+  title: string;
+  client_name: string | null;
+  client_location: string | null;
+  capacity_kw: number | null;
+  is_customised: boolean | null;
+  computed: any;
+  updated_at: string;
+}
+
 const ProposalsList: React.FC = () => {
   const nav = useNavigate();
   const { user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [communityRows, setCommunityRows] = useState<CommunityRow[]>([]);
+  const [residentialRows, setResidentialRows] = useState<ResidentialRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const [{ data, error }, { data: cData, error: cErr }] = await Promise.all([
+    const [{ data, error }, { data: cData, error: cErr }, { data: rData, error: rErr }] = await Promise.all([
       supabase
         .from("proposals")
         .select("id,title,client_name,client_location,capacity_kw,computed,updated_at")
@@ -50,12 +63,18 @@ const ProposalsList: React.FC = () => {
         .from("community_proposals")
         .select("id,title,community_name,location,theme,computed,updated_at")
         .order("updated_at", { ascending: false }),
+      supabase
+        .from("residential_proposals")
+        .select("id,title,client_name,client_location,capacity_kw,is_customised,computed,updated_at")
+        .order("updated_at", { ascending: false }),
     ]);
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     if (cErr) { toast.error(cErr.message); return; }
+    if (rErr) { toast.error(rErr.message); return; }
     setRows((data as any) || []);
     setCommunityRows((cData as any) || []);
+    setResidentialRows((rData as any) || []);
   };
 
   useEffect(() => { load(); }, [user]);
