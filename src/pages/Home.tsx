@@ -123,6 +123,28 @@ const Home: React.FC = () => {
     ? [...workTiles, { icon: ShieldCheck, title: "Admin", desc: "API keys & brand library", to: "/admin", hue: "from-emerald-600 to-teal-500", image: IMG.admin, ready: true } as Tile]
     : workTiles;
 
+  const trackClick = (tile: Tile) => {
+    // Fire-and-forget; ignore errors so navigation is never blocked
+    supabase
+      .from("tile_clicks")
+      .insert({
+        tile_key: tile.title,
+        destination: tile.to,
+        user_id: user?.id ?? null,
+      })
+      .then(() => {})
+      .then(undefined, () => {});
+  };
+
+  const handleTileClick = (tile: Tile) => {
+    trackClick(tile);
+    if (tile.to.startsWith("http")) {
+      window.open(tile.to, "_blank", "noopener,noreferrer");
+    } else {
+      nav(tile.to);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <AppNav />
@@ -146,11 +168,7 @@ const Home: React.FC = () => {
               <Tile
                 key={t.title}
                 tile={t}
-                onClick={() =>
-                  t.to.startsWith("http")
-                    ? window.open(t.to, "_blank", "noopener,noreferrer")
-                    : nav(t.to)
-                }
+                onClick={() => handleTileClick(t)}
               />
             ))}
           </div>
@@ -162,7 +180,7 @@ const Home: React.FC = () => {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {stationeryTiles.map((t) => (
-              <Tile key={t.title} tile={t} onClick={() => nav(t.to)} />
+              <Tile key={t.title} tile={t} onClick={() => handleTileClick(t)} />
             ))}
           </div>
         </section>
@@ -173,7 +191,7 @@ const Home: React.FC = () => {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {visibleWorkTiles.map((t) => (
-              <Tile key={t.title} tile={t} onClick={() => nav(t.to)} />
+              <Tile key={t.title} tile={t} onClick={() => handleTileClick(t)} />
             ))}
           </div>
         </section>
