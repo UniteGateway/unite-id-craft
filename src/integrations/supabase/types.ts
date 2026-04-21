@@ -705,6 +705,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tile_clicks: {
+        Row: {
+          created_at: string
+          destination: string
+          id: string
+          tile_key: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          id?: string
+          tile_key: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          id?: string
+          tile_key?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
