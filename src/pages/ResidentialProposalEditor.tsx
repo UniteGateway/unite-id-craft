@@ -475,6 +475,40 @@ const ResidentialProposalEditor: React.FC = () => {
                   <div><Label>Contact</Label><Input value={row.client_contact || ""} onChange={(e) => update({ client_contact: e.target.value })} /></div>
                   <div><Label>Email</Label><Input value={row.client_email || ""} onChange={(e) => update({ client_email: e.target.value })} /></div>
                 </div>
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                  <div>
+                    <Label className="text-xs">State (for solar generation)</Label>
+                    <Select value={row.location_state || ""} onValueChange={(v) => update({ location_state: v, location_city: null, daily_generation_kwh_per_kw: DEFAULT_KWH_PER_KW_PER_DAY })}>
+                      <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {INDIAN_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">City</Label>
+                    <Select
+                      value={row.location_city || ""}
+                      onValueChange={(v) => {
+                        const c = lookupCity(v);
+                        update({ location_city: v, daily_generation_kwh_per_kw: c?.kWhPerKwPerDay ?? DEFAULT_KWH_PER_KW_PER_DAY });
+                      }}
+                      disabled={!row.location_state}
+                    >
+                      <SelectTrigger><SelectValue placeholder={row.location_state ? "Select city" : "Pick state first"} /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {(row.location_state ? citiesByState(row.location_state) : []).map(c => (
+                          <SelectItem key={c.city} value={c.city}>{c.city} ({c.kWhPerKwPerDay} kWh/kW/day)</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {row.location_city && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Estimated generation: <b>{((row.daily_generation_kwh_per_kw || 0) * (row.capacity_kw || 0)).toFixed(1)} kWh/day</b> ({Math.round((row.daily_generation_kwh_per_kw || 0) * (row.capacity_kw || 0) * 365).toLocaleString("en-IN")} kWh/year)
+                  </p>
+                )}
               </TabsContent>
 
               <TabsContent value="system" className="space-y-3 mt-3">
@@ -488,6 +522,14 @@ const ResidentialProposalEditor: React.FC = () => {
                 <div>
                   <Label>Terms & Conditions</Label>
                   <Textarea rows={8} value={row.terms_and_conditions || ""} onChange={(e) => update({ terms_and_conditions: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Warranties</Label>
+                  <Textarea rows={6} value={row.warranties || ""} onChange={(e) => update({ warranties: e.target.value })} placeholder="Modules, inverter, structure, workmanship…" />
+                </div>
+                <div>
+                  <Label>Service & AMC</Label>
+                  <Textarea rows={6} value={row.service_amc || ""} onChange={(e) => update({ service_amc: e.target.value })} placeholder="AMC plans, visit frequency, response time…" />
                 </div>
               </TabsContent>
 
@@ -718,6 +760,12 @@ const ResidentialProposalEditor: React.FC = () => {
                 subsidyInLoan={row.subsidy_in_loan}
                 offerLabel={row.offer_label}
                 offerDescription={selectedOffer?.description || null}
+                billSummary={row.bill_summary}
+                warranties={row.warranties}
+                serviceAmc={row.service_amc}
+                locationCity={row.location_city}
+                locationState={row.location_state}
+                dailyGenerationKwhPerKw={row.daily_generation_kwh_per_kw}
               />
             </div>
           </div>
