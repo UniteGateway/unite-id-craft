@@ -120,6 +120,30 @@ const ResidentialDocument: React.FC<Props> = (props) => {
             <h1 className="text-5xl font-extrabold leading-tight drop-shadow-lg">{title || `${capacityKw} kW Solar Solution`}</h1>
             <p className="mt-3 text-lg opacity-95">Prepared for <span className="font-bold">{client.name || "—"}</span></p>
             <p className="text-sm opacity-90">{client.location || ""}</p>
+            {hasBill && (
+              <div className="mt-5 inline-block rounded-lg bg-white/95 text-slate-900 p-4 shadow-lg max-w-md">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-orange-600 mb-1">
+                  Based on customer's actual electricity bill
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                  {billSummary?.consumer_name && (
+                    <div className="col-span-2"><b>Consumer:</b> {billSummary.consumer_name}</div>
+                  )}
+                  {!!billSummary?.monthly_units && (
+                    <div><b>Avg units / month:</b> {Math.round(billSummary.monthly_units)}</div>
+                  )}
+                  {!!billSummary?.energy_charge_per_unit && (
+                    <div><b>Tariff:</b> ₹{billSummary.energy_charge_per_unit}/unit</div>
+                  )}
+                  {!!billSummary?.monthly_bill && (
+                    <div><b>Monthly bill:</b> {inr(billSummary.monthly_bill)}</div>
+                  )}
+                  {!!billSummary?.sanction_load_kw && (
+                    <div><b>Sanctioned load:</b> {billSummary.sanction_load_kw} kW</div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Page>
