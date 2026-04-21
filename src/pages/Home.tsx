@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import PageBanner, { BANNERS } from "@/components/PageBanner";
+import AppFooter from "@/components/AppFooter";
 
 interface Tile {
   icon: React.ElementType;
@@ -120,7 +121,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppNav />
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-5 md:py-6 pb-[env(safe-area-inset-bottom)]">
         <PageBanner
           image={BANNERS.studio}
           eyebrow="Exclusive Unite Solar Studio"
@@ -128,7 +129,7 @@ const Home: React.FC = () => {
           title={`Welcome${user?.email ? `, ${user.email.split("@")[0]}` : ""} 👋`}
           subtitle="Pick a tool below to start designing on-brand — ID cards, business cards, proposals & more."
           height="md"
-          className="mb-8"
+          className="mb-6 md:mb-8"
         />
 
         <section className="mb-10">
@@ -165,11 +166,7 @@ const Home: React.FC = () => {
         </section>
       </main>
 
-      <footer className="py-6 text-center border-t border-border">
-        <p className="text-xs text-muted-foreground">
-          Powered by <span className="font-semibold text-foreground">Unite Developers Global Inc</span>
-        </p>
-      </footer>
+      <AppFooter />
     </div>
   );
 };
