@@ -76,9 +76,23 @@ const ResidentialDocument: React.FC<Props> = (props) => {
     title, proposalNumber, client, capacityKw, panelCount, panelWattage, inverterCapacity,
     structureType, boq, terms, computed, coverUrl, category, finance,
     paymentMode = "cash", loanInterestRate, loanTenureYears, subsidyInLoan, offerLabel, offerDescription,
+    billSummary, warranties, serviceAmc,
+    locationCity, locationState, dailyGenerationKwhPerKw,
   } = props;
 
   const isLoan = paymentMode === "loan";
+
+  const hasBill = !!(billSummary && (billSummary.monthly_units || billSummary.monthly_bill));
+  const generation = dailyGenerationKwhPerKw && capacityKw
+    ? generationFor(capacityKw, dailyGenerationKwhPerKw)
+    : null;
+  const roi = finance
+    ? buildRoiSeries({
+        netCost: Math.max(0, finance.netCost - finance.subsidy),
+        monthlySavings: finance.monthlySavings,
+        years: 25,
+      })
+    : null;
 
   return (
     <div id="proposal-doc" className="space-y-6">
