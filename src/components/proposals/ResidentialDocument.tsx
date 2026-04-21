@@ -46,7 +46,16 @@ type Props = {
 const Page: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div
     className="pdf-page bg-white text-slate-900 mx-auto shadow-lg"
-    style={{ width: "210mm", minHeight: "297mm", padding: "16mm", boxSizing: "border-box" }}
+    style={{
+      width: "210mm",
+      height: "297mm",
+      padding: "16mm",
+      boxSizing: "border-box",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      pageBreakAfter: "always",
+    }}
   >
     {children}
   </div>
@@ -95,13 +104,12 @@ const ResidentialDocument: React.FC<Props> = (props) => {
     : null;
 
   return (
-    <div id="proposal-doc" className="space-y-6">
+    <div id="proposal-doc">
       {/* COVER */}
       <Page>
         <div
-          className="relative w-full h-full rounded-md overflow-hidden flex flex-col justify-between"
+          className="relative w-full rounded-md overflow-hidden flex flex-col justify-between flex-1"
           style={{
-            minHeight: "265mm",
             backgroundImage: coverUrl ? `url(${coverUrl})` : "linear-gradient(135deg, #1a3c6e, #f08c00)",
             backgroundSize: "cover",
             backgroundPosition: "center",
