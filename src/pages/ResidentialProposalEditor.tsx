@@ -30,6 +30,7 @@ import {
 import ResidentialDocument from "@/components/proposals/ResidentialDocument";
 import DuplicateToSizesDialog from "@/components/proposals/DuplicateToSizesDialog";
 import { exportProposalPdf } from "@/lib/proposal-export";
+import { INDIAN_STATES, INDIA_CITY_SOLAR, citiesByState, lookupCity, DEFAULT_KWH_PER_KW_PER_DAY } from "@/lib/india-solar";
 
 type Row = {
   id: string;
@@ -65,6 +66,13 @@ type Row = {
   loan_tenure_years: number;
   subsidy_in_loan: boolean;
   monthly_savings_per_kw: number;
+  // new
+  bill_summary: any;
+  warranties: string | null;
+  service_amc: string | null;
+  location_city: string | null;
+  location_state: string | null;
+  daily_generation_kwh_per_kw: number | null;
 };
 
 type Offer = {
@@ -127,6 +135,12 @@ const ResidentialProposalEditor: React.FC = () => {
       const { data } = await supabase.from("residential_presets").select("*").eq("capacity_kw", Number(presetKw)).maybeSingle();
       preset = data;
     }
+    // Pull global defaults (warranties / AMC / general terms) from admin settings.
+    const { data: settings } = await supabase
+      .from("proposal_settings")
+      .select("warranties, service_amc, general_terms")
+      .limit(1)
+      .maybeSingle();
     const cap = preset?.capacity_kw ?? (isCustom ? 5 : Number(presetKw));
     const insert = {
       user_id: user.id,
@@ -141,9 +155,12 @@ const ResidentialProposalEditor: React.FC = () => {
       structure_type: preset?.structure_type ?? "GI elevated rooftop structure",
       cost_per_kw: preset?.cost_per_kw ?? 55000,
       boq: preset?.boq ?? [],
-      terms_and_conditions: preset?.terms_and_conditions ?? DEFAULT_RESIDENTIAL_TERMS,
+      terms_and_conditions: settings?.general_terms || preset?.terms_and_conditions || DEFAULT_RESIDENTIAL_TERMS,
+      warranties: settings?.warranties || null,
+      service_amc: settings?.service_amc || null,
       subsidy_amount: preset?.subsidy_amount ?? computeResidentialSubsidy(cap),
       subsidy_per_kw: preset?.subsidy_per_kw ?? 0,
+      daily_generation_kwh_per_kw: DEFAULT_KWH_PER_KW_PER_DAY,
     };
     const { data: created, error } = await supabase.from("residential_proposals").insert(insert).select("*").single();
     setLoading(false);
@@ -255,6 +272,12 @@ const ResidentialProposalEditor: React.FC = () => {
       loan_tenure_years: row.loan_tenure_years,
       subsidy_in_loan: row.subsidy_in_loan,
       monthly_savings_per_kw: row.monthly_savings_per_kw,
+      bill_summary: row.bill_summary || {},
+      warranties: row.warranties,
+      service_amc: row.service_amc,
+      location_city: row.location_city,
+      location_state: row.location_state,
+      daily_generation_kwh_per_kw: row.daily_generation_kwh_per_kw,
       computed: { ...computed, finance } as any,
     }).eq("id", row.id);
     setSaving(false);
@@ -324,6 +347,17 @@ const ResidentialProposalEditor: React.FC = () => {
       const totalSavings = units * tariff;
       const perKw = cap > 0 ? Math.round(totalSavings / cap) : 0;
       setBillInfo({ units, tariff, bill });
+      // Persist the parsed bill on the proposal so it shows on the PDF cover.
+      const summary = {
+        consumer_name: (data as any).consumer_name || "",
+        state: (data as any).state || "",
+        billing_month: (data as any).billing_month || "",
+        monthly_units: units,
+        monthly_bill: bill,
+        energy_charge_per_unit: tariff,
+        sanction_load_kw: Number((data as any).sanction_load_kw) || 0,
+      };
+      update({ bill_summary: summary });
       if (perKw > 0) {
         update({ monthly_savings_per_kw: perKw });
         toast.success(`Bill parsed: ${units} units @ ₹${tariff}/u → ₹${perKw}/kW/mo`);
