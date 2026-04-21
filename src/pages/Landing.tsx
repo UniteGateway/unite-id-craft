@@ -2,53 +2,89 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  CreditCard,
-  Contact,
-  FileImage,
-  BookOpen,
-  Presentation,
-  FileSignature,
-  Mail,
   Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  Palette,
+  Zap,
+  Download,
   LayoutDashboard,
   LibraryBig,
-  ArrowRight,
+  CheckCircle2,
+  BookOpenCheck,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import uniteSolarLogoSrc from "@/assets/unite-solar-logo.png";
 import ThemeToggle from "@/components/ThemeToggle";
+import AppFooter from "@/components/AppFooter";
 import { BANNERS } from "@/components/PageBanner";
 
-interface Tile {
-  icon: React.ElementType;
-  title: string;
-  desc: string;
-  to: string;
-  hue: string; // tailwind gradient classes
-  ready?: boolean;
-}
+/* Curated corporate imagery */
+const IMG = {
+  teamwork:
+    "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=70",
+  designer:
+    "https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=1200&q=70",
+  presentation:
+    "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?auto=format&fit=crop&w=1200&q=70",
+  brand:
+    "https://images.unsplash.com/photo-1542435503-956c469947f6?auto=format&fit=crop&w=1200&q=70",
+};
 
-const tiles: Tile[] = [
-  { icon: CreditCard, title: "ID Cards", desc: "Employee badges, barcodes, A4 sheets", to: "/id-cards", hue: "from-orange-500 to-amber-400", ready: true },
-  { icon: Contact, title: "Business Cards", desc: "3.5×2 visiting cards, 13×19 print", to: "/visiting-cards", hue: "from-blue-600 to-cyan-400", ready: true },
-  { icon: FileImage, title: "Flyers", desc: "Single-page promotional designs", to: "/coming-soon?type=flyers", hue: "from-pink-500 to-rose-400" },
-  { icon: BookOpen, title: "Brochures", desc: "Tri-fold & bi-fold layouts", to: "/coming-soon?type=brochures", hue: "from-emerald-500 to-teal-400" },
-  { icon: Presentation, title: "Presentations", desc: "Pitch decks & PPT templates", to: "/coming-soon?type=presentations", hue: "from-violet-600 to-fuchsia-400" },
-  { icon: FileSignature, title: "Proposals", desc: "Client proposals with pricing", to: "/coming-soon?type=proposals", hue: "from-indigo-600 to-blue-400" },
-  { icon: Mail, title: "Letterheads", desc: "Branded letterhead stationery", to: "/coming-soon?type=letterheads", hue: "from-yellow-500 to-orange-400" },
+const benefits = [
+  {
+    icon: ShieldCheck,
+    title: "100% On-Brand",
+    desc: "Every template uses Unite Solar's approved colors, fonts and logos — no off-brand designs slip out.",
+  },
+  {
+    icon: Zap,
+    title: "Fast as Lightning",
+    desc: "Generate ID cards, business cards and proposals in minutes, not hours.",
+  },
+  {
+    icon: Palette,
+    title: "AI Design Assist",
+    desc: "Describe what you need and let the studio generate ready-to-edit templates.",
+  },
+  {
+    icon: Download,
+    title: "Print-Ready Exports",
+    desc: "300 DPI PNG, PDF and 13×19 print sheets with crop marks & bleed included.",
+  },
+  {
+    icon: LayoutDashboard,
+    title: "Personal Dashboard",
+    desc: "Save, edit and re-export every design you've ever created — in one place.",
+  },
+  {
+    icon: LibraryBig,
+    title: "Brand Library",
+    desc: "Centralised library of approved templates kept in sync across the team.",
+  },
+];
+
+const guidelines = [
+  "Always use the official Unite Solar logo — never recolour or distort it.",
+  "Stick to brand colours: Orange #f08c00, Dark Grey #3a3a3a, Logo Blue #1a3c6e.",
+  "Use Inter font for all designs to keep typography consistent.",
+  "Employee names appear in UPPERCASE bold; IDs use the format US-BA-XXX.",
+  "Always preview before exporting and verify spelling, phone & email.",
+  "Save your work to the Dashboard so it stays available for re-export.",
 ];
 
 const Landing: React.FC = () => {
   const nav = useNavigate();
   const { user } = useAuth();
 
-  const goAuthOrHome = () => nav(user ? "/home" : "/auth");
+  const cta = () => nav(user ? "/home" : "/auth");
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-30 backdrop-blur bg-background/70 border-b border-border">
-        <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-30 backdrop-blur bg-background/80 border-b border-border">
+        <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src={uniteSolarLogoSrc} alt="Unite Solar" className="h-9 object-contain" />
             <span className="font-bold text-foreground hidden sm:block">
@@ -58,34 +94,38 @@ const Landing: React.FC = () => {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             {user ? (
-              <Button onClick={() => nav("/home")}>
+              <Button onClick={() => nav("/home")} size="sm">
                 Open Studio <ArrowRight className="h-4 w-4" />
               </Button>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => nav("/auth")}>Sign in</Button>
-                <Button onClick={() => nav("/auth")}>Get started</Button>
+                <Button variant="ghost" size="sm" onClick={() => nav("/auth")}>
+                  Sign in
+                </Button>
+                <Button size="sm" onClick={() => nav("/auth")}>
+                  Get started
+                </Button>
               </>
             )}
           </div>
         </div>
       </header>
 
-      {/* Hero with banner image */}
+      {/* Hero */}
       <section className="relative overflow-hidden">
         <img
           src={BANNERS.landing}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/75 to-background" />
         <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-primary/30 blur-3xl" />
         <div className="absolute -bottom-20 -right-20 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl px-4 pt-20 pb-24 text-center">
+        <div className="relative mx-auto max-w-6xl px-4 pt-16 md:pt-20 pb-20 md:pb-24 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-semibold mb-6 backdrop-blur">
             <Sparkles className="h-3.5 w-3.5" />
-            Exclusive Unite Solar Design Branding App
+            Exclusive Unite Solar Design Studio
           </div>
           <h1 className="text-4xl md:text-6xl font-extrabold text-foreground tracking-tight drop-shadow-sm">
             Design anything.
@@ -97,84 +137,167 @@ const Landing: React.FC = () => {
           <p className="mt-5 text-base md:text-lg text-foreground/85 max-w-2xl mx-auto">
             A Canva-style design hub built exclusively for the Unite Solar team — ID
             cards, business cards, flyers, brochures, presentations, proposals and
-            letterheads with one click brand consistency.
+            more, all with one-click brand consistency.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" onClick={goAuthOrHome} className="text-base shadow-lg shadow-primary/30">
-              {user ? "Open Studio" : "Login to enter Studio"} <ArrowRight className="h-4 w-4" />
+            <Button size="lg" onClick={cta} className="text-base shadow-lg shadow-primary/30">
+              {user ? "Open Studio" : "Login to enter Studio"}{" "}
+              <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline" onClick={() => nav("/id-cards")} className="backdrop-blur bg-background/60">
-              Try ID Cards (no login)
-            </Button>
+            {!user && (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => nav("/auth")}
+                className="backdrop-blur bg-background/60"
+              >
+                Create an account
+              </Button>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Category grid */}
-      <section className="mx-auto max-w-6xl px-4 pb-16">
-        <h2 className="text-xl font-bold text-foreground mb-1">What will you create today?</h2>
-        <p className="text-sm text-muted-foreground mb-6">Pick a category to start designing</p>
+      {/* Why the studio */}
+      <section className="mx-auto max-w-6xl px-4 py-14 md:py-20">
+        <div className="text-center mb-10">
+          <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">
+            Why Unite Solar Studio
+          </p>
+          <h2 className="text-2xl md:text-4xl font-extrabold text-foreground">
+            Built for speed, locked to brand
+          </h2>
+          <p className="mt-3 text-muted-foreground max-w-2xl mx-auto text-sm md:text-base">
+            Every tool inside the studio is engineered so the Unite Solar team
+            can produce professional, print-ready collateral without a designer.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-          {tiles.map((t) => {
-            const Icon = t.icon;
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+          {benefits.map((b) => {
+            const Icon = b.icon;
             return (
-              <button
-                key={t.title}
-                onClick={() => nav(t.ready ? t.to : t.to)}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-primary/40"
+              <div
+                key={b.title}
+                className="group rounded-2xl border border-border bg-card p-5 hover:border-primary/40 hover:shadow-md transition-all"
               >
-                <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br ${t.hue} transition-opacity`} />
-                <div className={`relative w-11 h-11 rounded-xl bg-gradient-to-br ${t.hue} text-white flex items-center justify-center mb-4`}>
+                <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                   <Icon className="h-5 w-5" />
                 </div>
-                <div className="relative flex items-center justify-between">
-                  <h3 className="font-semibold text-foreground">{t.title}</h3>
-                  {!t.ready && (
-                    <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                      Soon
-                    </span>
-                  )}
-                </div>
-                <p className="relative text-xs text-muted-foreground mt-1">{t.desc}</p>
-              </button>
+                <h3 className="font-semibold text-foreground">{b.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{b.desc}</p>
+              </div>
             );
           })}
         </div>
       </section>
 
-      {/* Tools strip */}
-      <section className="mx-auto max-w-6xl px-4 pb-20">
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-border bg-card p-5 flex items-start gap-3">
-            <LibraryBig className="h-5 w-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-foreground">Brand Library</h4>
-              <p className="text-xs text-muted-foreground mt-1">All approved Unite Solar templates in one place.</p>
-            </div>
+      {/* Image strip */}
+      <section className="bg-muted/40 border-y border-border">
+        <div className="mx-auto max-w-6xl px-4 py-14 md:py-20 grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+          <div className="relative rounded-2xl overflow-hidden border border-border shadow-lg aspect-[4/3]">
+            <img
+              src={IMG.designer}
+              alt="Designer working on Unite Solar designs"
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+            />
           </div>
-          <div className="rounded-2xl border border-border bg-card p-5 flex items-start gap-3">
-            <LayoutDashboard className="h-5 w-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-foreground">Personal Dashboard</h4>
-              <p className="text-xs text-muted-foreground mt-1">Save, edit and re-export every design you make.</p>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-5 flex items-start gap-3">
-            <Sparkles className="h-5 w-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-foreground">Export PDF & PPT</h4>
-              <p className="text-xs text-muted-foreground mt-1">Print-ready 13×19 PDFs with crop marks & bleed.</p>
-            </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">
+              For every team member
+            </p>
+            <h2 className="text-2xl md:text-4xl font-extrabold text-foreground">
+              From sales to ops — everyone designs like a pro
+            </h2>
+            <p className="mt-3 text-muted-foreground text-sm md:text-base">
+              Whether you're handing out a business card, sending a client
+              proposal, or printing a new batch of employee ID cards, the
+              studio gives you on-brand templates ready to personalise.
+            </p>
+            <ul className="mt-5 space-y-2.5">
+              {[
+                "ID cards with barcode & A4 print sheets",
+                "Business cards with 13×19 print layout",
+                "Solar proposals with auto pricing & ROI",
+                "Social media posts & stories",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
-      <footer className="py-6 text-center border-t border-border">
-        <p className="text-xs text-muted-foreground">
-          Powered by <span className="font-semibold text-foreground">Unite Developers Global Inc</span>
-        </p>
-      </footer>
+      {/* Employee guidelines */}
+      <section className="mx-auto max-w-6xl px-4 py-14 md:py-20">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+          <div className="order-2 md:order-1">
+            <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2 inline-flex items-center gap-1.5">
+              <BookOpenCheck className="h-3.5 w-3.5" />
+              Employee guidelines
+            </p>
+            <h2 className="text-2xl md:text-4xl font-extrabold text-foreground">
+              Stay on-brand — every time
+            </h2>
+            <p className="mt-3 text-muted-foreground text-sm md:text-base">
+              Follow these simple rules to make sure everything you produce
+              represents Unite Solar with the same quality and consistency.
+            </p>
+            <ul className="mt-5 space-y-3">
+              {guidelines.map((g, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 rounded-xl border border-border bg-card p-3"
+                >
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center">
+                    {i + 1}
+                  </span>
+                  <p className="text-sm text-foreground">{g}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="order-1 md:order-2 relative rounded-2xl overflow-hidden border border-border shadow-lg aspect-[4/3]">
+            <img
+              src={IMG.brand}
+              alt="Unite Solar brand guidelines"
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="bg-gradient-to-br from-primary/15 via-background to-background border-t border-border">
+        <div className="mx-auto max-w-4xl px-4 py-16 md:py-20 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-semibold mb-5">
+            <Users className="h-3.5 w-3.5" />
+            For Unite Solar team members
+          </div>
+          <h2 className="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight">
+            Ready to design something{" "}
+            <span className="bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent">
+              brilliant?
+            </span>
+          </h2>
+          <p className="mt-4 text-muted-foreground text-sm md:text-base max-w-xl mx-auto">
+            Sign in with your Unite Solar account and the entire studio unlocks instantly.
+          </p>
+          <div className="mt-8">
+            <Button size="lg" onClick={cta} className="text-base shadow-lg shadow-primary/30">
+              {user ? "Open Studio" : "Sign in to continue"}{" "}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <AppFooter />
     </div>
   );
 };
