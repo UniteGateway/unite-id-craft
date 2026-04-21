@@ -46,9 +46,21 @@ const Logo: React.FC<{ small?: boolean }> = ({ small }) => (
   </div>
 );
 
+const PageHeader: React.FC<{ label: string }> = ({ label }) => (
+  <div className="flex items-center justify-between border-b-2 pb-3 mb-6" style={{ borderColor: "#f08c00" }}>
+    <Logo small />
+    <div className="text-xs text-slate-500">{label}</div>
+  </div>
+);
+
 const ResidentialDocument: React.FC<Props> = (props) => {
-  const { title, proposalNumber, client, capacityKw, panelCount, panelWattage, inverterCapacity, structureType, boq, terms, computed, coverUrl,
-    category, finance, paymentMode, loanInterestRate, loanTenureYears, subsidyInLoan, offerLabel, offerDescription } = props;
+  const {
+    title, proposalNumber, client, capacityKw, panelCount, panelWattage, inverterCapacity,
+    structureType, boq, terms, computed, coverUrl, category, finance,
+    paymentMode = "cash", loanInterestRate, loanTenureYears, subsidyInLoan, offerLabel, offerDescription,
+  } = props;
+
+  const isLoan = paymentMode === "loan";
 
   return (
     <div id="proposal-doc" className="space-y-6">
@@ -72,7 +84,7 @@ const ResidentialDocument: React.FC<Props> = (props) => {
             </div>
           </div>
           <div className="relative p-8 text-white">
-            <div className="inline-block px-3 py-1 rounded-full bg-orange-500 text-white text-xs font-bold mb-4">RESIDENTIAL SOLAR PROPOSAL</div>
+            <div className="inline-block px-3 py-1 rounded-full bg-orange-500 text-white text-xs font-bold mb-4">{(category || "RESIDENTIAL").toUpperCase()} SOLAR PROPOSAL</div>
             <h1 className="text-5xl font-extrabold leading-tight drop-shadow-lg">{title || `${capacityKw} kW Solar Solution`}</h1>
             <p className="mt-3 text-lg opacity-95">Prepared for <span className="font-bold">{client.name || "—"}</span></p>
             <p className="text-sm opacity-90">{client.location || ""}</p>
@@ -82,10 +94,7 @@ const ResidentialDocument: React.FC<Props> = (props) => {
 
       {/* OVERVIEW */}
       <Page>
-        <div className="flex items-center justify-between border-b-2 pb-3 mb-6" style={{ borderColor: "#f08c00" }}>
-          <Logo small />
-          <div className="text-xs text-slate-500">Project Overview</div>
-        </div>
+        <PageHeader label="Project Overview" />
         <h2 className="text-2xl font-extrabold mb-4" style={{ color: "#1a3c6e" }}>Project Overview</h2>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -125,16 +134,13 @@ const ResidentialDocument: React.FC<Props> = (props) => {
         </div>
 
         <div className="text-xs text-slate-600 leading-relaxed">
-          This proposal covers the design, supply, installation and commissioning of a {capacityKw} kW grid-connected residential rooftop solar system. The system is designed for maximum generation with Tier-1 components, in compliance with MNRE & local DISCOM standards.
+          This proposal covers the design, supply, installation and commissioning of a {capacityKw} kW grid-connected residential rooftop solar system, with Tier-1 components, in compliance with MNRE & local DISCOM standards.
         </div>
       </Page>
 
       {/* BOQ */}
       <Page>
-        <div className="flex items-center justify-between border-b-2 pb-3 mb-6" style={{ borderColor: "#f08c00" }}>
-          <Logo small />
-          <div className="text-xs text-slate-500">Bill of Quantities</div>
-        </div>
+        <PageHeader label="Bill of Quantities" />
         <h2 className="text-2xl font-extrabold mb-4" style={{ color: "#1a3c6e" }}>Bill of Quantities</h2>
 
         <table className="w-full text-xs border-collapse">
@@ -152,7 +158,7 @@ const ResidentialDocument: React.FC<Props> = (props) => {
             {boq.map((l, i) => (
               <tr key={i} className="border-b border-slate-200">
                 <td className="p-2">{i + 1}</td>
-                <td className="p-2">{l.item}</td>
+                <td className="p-2">{l.item}{l.is_fixed ? <span className="ml-1 text-[9px] uppercase text-slate-500">(fixed)</span> : null}</td>
                 <td className="p-2 text-right">{l.qty}</td>
                 <td className="p-2">{l.unit}</td>
                 <td className="p-2 text-right">{Math.round(l.rate).toLocaleString("en-IN")}</td>
@@ -181,38 +187,135 @@ const ResidentialDocument: React.FC<Props> = (props) => {
         </table>
       </Page>
 
+      {/* FINANCIAL SUMMARY + PAYMENT + SAVINGS + COMPARISON */}
+      {finance && (
+        <Page>
+          <PageHeader label="Financial Summary" />
+          <h2 className="text-2xl font-extrabold mb-4" style={{ color: "#1a3c6e" }}>Financial Summary</h2>
+
+          {/* Section 1 */}
+          <table className="w-full text-sm border-collapse mb-6">
+            <thead>
+              <tr style={{ background: "#1a3c6e", color: "white" }}>
+                <th className="text-left p-2">System Size</th>
+                <th className="text-right p-2">Total Cost</th>
+                <th className="text-right p-2">Subsidy</th>
+                <th className="text-right p-2">Offer Discount</th>
+                <th className="text-right p-2">Net Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-slate-200">
+                <td className="p-2 font-semibold">{capacityKw} kW</td>
+                <td className="p-2 text-right">{inr(finance.totalCost)}</td>
+                <td className="p-2 text-right text-emerald-700">− {inr(finance.subsidy)}</td>
+                <td className="p-2 text-right text-emerald-700">− {inr(finance.offerDiscount)}</td>
+                <td className="p-2 text-right font-extrabold" style={{ color: "#1a3c6e" }}>{inr(Math.max(0, finance.netCost - finance.subsidy))}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Offer */}
+          {(offerLabel || offerDescription) && (
+            <div className="mb-6 p-3 rounded border border-orange-300 bg-orange-50">
+              <div className="text-xs uppercase text-orange-700 font-bold">Special Offer Applied</div>
+              <div className="text-sm font-semibold">{offerLabel}</div>
+              {offerDescription && <div className="text-xs text-slate-700">{offerDescription}</div>}
+            </div>
+          )}
+
+          {/* Section 2 — Payment options */}
+          <h3 className="text-lg font-bold mb-2" style={{ color: "#1a3c6e" }}>Payment Options</h3>
+
+          {!isLoan ? (
+            <div className="p-4 rounded border border-slate-200 mb-6">
+              <div className="text-xs uppercase text-slate-500 font-semibold mb-1">Option A — Cash Payment</div>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div><div className="text-xs text-slate-500">Total Payable</div><div className="font-bold">{inr(finance.totalCost - finance.offerDiscount)}</div></div>
+                <div><div className="text-xs text-slate-500">Subsidy Benefit (post)</div><div className="font-bold text-emerald-700">{inr(finance.subsidy)}</div></div>
+                <div><div className="text-xs text-slate-500">Effective Net Outflow</div><div className="font-bold" style={{ color: "#1a3c6e" }}>{inr(Math.max(0, finance.netCost - finance.subsidy))}</div></div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 mb-6">
+              <div className="p-4 rounded border border-slate-200">
+                <div className="text-xs uppercase text-slate-500 font-semibold mb-1">Option B — Loan @ {loanInterestRate}% × {loanTenureYears} yrs</div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="p-3 rounded bg-slate-100">
+                    <div className="text-xs uppercase font-semibold text-slate-600">Scenario 1 — Without Subsidy</div>
+                    <div className="text-xs text-slate-500 mt-1">EMI</div>
+                    <div className="text-lg font-extrabold">{inr(finance.emiFull)} / mo</div>
+                    <div className="text-xs text-slate-500 mt-1">Total payment</div>
+                    <div className="text-sm font-semibold">{inr(finance.totalPaymentFull)}</div>
+                  </div>
+                  <div className="p-3 rounded" style={{ background: "#fff3e0" }}>
+                    <div className="text-xs uppercase font-semibold text-orange-700">Scenario 2 — After Subsidy</div>
+                    <div className="text-xs text-slate-500 mt-1">EMI (reduced)</div>
+                    <div className="text-lg font-extrabold" style={{ color: "#f08c00" }}>{inr(finance.emiAfterSubsidy)} / mo</div>
+                    <div className="text-xs text-slate-500 mt-1">Loan adjusted to</div>
+                    <div className="text-sm font-semibold">{inr(Math.max(0, finance.netCost - finance.subsidy))}</div>
+                  </div>
+                </div>
+                <div className="text-[11px] text-slate-600 mt-2">
+                  Month 1 EMI = full EMI ({inr(finance.emiFull)}). After subsidy credit (typically 30 days), {subsidyInLoan ? "principal is reduced and EMI is recalculated as shown." : "subsidy is paid to client; EMI continues at full amount."}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 3 — Savings */}
+          <h3 className="text-lg font-bold mb-2" style={{ color: "#1a3c6e" }}>Power Savings</h3>
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="p-3 rounded text-white" style={{ background: "#10b981" }}>
+              <div className="text-xs opacity-90">Monthly Savings</div>
+              <div className="text-2xl font-extrabold">{inr(finance.monthlySavings)}</div>
+            </div>
+            <div className="p-3 rounded text-white" style={{ background: "#059669" }}>
+              <div className="text-xs opacity-90">Annual Savings</div>
+              <div className="text-2xl font-extrabold">{inr(finance.annualSavings)}</div>
+            </div>
+          </div>
+
+          {/* Section 4 — Comparison */}
+          {isLoan && (
+            <>
+              <h3 className="text-lg font-bold mb-2" style={{ color: "#1a3c6e" }}>EMI vs Savings</h3>
+              <table className="w-full text-sm border-collapse mb-4">
+                <thead>
+                  <tr style={{ background: "#3a3a3a", color: "white" }}>
+                    <th className="text-left p-2">Scenario</th>
+                    <th className="text-right p-2">EMI</th>
+                    <th className="text-right p-2">Monthly Savings</th>
+                    <th className="text-right p-2">Net Impact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-2">Before Subsidy Adjustment</td>
+                    <td className="p-2 text-right">{inr(finance.emiFull)}</td>
+                    <td className="p-2 text-right">{inr(finance.monthlySavings)}</td>
+                    <td className={`p-2 text-right font-bold ${finance.netImpactBefore >= 0 ? "text-emerald-700" : "text-red-600"}`}>{inr(finance.netImpactBefore)}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2">After Subsidy Adjustment</td>
+                    <td className="p-2 text-right">{inr(finance.emiAfterSubsidy)}</td>
+                    <td className="p-2 text-right">{inr(finance.monthlySavings)}</td>
+                    <td className={`p-2 text-right font-bold ${finance.netImpactAfter >= 0 ? "text-emerald-700" : "text-red-600"}`}>{inr(finance.netImpactAfter)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </>
+          )}
+
+          <div className="text-[11px] text-slate-600 leading-relaxed border-t pt-2">
+            <b>Notes:</b> Subsidy is credited typically within ~30 days of net-meter approval. Monthly savings assumed at ₹{(finance.monthlySavings / Math.max(1, capacityKw)).toFixed(0)} per kW (DISCOM tariff dependent). EMI applicable from disbursement.
+          </div>
+        </Page>
+      )}
+
       {/* T&C */}
       <Page>
-        <div className="flex items-center justify-between border-b-2 pb-3 mb-6" style={{ borderColor: "#f08c00" }}>
-          <Logo small />
-          <div className="text-xs text-slate-500">Terms & Conditions</div>
-        </div>
-        <h2 className="text-2xl font-extrabold mb-4" style={{ color: "#1a3c6e" }}>Terms & Conditions</h2>
-        <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans leading-relaxed">{terms}</pre>
-
-        <div className="mt-12 grid grid-cols-2 gap-8 text-xs">
-          <div>
-            <div className="border-t border-slate-400 pt-2">For Unite Solar</div>
-            <div className="text-slate-500">Authorised Signatory</div>
-          </div>
-          <div>
-            <div className="border-t border-slate-400 pt-2">Client Acceptance</div>
-            <div className="text-slate-500">{client.name || "—"}</div>
-          </div>
-        </div>
-
-        <div className="mt-16 text-center text-[10px] text-slate-400">Powered by Unite Developers Global Inc</div>
-      </Page>
-    </>
-  );
-
-  // Build sections after T&C above is closed; we'll instead inject the financial pages BEFORE T&C using a helper
-  // (kept lower than easy refactor, see note below)
-};
-
-export default ResidentialDocument;
-          <div className="text-xs text-slate-500">Terms & Conditions</div>
-        </div>
+        <PageHeader label="Terms & Conditions" />
         <h2 className="text-2xl font-extrabold mb-4" style={{ color: "#1a3c6e" }}>Terms & Conditions</h2>
         <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans leading-relaxed">{terms}</pre>
 
