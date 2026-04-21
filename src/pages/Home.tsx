@@ -27,29 +27,48 @@ interface Tile {
   desc: string;
   to: string;
   hue: string;
+  image: string;
   ready?: boolean;
 }
 
+// Curated royalty-free Unsplash thumbnails — corporate, on-brand
+const IMG = {
+  idCards: "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=800&q=70",
+  visiting: "https://images.unsplash.com/photo-1606857521015-7f9fcf423740?auto=format&fit=crop&w=800&q=70",
+  social: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=800&q=70",
+  flyer: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&w=800&q=70",
+  brochure: "https://images.unsplash.com/photo-1542435503-956c469947f6?auto=format&fit=crop&w=800&q=70",
+  presentation: "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?auto=format&fit=crop&w=800&q=70",
+  proposals: "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&w=800&q=70",
+  letterhead: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=70",
+  envelope: "https://images.unsplash.com/photo-1579541814924-49fef17c5be5?auto=format&fit=crop&w=800&q=70",
+  billbook: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=800&q=70",
+  voucher: "https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=800&q=70",
+  library: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=800&q=70",
+  dashboard: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=70",
+  admin: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=70",
+};
+
 const designTiles: Tile[] = [
-  { icon: CreditCard, title: "ID Cards", desc: "Employee badges", to: "/id-cards", hue: "from-orange-500 to-amber-400", ready: true },
-  { icon: Contact, title: "Business Cards", desc: "Visiting cards", to: "/visiting-cards", hue: "from-blue-600 to-cyan-400", ready: true },
-  { icon: Instagram, title: "Social Media", desc: "Instagram posts & stories", to: "/social-media", hue: "from-fuchsia-500 to-pink-500", ready: true },
-  { icon: FileImage, title: "Flyers", desc: "Single-page promos", to: "/designs/flyer", hue: "from-pink-500 to-rose-400", ready: true },
-  { icon: BookOpen, title: "Brochures", desc: "Tri-fold layouts", to: "/designs/brochure", hue: "from-emerald-500 to-teal-400", ready: true },
-  { icon: Presentation, title: "Presentations", desc: "Pitch decks", to: "/designs/presentation", hue: "from-violet-600 to-fuchsia-400", ready: true },
-  { icon: FileSignature, title: "Proposals", desc: "Solar project proposals", to: "/proposals", hue: "from-indigo-600 to-blue-400", ready: true },
+  { icon: CreditCard, title: "ID Cards", desc: "Employee badges", to: "/id-cards", hue: "from-orange-500 to-amber-400", image: IMG.idCards, ready: true },
+  { icon: Contact, title: "Business Cards", desc: "Visiting cards", to: "/visiting-cards", hue: "from-blue-600 to-cyan-400", image: IMG.visiting, ready: true },
+  { icon: Instagram, title: "Social Media", desc: "Instagram posts & stories", to: "/social-media", hue: "from-fuchsia-500 to-pink-500", image: IMG.social, ready: true },
+  { icon: FileImage, title: "Flyers", desc: "Single-page promos", to: "/designs/flyer", hue: "from-pink-500 to-rose-400", image: IMG.flyer, ready: true },
+  { icon: BookOpen, title: "Brochures", desc: "Tri-fold layouts", to: "/designs/brochure", hue: "from-emerald-500 to-teal-400", image: IMG.brochure, ready: true },
+  { icon: Presentation, title: "Presentations", desc: "Pitch decks", to: "/designs/presentation", hue: "from-violet-600 to-fuchsia-400", image: IMG.presentation, ready: true },
+  { icon: FileSignature, title: "Proposals", desc: "Solar project proposals", to: "/proposals", hue: "from-indigo-600 to-blue-400", image: IMG.proposals, ready: true },
 ];
 
 const stationeryTiles: Tile[] = [
-  { icon: Mail, title: "Letterheads", desc: "Corporate stationery", to: "/designs/letterhead", hue: "from-yellow-500 to-orange-400", ready: true },
-  { icon: Mail, title: "Envelopes", desc: "#10 business envelopes", to: "/designs/envelope", hue: "from-amber-500 to-orange-500", ready: true },
-  { icon: Receipt, title: "Billbooks", desc: "Invoices & bills", to: "/designs/billbook", hue: "from-sky-600 to-blue-500", ready: true },
-  { icon: Ticket, title: "Vouchers", desc: "Coupons & gift vouchers", to: "/designs/voucher", hue: "from-rose-500 to-red-400", ready: true },
+  { icon: Mail, title: "Letterheads", desc: "Corporate stationery", to: "/designs/letterhead", hue: "from-yellow-500 to-orange-400", image: IMG.letterhead, ready: true },
+  { icon: Mail, title: "Envelopes", desc: "#10 business envelopes", to: "/designs/envelope", hue: "from-amber-500 to-orange-500", image: IMG.envelope, ready: true },
+  { icon: Receipt, title: "Billbooks", desc: "Invoices & bills", to: "/designs/billbook", hue: "from-sky-600 to-blue-500", image: IMG.billbook, ready: true },
+  { icon: Ticket, title: "Vouchers", desc: "Coupons & gift vouchers", to: "/designs/voucher", hue: "from-rose-500 to-red-400", image: IMG.voucher, ready: true },
 ];
 
 const workTiles: Tile[] = [
-  { icon: LibraryBig, title: "Library", desc: "Brand template library", to: "/visiting-cards?tab=library", hue: "from-slate-700 to-slate-500", ready: true },
-  { icon: LayoutDashboard, title: "Dashboard", desc: "Your saved designs", to: "/dashboard", hue: "from-zinc-800 to-zinc-600", ready: true },
+  { icon: LibraryBig, title: "Library", desc: "Brand template library", to: "/visiting-cards?tab=library", hue: "from-slate-700 to-slate-500", image: IMG.library, ready: true },
+  { icon: LayoutDashboard, title: "Dashboard", desc: "Your saved designs", to: "/dashboard", hue: "from-zinc-800 to-zinc-600", image: IMG.dashboard, ready: true },
 ];
 
 const Tile: React.FC<{ tile: Tile; onClick: () => void }> = ({ tile, onClick }) => {
@@ -57,19 +76,35 @@ const Tile: React.FC<{ tile: Tile; onClick: () => void }> = ({ tile, onClick }) 
   return (
     <button
       onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-primary/40"
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card text-left transition-all hover:-translate-y-1 hover:shadow-xl hover:border-primary/40"
     >
-      <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br ${tile.hue} transition-opacity`} />
-      <div className={`relative w-11 h-11 rounded-xl bg-gradient-to-br ${tile.hue} text-white flex items-center justify-center mb-4`}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <div className="relative flex items-center justify-between">
-        <h3 className="font-semibold text-foreground">{tile.title}</h3>
+      {/* Thumbnail */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+        <img
+          src={tile.image}
+          alt={tile.title}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        {/* Subtle dark gradient for premium feel */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        {/* Brand tint on hover */}
+        <div className={`absolute inset-0 opacity-0 group-hover:opacity-25 bg-gradient-to-br ${tile.hue} transition-opacity`} />
+        {/* Icon chip */}
+        <div className={`absolute top-3 left-3 w-9 h-9 rounded-lg bg-white/95 backdrop-blur text-foreground flex items-center justify-center shadow-md`}>
+          <Icon className="h-4 w-4" />
+        </div>
         {!tile.ready && (
-          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Soon</span>
+          <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/90 text-foreground font-semibold">
+            Soon
+          </span>
         )}
       </div>
-      <p className="relative text-xs text-muted-foreground mt-1">{tile.desc}</p>
+      {/* Caption */}
+      <div className="px-4 py-3 border-t border-border">
+        <h3 className="font-semibold text-foreground text-sm leading-tight">{tile.title}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{tile.desc}</p>
+      </div>
     </button>
   );
 };
@@ -79,7 +114,7 @@ const Home: React.FC = () => {
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
   const visibleWorkTiles = isAdmin
-    ? [...workTiles, { icon: ShieldCheck, title: "Admin", desc: "API keys & brand library", to: "/admin", hue: "from-emerald-600 to-teal-500", ready: true } as Tile]
+    ? [...workTiles, { icon: ShieldCheck, title: "Admin", desc: "API keys & brand library", to: "/admin", hue: "from-emerald-600 to-teal-500", image: IMG.admin, ready: true } as Tile]
     : workTiles;
 
   return (
