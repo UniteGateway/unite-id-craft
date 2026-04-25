@@ -1,5 +1,6 @@
 import React from "react";
 import CoverSlide from "./CoverSlide";
+import OverviewSlide from "./OverviewSlide";
 import { ProposalVars } from "./types";
 
 export interface VariableSlideDef {
@@ -13,7 +14,7 @@ export interface VariableSlideDef {
 
 export const VARIABLE_SLIDE_REGISTRY: VariableSlideDef[] = [
   { n: 10, key: "cover", title: "Cover Page", Component: CoverSlide },
-  { n: 11, key: "overview", title: "Project Overview", Component: null },
+  { n: 11, key: "overview", title: "Project Overview", Component: OverviewSlide },
   { n: 12, key: "site", title: "Site & Location Analysis", Component: null },
   { n: 13, key: "technical", title: "Technical Overview", Component: null },
   { n: 14, key: "layout", title: "System Layout", Component: null },
