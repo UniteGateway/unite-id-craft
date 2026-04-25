@@ -1,16 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import AppNav from "@/components/AppNav";
 import AppFooter from "@/components/AppFooter";
 import PageBanner, { BANNERS } from "@/components/PageBanner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Sparkles, CheckCircle2, Layers, ArrowRight } from "lucide-react";
+import { Sparkles, CheckCircle2, Layers, ArrowRight, FileImage, Loader2 } from "lucide-react";
 
 interface SlideItem {
   n: number;
   title: string;
   desc: string;
+}
+
+interface FixedSlideAsset {
+  id: string;
+  slide_number: number;
+  title: string;
+  description: string | null;
+  image_url: string;
+  sort_order: number;
 }
 
 const FIXED_SLIDES: SlideItem[] = [
@@ -39,7 +49,7 @@ const VARIABLE_SLIDES: SlideItem[] = [
 ];
 
 const SlideRow: React.FC<{ s: SlideItem; tone: "fixed" | "variable" }> = ({ s, tone }) => (
-  <div className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/40 transition-colors">
+  <div className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/40 transition-colors h-full">
     <div
       className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
         tone === "fixed"
@@ -58,6 +68,27 @@ const SlideRow: React.FC<{ s: SlideItem; tone: "fixed" | "variable" }> = ({ s, t
 
 const CreateProposal: React.FC = () => {
   const nav = useNavigate();
+  const [assets, setAssets] = useState<FixedSlideAsset[]>([]);
+  const [loadingAssets, setLoadingAssets] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("fixed_slides")
+        .select("id, slide_number, title, description, image_url, sort_order")
+        .eq("active", true)
+        .order("slide_number", { ascending: true })
+        .order("sort_order", { ascending: true });
+      if (!cancelled) {
+        setAssets((data ?? []) as FixedSlideAsset[]);
+        setLoadingAssets(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const assetsBySlide = (n: number) => assets.filter(a => a.slide_number === n);
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,13 +125,45 @@ const CreateProposal: React.FC = () => {
             </h2>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            No major data changes (only minor name/location swap if needed). These build brand trust + consistency.
+            Preloaded brand slides (uploaded by admin) are auto-attached to every new proposal — no per-project edits required.
           </p>
           <Card className="p-3 md:p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-              {FIXED_SLIDES.map((s) => (
-                <SlideRow key={s.n} s={s} tone="fixed" />
-              ))}
+            <div className="space-y-3">
+              {FIXED_SLIDES.map((s) => {
+                const slideAssets = assetsBySlide(s.n);
+                return (
+                  <div key={s.n} className="rounded-xl border border-border bg-card p-3">
+                    <SlideRow s={s} tone="fixed" />
+                    <div className="mt-3 pl-11">
+                      {loadingAssets ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading preloaded content…
+                        </div>
+                      ) : slideAssets.length === 0 ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <FileImage className="h-3.5 w-3.5 opacity-60" />
+                          No preloaded content yet — admin can upload an A4 image in Admin → Fixed Proposal Slides.
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {slideAssets.map(a => (
+                            <a
+                              key={a.id}
+                              href={a.image_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              title={a.title}
+                              className="group relative block h-24 w-[68px] overflow-hidden rounded-md border border-border bg-muted hover:border-primary/60 transition-colors"
+                            >
+                              <img src={a.image_url} alt={a.title} className="h-full w-full object-cover" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </Card>
         </section>
