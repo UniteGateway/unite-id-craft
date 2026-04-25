@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
 import SolarSidebar from "./SolarSidebar";
@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, Sun } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useBranding } from "@/hooks/useBranding";
 
 interface SolarShellProps {
   title?: string;
@@ -23,6 +24,15 @@ export const SolarShell: React.FC<SolarShellProps> = ({
 }) => {
   const nav = useNavigate();
   const { user, signOut } = useAuth();
+  const { branding } = useBranding();
+
+  // Apply user brand color as a CSS variable scoped to the shell
+  useEffect(() => {
+    if (branding.brand_primary_color) {
+      document.documentElement.style.setProperty("--solar-brand", branding.brand_primary_color);
+    }
+  }, [branding.brand_primary_color]);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -31,8 +41,10 @@ export const SolarShell: React.FC<SolarShellProps> = ({
           <header className="h-14 sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/80 backdrop-blur px-3">
             <SidebarTrigger />
             <div className="flex items-center gap-2 text-sm font-semibold">
-              <Sun className="h-4 w-4 text-primary" />
-              <span>Unite Solar</span>
+              {branding.brand_logo_url
+                ? <img src={branding.brand_logo_url} alt="logo" className="h-6 w-6 object-contain" />
+                : <Sun className="h-4 w-4 text-primary" />}
+              <span>{branding.company || "Unite Solar"}</span>
               {title && <span className="text-muted-foreground font-normal hidden md:inline">/ {title}</span>}
             </div>
             <div className="ml-auto flex items-center gap-2">
