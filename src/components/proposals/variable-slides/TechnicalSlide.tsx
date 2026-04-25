@@ -26,6 +26,10 @@ import {
   Globe,
   HandshakeIcon,
   Building2,
+  Cpu,
+  Activity,
+  Layers,
+  Cable,
   type LucideIcon,
 } from "lucide-react";
 
