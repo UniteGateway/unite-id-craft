@@ -17,6 +17,7 @@ import Admin from "./pages/Admin.tsx";
 import Proposals from "./pages/Proposals.tsx";
 import Designs from "./pages/Designs.tsx";
 import ProposalEditor from "./pages/ProposalEditor.tsx";
+import CreateProposal from "./pages/CreateProposal.tsx";
 import CommunityProposalEditor from "./pages/CommunityProposalEditor.tsx";
 import ResidentialProposalEditor from "./pages/ResidentialProposalEditor.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
@@ -80,6 +81,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Proposals />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/create-proposal"
+              element={
+                <ProtectedRoute>
+                  <CreateProposal />
                 </ProtectedRoute>
               }
             />
