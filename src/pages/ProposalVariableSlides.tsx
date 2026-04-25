@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toPng } from "html-to-image";
 import AppNav from "@/components/AppNav";
@@ -25,6 +25,20 @@ const ProposalVariableSlides: React.FC = () => {
   const [vars, setVars] = useState<ProposalVars>(DEFAULT_VARS);
   const [exporting, setExporting] = useState(false);
   const slideRef = useRef<HTMLDivElement>(null);
+
+  // Hydrate vars from sessionStorage if a generated proposal was just opened.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("unite-solar:incoming-vars");
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<ProposalVars>;
+        setVars((v) => ({ ...v, ...parsed }));
+        sessionStorage.removeItem("unite-solar:incoming-vars");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const active = useMemo(
     () => VARIABLE_SLIDE_REGISTRY.find((s) => s.key === activeKey) ?? VARIABLE_SLIDE_REGISTRY[0],
