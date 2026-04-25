@@ -142,6 +142,80 @@ const TechnicalSlide = forwardRef<HTMLDivElement, Props>(({ vars }, ref) => {
   const projectUpper = vars.PROJECT_NAME.toUpperCase();
   const annualKwh = Number(vars.ANNUAL_UNITS) || 14;
   const lowerRange = annualKwh - 1;
+  const capMW = Number(vars.CAPACITY) || 1;
+  const capKW = capMW * 1000;
+  // Component sizing rules of thumb (per MW)
+  const moduleQty = Math.round((capKW * 1000) / 580); // ~580 Wp per module
+  const inverterQty = Math.max(1, Math.round(capMW / 0.1)); // ~100 kW string inverters
+  const stringMonitorQty = inverterQty;
+  const transformerQty = Math.max(1, Math.ceil(capMW / 1));
+  const dcCableM = Math.round(capKW * 12); // ~12 m DC cable per kW
+  const acCableM = Math.round(capKW * 6);
+
+  const componentRows: Array<{
+    Icon: LucideIcon;
+    component: string;
+    makeType: string;
+    qty: string;
+    specs: string;
+  }> = [
+    {
+      Icon: SunMedium,
+      component: "Solar PV Modules",
+      makeType: "Tier-1 Mono PERC / TOPCon (Bifacial)",
+      qty: `${moduleQty.toLocaleString("en-IN")} Nos.`,
+      specs: "560–600 Wp • 21%+ efficiency • IEC 61215 / 61730 • 25-yr linear power warranty",
+    },
+    {
+      Icon: Cpu,
+      component: "String Inverters",
+      makeType: "Sungrow / SMA / Huawei / equivalent",
+      qty: `${inverterQty} Nos. (~100 kW)`,
+      specs: "98.5%+ efficiency • IP66 • Integrated MPPT, AFCI & SPD • 5-yr standard warranty",
+    },
+    {
+      Icon: Layers,
+      component: "Mounting Structure",
+      makeType: "Hot-Dip Galvanized MS / Aluminium",
+      qty: `For ${capMW} MW array`,
+      specs: "80 µm galvanization • Wind load 150 km/h • 25-yr design life • Pre-engineered",
+    },
+    {
+      Icon: Cable,
+      component: "DC & AC Cabling",
+      makeType: "Polycab / Lapp / Havells – Solar grade",
+      qty: `~${dcCableM.toLocaleString("en-IN")} m DC + ~${acCableM.toLocaleString("en-IN")} m AC`,
+      specs: "XLPE insulated • UV & weather resistant • Copper / Aluminium • TUV certified",
+    },
+    {
+      Icon: Zap,
+      component: "Transformer & LT/HT Panels",
+      makeType: "ABB / Schneider / Siemens",
+      qty: `${transformerQty} Nos.`,
+      specs: "Step-up transformer • VCB / ACB switchgear • Protection relays • IS/IEC compliant",
+    },
+    {
+      Icon: Activity,
+      component: "Net / ABT Metering",
+      makeType: "DISCOM-approved bi-directional meter",
+      qty: "1 Set",
+      specs: "Class 0.5S accuracy • Remote read • Compliant with state DISCOM regulations",
+    },
+    {
+      Icon: MonitorSmartphone,
+      component: "SCADA & Monitoring",
+      makeType: "Cloud + On-site SCADA",
+      qty: `${stringMonitorQty} Data loggers`,
+      specs: "Real-time generation • String-level monitoring • Mobile + Web dashboard • Alerts",
+    },
+    {
+      Icon: ShieldCheck,
+      component: "Safety & Earthing",
+      makeType: "LA + Chemical earthing kits",
+      qty: "As per IS/IEC norms",
+      specs: "Lightning arrestors • DC/AC SPDs • Dedicated earth pits • Fire-safety compliant",
+    },
+  ];
 
   return (
     <SlideFrame ref={ref} className="!bg-white !text-[#0A1B33]">
