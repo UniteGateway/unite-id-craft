@@ -170,8 +170,8 @@ const GenerateProposal: React.FC = () => {
           investment_model: v.investment_model || null,
           approx_budget: v.approx_budget || null,
           custom_notes: v.custom_notes || null,
-          computed: computed as unknown as Record<string, unknown>,
-          ai_recommendation: (aiRec ?? null) as unknown as Record<string, unknown> | null,
+          computed: JSON.parse(JSON.stringify(computed)),
+          ai_recommendation: aiRec ? JSON.parse(JSON.stringify(aiRec)) : null,
         },
       ]);
       setSaving(false);
