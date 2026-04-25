@@ -23,6 +23,14 @@ import GenerateProposal from "./pages/GenerateProposal.tsx";
 import CommunityProposalEditor from "./pages/CommunityProposalEditor.tsx";
 import ResidentialProposalEditor from "./pages/ResidentialProposalEditor.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import SolarDashboard from "./pages/solar/SolarDashboard.tsx";
+import SolarMyProposals from "./pages/solar/SolarMyProposals.tsx";
+import SolarTemplates from "./pages/solar/SolarTemplates.tsx";
+import SolarAssets from "./pages/solar/SolarAssets.tsx";
+import SolarBranding from "./pages/solar/SolarBranding.tsx";
+import SolarSettings from "./pages/solar/SolarSettings.tsx";
+import SolarProposalSummary from "./pages/solar/SolarProposalSummary.tsx";
+import SolarProposalSlides from "./pages/solar/SolarProposalSlides.tsx";
 
 const queryClient = new QueryClient();
 
@@ -142,6 +150,16 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            {/* Solar SaaS shell */}
+            <Route path="/solar" element={<ProtectedRoute><SolarDashboard /></ProtectedRoute>} />
+            <Route path="/solar/generate" element={<ProtectedRoute><GenerateProposal /></ProtectedRoute>} />
+            <Route path="/solar/proposals" element={<ProtectedRoute><SolarMyProposals /></ProtectedRoute>} />
+            <Route path="/solar/proposals/:id/summary" element={<ProtectedRoute><SolarProposalSummary /></ProtectedRoute>} />
+            <Route path="/solar/proposals/:id/slides" element={<ProtectedRoute><SolarProposalSlides /></ProtectedRoute>} />
+            <Route path="/solar/templates" element={<ProtectedRoute><SolarTemplates /></ProtectedRoute>} />
+            <Route path="/solar/assets" element={<ProtectedRoute><SolarAssets /></ProtectedRoute>} />
+            <Route path="/solar/branding" element={<ProtectedRoute><SolarBranding /></ProtectedRoute>} />
+            <Route path="/solar/settings" element={<ProtectedRoute><SolarSettings /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
