@@ -6,7 +6,7 @@ import AppFooter from "@/components/AppFooter";
 import PageBanner, { BANNERS } from "@/components/PageBanner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Sparkles, CheckCircle2, Layers, ArrowRight, FileImage, Loader2 } from "lucide-react";
+import { Sparkles, CheckCircle2, Layers, ArrowRight, FileImage, Loader2, Eye } from "lucide-react";
 
 interface SlideItem {
   n: number;
@@ -112,6 +112,15 @@ const CreateProposal: React.FC = () => {
           </Button>
           <Button size="lg" variant="outline" onClick={() => nav("/proposals")} className="gap-2">
             Start a New Proposal
+          </Button>
+          <Button
+            size="lg"
+            variant="secondary"
+            onClick={() => nav("/proposal-variable-slides")}
+            className="gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            Preview Variable Slides
           </Button>
         </div>
 
