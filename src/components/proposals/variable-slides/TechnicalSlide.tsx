@@ -365,23 +365,61 @@ const TechnicalSlide = forwardRef<HTMLDivElement, Props>(({ vars }, ref) => {
         </div>
       </div>
 
-      {/* ===== KEY HIGHLIGHTS ===== */}
-      <div className="absolute left-[40px] right-[40px]" style={{ top: 880 }}>
-        <SectionTitle width={260}>KEY HIGHLIGHTS</SectionTitle>
+      {/* ===== DETAILED COMPONENTS TABLE ===== */}
+      <div className="absolute left-[40px] right-[40px]" style={{ top: 800 }}>
+        <SectionTitle width={620}>
+          DETAILED BILL OF MATERIALS – {vars.CAPACITY} MW
+        </SectionTitle>
         <div
-          className="mt-3 px-6 py-4 grid grid-cols-6 gap-5"
+          className="mt-3 overflow-hidden"
           style={{
             background: "#F8FAFC",
             border: "1px solid #E5E7EB",
             borderRadius: 14,
           }}
         >
-          <Highlight Icon={TrendingUp} title={"High Energy\nYield"} desc="Maximizing power generation" />
-          <Highlight Icon={ShieldCheck} title={"Reliable & Safe System"} desc="International standard equipment" />
-          <Highlight Icon={Wrench} title="Low Maintenance" desc="Advanced technology ensures low O&M cost" />
-          <Highlight Icon={MonitorSmartphone} title="Smart Monitoring" desc="24/7 remote monitoring & performance tracking" />
-          <Highlight Icon={Repeat} title={"Scalable & Future Ready"} desc="Expandable for future energy needs" />
-          <Highlight Icon={Leaf} title="Sustainable Impact" desc="Clean energy for a greener tomorrow" />
+          {/* Table header */}
+          <div
+            className="grid items-center px-5 py-3 text-white text-[14px] font-extrabold tracking-[0.16em] uppercase"
+            style={{
+              gridTemplateColumns: "330px 430px 260px 1fr",
+              background: NAVY,
+              gap: 16,
+            }}
+          >
+            <div>Component</div>
+            <div>Make / Type</div>
+            <div>Quantity / Sizing</div>
+            <div>Key Specifications</div>
+          </div>
+          {/* Rows */}
+          {componentRows.map((row, i) => (
+            <div
+              key={row.component}
+              className="grid items-center px-5 py-[10px]"
+              style={{
+                gridTemplateColumns: "330px 430px 260px 1fr",
+                gap: 16,
+                background: i % 2 === 0 ? "#FFFFFF" : "#F8FAFC",
+                borderBottom: i === componentRows.length - 1 ? "none" : "1px solid #E5E7EB",
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-md"
+                  style={{ background: "rgba(245,158,11,0.14)" }}
+                >
+                  <row.Icon size={22} color={ORANGE} strokeWidth={2.3} />
+                </div>
+                <div className="text-[15px] font-extrabold tracking-wider uppercase text-[#0A1B33] leading-tight">
+                  {row.component}
+                </div>
+              </div>
+              <div className="text-[14px] text-[#1F2937] leading-snug">{row.makeType}</div>
+              <div className="text-[14px] font-bold text-[#0A1B33] leading-snug">{row.qty}</div>
+              <div className="text-[13px] text-[#475569] leading-snug">{row.specs}</div>
+            </div>
+          ))}
         </div>
       </div>
 
