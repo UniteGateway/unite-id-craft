@@ -14,6 +14,7 @@ import { Key, ImagePlus, Trash2, ShieldCheck, Loader2, Palette, Plus, Users, Use
 import ResidentialPresetsManager from "@/components/admin/ResidentialPresetsManager";
 import ResidentialOffersManager from "@/components/admin/ResidentialOffersManager";
 import ProposalSettingsManager from "@/components/admin/ProposalSettingsManager";
+import FixedSlidesManager from "@/components/admin/FixedSlidesManager";
 
 interface BrandAsset { id: string; name: string; asset_type: string; image_url: string; storage_path: string | null; }
 interface ApiKeyRow { provider: string; label: string | null; updated_at: string; }
@@ -409,6 +410,8 @@ const AdminPage: React.FC = () => {
         <ResidentialOffersManager />
 
         <ProposalSettingsManager />
+
+        <FixedSlidesManager />
 
         <Card>
           <CardHeader>
