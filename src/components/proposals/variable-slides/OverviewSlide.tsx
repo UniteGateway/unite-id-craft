@@ -17,12 +17,13 @@ import {
   Building2,
   Globe,
   IndianRupee,
+  type LucideIcon,
 } from "lucide-react";
 
 const ORANGE = "#F59E0B";
 
 const Stat: React.FC<{
-  Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  Icon: LucideIcon;
   label: string;
   primary: string;
   secondary?: string;
@@ -52,7 +53,7 @@ const Stat: React.FC<{
 );
 
 const Benefit: React.FC<{
-  Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  Icon: LucideIcon;
   title: string;
   desc: string;
 }> = ({ Icon, title, desc }) => (
@@ -73,7 +74,7 @@ const Benefit: React.FC<{
 );
 
 const FootChip: React.FC<{
-  Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  Icon: LucideIcon;
   label: string;
 }> = ({ Icon, label }) => (
   <div className="flex items-center gap-3">
