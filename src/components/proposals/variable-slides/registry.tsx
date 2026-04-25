@@ -5,6 +5,7 @@ import SiteSlide from "./SiteSlide";
 import TechnicalSlide from "./TechnicalSlide";
 import LayoutSlide from "./LayoutSlide";
 import GenerationSlide from "./GenerationSlide";
+import SavingsSlide from "./SavingsSlide";
 import { ProposalVars } from "./types";
 
 export interface VariableSlideDef {
@@ -23,7 +24,7 @@ export const VARIABLE_SLIDE_REGISTRY: VariableSlideDef[] = [
   { n: 13, key: "technical", title: "Technical Overview", Component: TechnicalSlide },
   { n: 14, key: "layout", title: "System Layout", Component: LayoutSlide },
   { n: 15, key: "generation", title: "Energy Generation Analysis", Component: GenerationSlide },
-  { n: 16, key: "savings", title: "Savings Potential", Component: null },
+  { n: 16, key: "savings", title: "Savings Potential", Component: SavingsSlide },
   { n: 17, key: "roi", title: "ROI & Financial Analysis", Component: null },
   { n: 18, key: "feasibility", title: "Feasibility Report", Component: null },
   { n: 19, key: "timeline", title: "Implementation Timeline", Component: null },
