@@ -160,18 +160,20 @@ const GenerateProposal: React.FC = () => {
         setSaving(false);
         return;
       }
-      const { error } = await supabase.from("solar_proposals").insert({
-        user_id: userId,
-        project_name: v.project_name,
-        location: v.location || null,
-        project_type: v.project_type || null,
-        capacity_mw: v.capacity_mw,
-        investment_model: v.investment_model || null,
-        approx_budget: v.approx_budget || null,
-        custom_notes: v.custom_notes || null,
-        computed: computed as unknown as Record<string, unknown>,
-        ai_recommendation: aiRec as unknown as Record<string, unknown> | null,
-      });
+      const { error } = await supabase.from("solar_proposals").insert([
+        {
+          user_id: userId,
+          project_name: v.project_name,
+          location: v.location || null,
+          project_type: v.project_type || null,
+          capacity_mw: v.capacity_mw,
+          investment_model: v.investment_model || null,
+          approx_budget: v.approx_budget || null,
+          custom_notes: v.custom_notes || null,
+          computed: computed as unknown as Record<string, unknown>,
+          ai_recommendation: (aiRec ?? null) as unknown as Record<string, unknown> | null,
+        },
+      ]);
       setSaving(false);
       if (error) {
         toast.error(error.message);
