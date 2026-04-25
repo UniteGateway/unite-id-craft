@@ -2,8 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import AppNav from "@/components/AppNav";
-import AppFooter from "@/components/AppFooter";
+import SolarShell from "@/components/solar/SolarShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -160,7 +159,7 @@ const GenerateProposal: React.FC = () => {
         setSaving(false);
         return;
       }
-      const { error } = await supabase.from("solar_proposals").insert([
+      const { data: inserted, error } = await supabase.from("solar_proposals").insert([
         {
           user_id: userId,
           project_name: v.project_name,
@@ -173,7 +172,7 @@ const GenerateProposal: React.FC = () => {
           computed: JSON.parse(JSON.stringify(computed)),
           ai_recommendation: aiRec ? JSON.parse(JSON.stringify(aiRec)) : null,
         },
-      ]);
+      ]).select("id").single();
       setSaving(false);
       if (error) {
         toast.error(error.message);
@@ -181,6 +180,10 @@ const GenerateProposal: React.FC = () => {
       }
       toast.success("Proposal saved");
       loadSaved();
+      if (inserted?.id) {
+        nav(`/solar/proposals/${inserted.id}/summary`);
+        return;
+      }
     }
 
     const vars = toProposalVars(
@@ -198,24 +201,11 @@ const GenerateProposal: React.FC = () => {
   };
 
   const openSaved = (row: SavedRow) => {
-    const vars = toProposalVars(
-      {
-        project_name: row.project_name,
-        location: row.location ?? "",
-        project_type: row.project_type ?? "",
-        capacity_mw: row.capacity_mw,
-        investment_model: row.investment_model ?? "",
-      },
-      row.computed,
-    );
-    sessionStorage.setItem("unite-solar:incoming-vars", JSON.stringify(vars));
-    nav("/proposal-variable-slides?slide=cover");
+    nav(`/solar/proposals/${row.id}/summary`);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppNav />
-      <main className="mx-auto max-w-7xl px-4 py-6 pb-[env(safe-area-inset-bottom)]">
+    <SolarShell title="Generate Proposal">
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Generate Proposal</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -391,9 +381,7 @@ const GenerateProposal: React.FC = () => {
             </div>
           )}
         </div>
-      </main>
-      <AppFooter />
-    </div>
+    </SolarShell>
   );
 };
 
