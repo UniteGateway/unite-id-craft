@@ -18,6 +18,7 @@ import Proposals from "./pages/Proposals.tsx";
 import Designs from "./pages/Designs.tsx";
 import ProposalEditor from "./pages/ProposalEditor.tsx";
 import CreateProposal from "./pages/CreateProposal.tsx";
+import ProposalVariableSlides from "./pages/ProposalVariableSlides.tsx";
 import CommunityProposalEditor from "./pages/CommunityProposalEditor.tsx";
 import ResidentialProposalEditor from "./pages/ResidentialProposalEditor.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
@@ -89,6 +90,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CreateProposal />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proposal-variable-slides"
+              element={
+                <ProtectedRoute>
+                  <ProposalVariableSlides />
                 </ProtectedRoute>
               }
             />
