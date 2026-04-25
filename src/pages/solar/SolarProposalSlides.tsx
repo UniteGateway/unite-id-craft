@@ -50,12 +50,14 @@ const SolarProposalSlides: React.FC = () => {
         nav("/solar/proposals");
         return;
       }
-      const merged: SolarComputed = { ...(data.computed as SolarComputed), ...((data.overrides as Partial<SolarComputed>) || {}) };
+      const computed = (data.computed as unknown) as SolarComputed;
+      const overrides = ((data.overrides as unknown) as Partial<SolarComputed>) || {};
+      const merged: SolarComputed = { ...computed, ...overrides };
       setRow({
         project_name: data.project_name,
         capacity_mw: Number(data.capacity_mw),
-        computed: data.computed as SolarComputed,
-        overrides: (data.overrides as Partial<SolarComputed>) || {},
+        computed,
+        overrides,
       });
       const v = toProposalVars(
         {
