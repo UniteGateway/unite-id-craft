@@ -747,6 +747,57 @@ export type Database = {
         }
         Relationships: []
       }
+      solar_proposals: {
+        Row: {
+          ai_recommendation: Json | null
+          approx_budget: string | null
+          capacity_mw: number
+          computed: Json
+          created_at: string
+          custom_notes: string | null
+          id: string
+          investment_model: string | null
+          location: string | null
+          overrides: Json
+          project_name: string
+          project_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_recommendation?: Json | null
+          approx_budget?: string | null
+          capacity_mw?: number
+          computed?: Json
+          created_at?: string
+          custom_notes?: string | null
+          id?: string
+          investment_model?: string | null
+          location?: string | null
+          overrides?: Json
+          project_name: string
+          project_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_recommendation?: Json | null
+          approx_budget?: string | null
+          capacity_mw?: number
+          computed?: Json
+          created_at?: string
+          custom_notes?: string | null
+          id?: string
+          investment_model?: string | null
+          location?: string | null
+          overrides?: Json
+          project_name?: string
+          project_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tile_clicks: {
         Row: {
           created_at: string
