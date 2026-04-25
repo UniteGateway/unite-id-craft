@@ -19,6 +19,7 @@ import {
   Instagram,
   ShieldCheck,
   Users,
+  Wand2,
 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import PageBanner, { BANNERS } from "@/components/PageBanner";
@@ -51,6 +52,7 @@ const IMG = {
   dashboard: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=70",
   admin: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=70",
   crm: "https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&w=800&q=70",
+  createProposal: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=70",
 };
 
 const designTiles: Tile[] = [
@@ -61,6 +63,7 @@ const designTiles: Tile[] = [
   { icon: BookOpen, title: "Brochures", desc: "Tri-fold layouts", to: "/designs/brochure", hue: "from-emerald-500 to-teal-400", image: IMG.brochure, ready: true },
   { icon: Presentation, title: "Presentations", desc: "Pitch decks", to: "/designs/presentation", hue: "from-violet-600 to-fuchsia-400", image: IMG.presentation, ready: true },
   { icon: FileSignature, title: "Proposals", desc: "Solar project proposals", to: "/proposals", hue: "from-indigo-600 to-blue-400", image: IMG.proposals, ready: true },
+  { icon: Wand2, title: "Create Proposal", desc: "Smart fixed + variable slides", to: "/create-proposal", hue: "from-amber-500 to-orange-500", image: IMG.createProposal, ready: true },
   { icon: Users, title: "CRM", desc: "Customer relationship manager", to: "https://crm.unitesolar.in", hue: "from-teal-600 to-emerald-400", image: IMG.crm, ready: true },
   { icon: Users, title: "CRM Portal", desc: "Open crm.unitesolar.in", to: "https://crm.unitesolar.in", hue: "from-emerald-600 to-teal-500", image: IMG.crm, ready: true },
 ];
