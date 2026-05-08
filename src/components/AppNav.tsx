@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { CreditCard, Contact, LayoutDashboard, LogOut, LogIn, Home as HomeIcon, Sparkles, ShieldCheck, FileSignature } from "lucide-react";
+import { CreditCard, Contact, LayoutDashboard, LogOut, LogIn, Home as HomeIcon, Sparkles, ShieldCheck, FileSignature, LayoutGrid } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,12 @@ const AppNav: React.FC = () => {
             <NavLink to="/admin" className={navItem}>
               <ShieldCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Admin</span>
+            </NavLink>
+          )}
+          {isAdmin && (
+            <NavLink to="/admin/hub" className={navItem}>
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">Admin Hub</span>
             </NavLink>
           )}
         </div>
