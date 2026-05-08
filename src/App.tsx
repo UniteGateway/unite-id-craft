@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import ComingSoon from "./pages/ComingSoon.tsx";
 import SocialMedia from "./pages/SocialMedia.tsx";
 import Admin from "./pages/Admin.tsx";
+import AdminHub from "./pages/AdminHub.tsx";
 import Proposals from "./pages/Proposals.tsx";
 import Designs from "./pages/Designs.tsx";
 import ProposalEditor from "./pages/ProposalEditor.tsx";
@@ -83,6 +84,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/hub"
+              element={
+                <ProtectedRoute>
+                  <AdminHub />
                 </ProtectedRoute>
               }
             />

@@ -269,7 +269,7 @@ const AdminPage: React.FC = () => {
           height="sm"
         />
 
-        <Card>
+        <Card id="api-keys" className="scroll-mt-24">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Key className="h-5 w-5" /> AI Model API Keys</CardTitle>
             <CardDescription>Paste a key here and the design team can immediately generate with that model. Keys are stored securely and never shown to non-admins.</CardDescription>
@@ -317,7 +317,7 @@ const AdminPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="brand-assets" className="scroll-mt-24">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><ImagePlus className="h-5 w-5" /> Brand Library</CardTitle>
             <CardDescription>Upload official Unite Solar logos and approved imagery. Available to the whole design team in every studio.</CardDescription>
@@ -359,7 +359,7 @@ const AdminPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="palettes" className="scroll-mt-24">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5" /> Brand Palettes</CardTitle>
             <CardDescription>Define named color palettes. Designers can apply them with one click inside any editor (text colors, accents, backgrounds).</CardDescription>
@@ -405,15 +405,15 @@ const AdminPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <ResidentialPresetsManager />
+        <div id="residential-presets" className="scroll-mt-24"><ResidentialPresetsManager /></div>
 
-        <ResidentialOffersManager />
+        <div id="residential-offers" className="scroll-mt-24"><ResidentialOffersManager /></div>
 
-        <ProposalSettingsManager />
+        <div id="proposal-settings" className="scroll-mt-24"><ProposalSettingsManager /></div>
 
-        <FixedSlidesManager />
+        <div id="fixed-slides" className="scroll-mt-24"><FixedSlidesManager /></div>
 
-        <Card>
+        <Card id="users" className="scroll-mt-24">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" /> Admin Users
