@@ -73,6 +73,7 @@ const ProposalVariableSlides: React.FC = () => {
         pixelRatio: 1,
         width: 1920,
         height: 1080,
+        skipFonts: true,
       });
       const a = document.createElement("a");
       a.href = dataUrl;
@@ -105,6 +106,7 @@ const ProposalVariableSlides: React.FC = () => {
         pixelRatio: 2,
         width: 1920,
         height: 1080,
+        skipFonts: true,
       });
       const { w, h } = PDF_SIZES[pdfSize];
       const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: [w, h] });
@@ -217,6 +219,7 @@ const ProposalVariableSlides: React.FC = () => {
           pixelRatio: 2,
           width: 1920,
           height: 1080,
+          skipFonts: true,
         });
         if (pageIdx > 1) pdf.addPage([w, h], "landscape");
         pdf.addImage(dataUrl, "PNG", x, y, imgW, imgH, undefined, "FAST");
