@@ -390,7 +390,6 @@ const ProposalVariableSlides: React.FC = () => {
           width: 1920,
           height: 1080,
           pointerEvents: "none",
-          opacity: 0,
         }}
       >
         {VARIABLE_SLIDE_REGISTRY.filter((s) => !!s.Component).map((s) => {
