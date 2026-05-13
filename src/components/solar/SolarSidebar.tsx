@@ -6,6 +6,7 @@ import {
   Image as ImageIcon,
   Palette,
   Settings as SettingsIcon,
+  Briefcase,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -24,6 +25,7 @@ import { cn } from "@/lib/utils";
 const items = [
   { title: "Dashboard", url: "/solar", icon: LayoutDashboard, end: true },
   { title: "Generate Proposal", url: "/solar/generate", icon: Sparkles },
+  { title: "Techno-Commercial", url: "/proposals/techno-commercial/new", icon: Briefcase },
   { title: "My Proposals", url: "/solar/proposals", icon: FileText },
   { title: "Templates", url: "/solar/templates", icon: LayoutTemplate },
   { title: "Assets", url: "/solar/assets", icon: ImageIcon },

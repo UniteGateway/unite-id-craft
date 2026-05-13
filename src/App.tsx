@@ -104,6 +104,14 @@ const App = () => (
               }
             />
             <Route
+              path="/proposals/techno-commercial/new"
+              element={
+                <ProtectedRoute>
+                  <ComingSoon />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/create-proposal"
               element={
                 <ProtectedRoute>
