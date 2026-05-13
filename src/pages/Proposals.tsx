@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, FileSignature, Trash2, Loader2, Pencil, Copy, Building2, Home, Sparkles } from "lucide-react";
+import { Plus, FileSignature, Trash2, Loader2, Pencil, Copy, Building2, Home, Sparkles, Briefcase } from "lucide-react";
 import { inr } from "@/lib/proposal-calc";
 import { RESIDENTIAL_KW_OPTIONS } from "@/lib/residential-presets";
 
@@ -134,6 +134,12 @@ const ProposalsList: React.FC = () => {
             <h1 className="text-3xl font-extrabold">Project Proposals</h1>
             <p className="text-sm text-muted-foreground">Industrial proposals and AI-generated decks for gated communities.</p>
           </div>
+          <Button
+            onClick={() => nav("/proposals/techno-commercial/new")}
+            className="bg-gradient-to-r from-primary to-primary/80"
+          >
+            <Briefcase className="h-4 w-4" /> New Techno-Commercial Proposal
+          </Button>
         </div>
 
         {loading ? (
