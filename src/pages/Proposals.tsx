@@ -135,7 +135,7 @@ const ProposalsList: React.FC = () => {
             <p className="text-sm text-muted-foreground">Industrial proposals and AI-generated decks for gated communities.</p>
           </div>
           <Button
-            onClick={() => nav("/proposals/techno-commercial/new")}
+            onClick={() => nav("/proposal-variable-slides")}
             className="bg-gradient-to-r from-primary to-primary/80"
           >
             <Briefcase className="h-4 w-4" /> New Techno-Commercial Proposal
