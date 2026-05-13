@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Download, Loader2, ArrowLeft, FileDown } from "lucide-react";
+import { Download, Loader2, ArrowLeft, FileDown, Files } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -33,8 +33,11 @@ const ProposalVariableSlides: React.FC = () => {
   const [vars, setVars] = useState<ProposalVars>(DEFAULT_VARS);
   const [exporting, setExporting] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingAll, setExportingAll] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{ i: number; total: number } | null>(null);
   const [pdfSize, setPdfSize] = useState<"a4" | "a3" | "letter" | "16:9">("16:9");
   const slideRef = useRef<HTMLDivElement>(null);
+  const allRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Hydrate vars from sessionStorage if a generated proposal was just opened.
   useEffect(() => {
@@ -130,6 +133,58 @@ const ProposalVariableSlides: React.FC = () => {
     }
   };
 
+  const exportAllPdf = async () => {
+    const ready = VARIABLE_SLIDE_REGISTRY.filter((s) => !!s.Component);
+    if (!ready.length) return;
+    setExportingAll(true);
+    setExportProgress({ i: 0, total: ready.length });
+    try {
+      const { w, h } = PDF_SIZES[pdfSize];
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: [w, h] });
+      const imgRatio = 1920 / 1080;
+      const pageRatio = w / h;
+      let imgW = w;
+      let imgH = h;
+      if (pageRatio > imgRatio) {
+        imgH = h;
+        imgW = h * imgRatio;
+      } else {
+        imgW = w;
+        imgH = w / imgRatio;
+      }
+      const x = (w - imgW) / 2;
+      const y = (h - imgH) / 2;
+
+      // Give the offscreen tree a tick to mount/paint.
+      await new Promise((r) => setTimeout(r, 50));
+
+      for (let i = 0; i < ready.length; i++) {
+        const slide = ready[i];
+        const node = allRefs.current[slide.key];
+        if (!node) continue;
+        setExportProgress({ i: i + 1, total: ready.length });
+        const dataUrl = await toPng(node, {
+          cacheBust: true,
+          pixelRatio: 2,
+          width: 1920,
+          height: 1080,
+        });
+        if (i > 0) pdf.addPage([w, h], "landscape");
+        pdf.addImage(dataUrl, "PNG", x, y, imgW, imgH, undefined, "FAST");
+      }
+
+      pdf.save(
+        `unite-solar-FULL-${vars.PROJECT_NAME.replace(/\s+/g, "_")}-${pdfSize}.pdf`
+      );
+      toast.success(`Exported ${ready.length} slides`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Full PDF export failed");
+    } finally {
+      setExportingAll(false);
+      setExportProgress(null);
+    }
+  };
+
   const Comp = active.Component;
 
   return (
@@ -159,9 +214,24 @@ const ProposalVariableSlides: React.FC = () => {
               </SelectContent>
             </Select>
             <Button
+              onClick={exportAllPdf}
+              disabled={exportingAll}
+              variant="default"
+              className="gap-2"
+            >
+              {exportingAll ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Files className="h-4 w-4" />
+              )}
+              {exportingAll && exportProgress
+                ? `Exporting ${exportProgress.i}/${exportProgress.total}…`
+                : "Export All (PDF)"}
+            </Button>
+            <Button
               onClick={exportPdf}
               disabled={exportingPdf || !Comp}
-              variant="default"
+              variant="outline"
               className="gap-2"
             >
               {exportingPdf ? (
@@ -169,7 +239,7 @@ const ProposalVariableSlides: React.FC = () => {
               ) : (
                 <FileDown className="h-4 w-4" />
               )}
-              Export PDF
+              This Slide PDF
             </Button>
             <Button
               onClick={exportPng}
@@ -258,6 +328,34 @@ const ProposalVariableSlides: React.FC = () => {
         </div>
       </main>
       <AppFooter />
+
+      {/* Off-screen render of every ready slide so we can capture them in one batch. */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          left: -100000,
+          top: 0,
+          width: 1920,
+          height: 1080,
+          pointerEvents: "none",
+          opacity: 0,
+        }}
+      >
+        {VARIABLE_SLIDE_REGISTRY.filter((s) => !!s.Component).map((s) => {
+          const C = s.Component!;
+          return (
+            <div key={s.key} style={{ width: 1920, height: 1080 }}>
+              <C
+                ref={(el) => {
+                  allRefs.current[s.key] = el;
+                }}
+                vars={vars}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
