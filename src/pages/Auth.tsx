@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -20,6 +20,8 @@ const schema = z.object({
 
 const Auth: React.FC = () => {
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/home";
   const { user, loading } = useAuth();
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
@@ -27,8 +29,8 @@ const Auth: React.FC = () => {
   const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
-    if (!loading && user) nav("/home", { replace: true });
-  }, [user, loading, nav]);
+    if (!loading && user) nav(redirectTo, { replace: true });
+  }, [user, loading, nav, redirectTo]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +67,7 @@ const Auth: React.FC = () => {
     });
     setBusy(false);
     if (error) toast.error(error.message);
-    else nav("/home");
+    else nav(redirectTo, { replace: true });
   };
 
   const handleForgot = async () => {
@@ -86,7 +88,7 @@ const Auth: React.FC = () => {
   const handleGoogle = async () => {
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/home`,
+      redirect_uri: `${window.location.origin}${redirectTo}`,
     });
     if (result.error) {
       setBusy(false);
@@ -94,7 +96,7 @@ const Auth: React.FC = () => {
       return;
     }
     if (result.redirected) return;
-    nav("/home", { replace: true });
+    nav(redirectTo, { replace: true });
   };
 
   return (
