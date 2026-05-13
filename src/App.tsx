@@ -107,7 +107,7 @@ const App = () => (
               path="/proposals/techno-commercial/new"
               element={
                 <ProtectedRoute>
-                  <ComingSoon />
+                  <ProposalVariableSlides />
                 </ProtectedRoute>
               }
             />
