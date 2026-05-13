@@ -24,6 +24,7 @@ import {
   VAR_LABELS,
 } from "@/components/proposals/variable-slides/types";
 import { VARIABLE_SLIDE_REGISTRY } from "@/components/proposals/variable-slides/registry";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProposalVariableSlides: React.FC = () => {
   const nav = useNavigate();
@@ -137,7 +138,21 @@ const ProposalVariableSlides: React.FC = () => {
     const ready = VARIABLE_SLIDE_REGISTRY.filter((s) => !!s.Component);
     if (!ready.length) return;
     setExportingAll(true);
-    setExportProgress({ i: 0, total: ready.length });
+    // Load active fixed slides (1-9) — admin uploaded brand pages.
+    let fixed: { slide_number: number; image_url: string }[] = [];
+    try {
+      const { data } = await supabase
+        .from("fixed_slides")
+        .select("slide_number,image_url,sort_order")
+        .eq("active", true)
+        .order("slide_number", { ascending: true })
+        .order("sort_order", { ascending: true });
+      fixed = (data ?? []) as any;
+    } catch {
+      /* ignore — proceed with variable slides only */
+    }
+    const totalPages = fixed.length + ready.length;
+    setExportProgress({ i: 0, total: totalPages });
     try {
       const { w, h } = PDF_SIZES[pdfSize];
       const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: [w, h] });
@@ -158,25 +173,61 @@ const ProposalVariableSlides: React.FC = () => {
       // Give the offscreen tree a tick to mount/paint.
       await new Promise((r) => setTimeout(r, 50));
 
+      let pageIdx = 0;
+
+      // 1) Fixed brand slides first (admin-uploaded images for slides 1-9).
+      for (const fx of fixed) {
+        pageIdx++;
+        setExportProgress({ i: pageIdx, total: totalPages });
+        try {
+          const res = await fetch(fx.image_url, { mode: "cors" });
+          const blob = await res.blob();
+          const dataUrl: string = await new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(fr.result as string);
+            fr.onerror = reject;
+            fr.readAsDataURL(blob);
+          });
+          if (pageIdx > 1) pdf.addPage([w, h], "landscape");
+          // Fit image into page preserving aspect ratio.
+          const img = new Image();
+          img.src = dataUrl;
+          await new Promise((r) => { img.onload = r; img.onerror = r; });
+          const r = img.width && img.height ? img.width / img.height : imgRatio;
+          let fW = w, fH = h;
+          if (w / h > r) { fH = h; fW = h * r; } else { fW = w; fH = w / r; }
+          const fX = (w - fW) / 2;
+          const fY = (h - fH) / 2;
+          const fmt = dataUrl.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
+          pdf.addImage(dataUrl, fmt, fX, fY, fW, fH, undefined, "FAST");
+        } catch {
+          // Skip this fixed slide on fetch/CORS failure.
+        }
+      }
+
+      // 2) Variable slides rendered from the React registry.
       for (let i = 0; i < ready.length; i++) {
         const slide = ready[i];
         const node = allRefs.current[slide.key];
         if (!node) continue;
-        setExportProgress({ i: i + 1, total: ready.length });
+        pageIdx++;
+        setExportProgress({ i: pageIdx, total: totalPages });
         const dataUrl = await toPng(node, {
           cacheBust: true,
           pixelRatio: 2,
           width: 1920,
           height: 1080,
         });
-        if (i > 0) pdf.addPage([w, h], "landscape");
+        if (pageIdx > 1) pdf.addPage([w, h], "landscape");
         pdf.addImage(dataUrl, "PNG", x, y, imgW, imgH, undefined, "FAST");
       }
 
       pdf.save(
         `unite-solar-FULL-${vars.PROJECT_NAME.replace(/\s+/g, "_")}-${pdfSize}.pdf`
       );
-      toast.success(`Exported ${ready.length} slides`);
+      toast.success(
+        `Exported ${totalPages} slides (${fixed.length} brand + ${ready.length} project)`
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "Full PDF export failed");
     } finally {
