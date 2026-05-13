@@ -1,13 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toPng } from "html-to-image";
+import jsPDF from "jspdf";
 import AppNav from "@/components/AppNav";
 import AppFooter from "@/components/AppFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Download, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Download, Loader2, ArrowLeft, FileDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import SlideStage from "@/components/proposals/variable-slides/SlideStage";
 import {
@@ -24,6 +32,8 @@ const ProposalVariableSlides: React.FC = () => {
   const [activeKey, setActiveKey] = useState<string>(initialKey);
   const [vars, setVars] = useState<ProposalVars>(DEFAULT_VARS);
   const [exporting, setExporting] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [pdfSize, setPdfSize] = useState<"a4" | "a3" | "letter" | "16:9">("16:9");
   const slideRef = useRef<HTMLDivElement>(null);
 
   // Hydrate vars from sessionStorage if a generated proposal was just opened.
@@ -72,6 +82,54 @@ const ProposalVariableSlides: React.FC = () => {
     }
   };
 
+  const PDF_SIZES: Record<
+    "a4" | "a3" | "letter" | "16:9",
+    { w: number; h: number; label: string }
+  > = {
+    "16:9": { w: 338.67, h: 190.5, label: "Slide 16:9" }, // 1920x1080 @ ~144dpi mm
+    a4: { w: 297, h: 210, label: "A4 Landscape" },
+    a3: { w: 420, h: 297, label: "A3 Landscape" },
+    letter: { w: 279.4, h: 215.9, label: "Letter Landscape" },
+  };
+
+  const exportPdf = async () => {
+    if (!slideRef.current) return;
+    setExportingPdf(true);
+    try {
+      const dataUrl = await toPng(slideRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        width: 1920,
+        height: 1080,
+      });
+      const { w, h } = PDF_SIZES[pdfSize];
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: [w, h] });
+      // Fit 16:9 image into page, centered
+      const imgRatio = 1920 / 1080;
+      const pageRatio = w / h;
+      let imgW = w;
+      let imgH = h;
+      if (pageRatio > imgRatio) {
+        imgH = h;
+        imgW = h * imgRatio;
+      } else {
+        imgW = w;
+        imgH = w / imgRatio;
+      }
+      const x = (w - imgW) / 2;
+      const y = (h - imgH) / 2;
+      pdf.addImage(dataUrl, "PNG", x, y, imgW, imgH, undefined, "FAST");
+      pdf.save(
+        `unite-solar-${active.key}-${vars.PROJECT_NAME.replace(/\s+/g, "_")}-${pdfSize}.pdf`
+      );
+      toast.success("PDF exported");
+    } catch (e: any) {
+      toast.error(e?.message ?? "PDF export failed");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   const Comp = active.Component;
 
   return (
@@ -87,10 +145,46 @@ const ProposalVariableSlides: React.FC = () => {
               Variable Slides — Live Preview
             </h1>
           </div>
-          <Button onClick={exportPng} disabled={exporting || !Comp} className="gap-2">
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Export PNG (HD 1920×1080)
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={pdfSize} onValueChange={(v) => setPdfSize(v as typeof pdfSize)}>
+              <SelectTrigger className="h-9 w-[170px]">
+                <SelectValue placeholder="PDF size" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(PDF_SIZES).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={exportPdf}
+              disabled={exportingPdf || !Comp}
+              variant="default"
+              className="gap-2"
+            >
+              {exportingPdf ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileDown className="h-4 w-4" />
+              )}
+              Export PDF
+            </Button>
+            <Button
+              onClick={exportPng}
+              disabled={exporting || !Comp}
+              variant="outline"
+              className="gap-2"
+            >
+              {exporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              PNG
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr_320px] gap-4">

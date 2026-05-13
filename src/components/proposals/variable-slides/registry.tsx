@@ -8,6 +8,7 @@ import GenerationSlide from "./GenerationSlide";
 import SavingsSlide from "./SavingsSlide";
 import RoiSlide from "./RoiSlide";
 import FeasibilitySlide from "./FeasibilitySlide";
+import TimelineSlide from "./TimelineSlide";
 import { ProposalVars } from "./types";
 
 export interface VariableSlideDef {
@@ -29,5 +30,5 @@ export const VARIABLE_SLIDE_REGISTRY: VariableSlideDef[] = [
   { n: 16, key: "savings", title: "Savings Potential", Component: SavingsSlide },
   { n: 17, key: "roi", title: "ROI & Financial Analysis", Component: RoiSlide },
   { n: 18, key: "feasibility", title: "Feasibility Report", Component: FeasibilitySlide },
-  { n: 19, key: "timeline", title: "Implementation Timeline", Component: null },
+  { n: 19, key: "timeline", title: "Implementation Timeline", Component: TimelineSlide },
 ];
