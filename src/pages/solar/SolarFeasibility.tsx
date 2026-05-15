@@ -331,16 +331,11 @@ const SolarFeasibility: React.FC = () => {
             {/* Header */}
             <div className="px-8 py-6 flex items-center justify-between gap-4"
               style={{ background: "linear-gradient(135deg,#0a1b33 0%,#1a3c6e 100%)" }}>
-              <div className="flex items-center gap-4">
-                <div className="bg-white rounded-md p-2 shrink-0">
-                  <img src={uniteSolarLogo} alt="Unite Solar" className="h-12 w-auto" crossOrigin="anonymous" />
-                </div>
-                <div>
-                  <div className="text-[11px] tracking-[0.3em] uppercase text-orange-400">Unite Solar</div>
-                  <div className="text-2xl md:text-3xl font-extrabold text-white">Solar Feasibility Report</div>
-                  <div className="text-sm text-white/80 mt-1">
-                    {manual.consumer_name || "Customer"} · {manual.location || "—"} · {SEGMENT_LABEL[report.segment]}
-                  </div>
+              <div>
+                <div className="text-[11px] tracking-[0.3em] uppercase text-orange-400">Unite Solar</div>
+                <div className="text-2xl md:text-3xl font-extrabold text-white">Solar Feasibility Report</div>
+                <div className="text-sm text-white/80 mt-1">
+                  {manual.consumer_name || "Customer"} · {manual.location || "—"} · {SEGMENT_LABEL[report.segment]}
                 </div>
               </div>
               <Sun className="h-14 w-14 text-orange-400 shrink-0" />
