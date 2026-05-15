@@ -225,8 +225,8 @@ const RoiSlide = forwardRef<HTMLDivElement, { vars: ProposalVars }>(
               value={`₹${netLifetime.toFixed(1)} Cr`}
               accent={GREEN}
             />
-            <KpiRow Icon={Percent} label="IRR" value="18% – 24%" accent={BLUE} />
-            <KpiRow Icon={Timer} label="Payback Period" value={`${vars.PAYBACK} Years`} accent={ORANGE} />
+            <KpiRow Icon={Percent} label="IRR" value={`${fin.irr_pct.toFixed(1)}%`} accent={BLUE} />
+            <KpiRow Icon={Timer} label="Payback Period" value={`${payback.toFixed(1)} Years`} accent={ORANGE} />
           </div>
 
           {/* Bottom callout */}
