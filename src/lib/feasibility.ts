@@ -17,6 +17,9 @@ export interface FeasibilityInput {
   loan_pct?: number;    // 0-1, share financed
   loan_rate_pct?: number; // annual
   loan_years?: number;
+  // EPC overrides
+  epc_rate_per_kw?: number;
+  epc_milestone_labels?: [string, string, string, string];
 }
 
 export interface FeasibilityReport {
@@ -281,17 +284,25 @@ function buildModels(
   };
 
   // EPC
-  const EPC_RATE = 40000; // ₹/kW incl. GST, insurance, cleaning
+  const EPC_RATE = input.epc_rate_per_kw && input.epc_rate_per_kw > 0
+    ? input.epc_rate_per_kw
+    : 40000; // ₹/kW incl. GST, insurance, cleaning
   const epcTotal = Math.round(capacityKw * EPC_RATE);
+  const labels = input.epc_milestone_labels ?? [
+    "Advance against Purchase Order",
+    "Material ready to dispatch",
+    "Pre-installation",
+    "Post-installation / Commissioning",
+  ];
+  const pcts = [10, 70, 15, 5];
   const epc = {
     rate_per_kw: EPC_RATE,
     total_cost: epcTotal,
-    payment_terms: [
-      { milestone: "Advance against Purchase Order", pct: 10, amount: Math.round(epcTotal * 0.10) },
-      { milestone: "Material ready to dispatch",     pct: 70, amount: Math.round(epcTotal * 0.70) },
-      { milestone: "Pre-installation",                pct: 15, amount: Math.round(epcTotal * 0.15) },
-      { milestone: "Post-installation / Commissioning", pct: 5, amount: Math.round(epcTotal * 0.05) },
-    ],
+    payment_terms: pcts.map((pct, i) => ({
+      milestone: labels[i],
+      pct,
+      amount: Math.round(epcTotal * (pct / 100)),
+    })),
   };
 
   const reg = stateRegulatory(input.state);
