@@ -359,7 +359,7 @@ const RoiSlide = forwardRef<HTMLDivElement, { vars: ProposalVars }>(
                 />
                 <ReferenceDot
                   x={lifeYrs}
-                  y={parseFloat((-projectCost + netAnnual * lifeYrs).toFixed(2))}
+                  y={cashFlow[cashFlow.length - 1]?.cum ?? 0}
                   r={7}
                   fill={ORANGE}
                   stroke="white"
