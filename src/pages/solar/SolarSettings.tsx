@@ -8,11 +8,32 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
+import {
+  getMapProvider,
+  setMapProvider,
+  getGoogleMapsApiKey,
+  setGoogleMapsApiKey,
+  type MapProvider,
+} from "@/lib/geocode";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const SolarSettings: React.FC = () => {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [mapProvider, setMapProviderState] = useState<MapProvider>("osm");
+  const [googleKey, setGoogleKey] = useState("");
+
+  useEffect(() => {
+    setMapProviderState(getMapProvider());
+    setGoogleKey(getGoogleMapsApiKey());
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -35,6 +56,8 @@ const SolarSettings: React.FC = () => {
       .eq("user_id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
+    setMapProvider(mapProvider);
+    setGoogleMapsApiKey(googleKey.trim());
     toast.success("Saved");
   };
 
@@ -49,6 +72,32 @@ const SolarSettings: React.FC = () => {
         <div>
           <Label>Email</Label>
           <Input value={user?.email ?? ""} disabled />
+        </div>
+        <div className="border-t pt-4 space-y-3">
+          <div>
+            <Label>Location Map Provider</Label>
+            <Select value={mapProvider} onValueChange={(v) => setMapProviderState(v as MapProvider)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="osm">OpenStreetMap (free, no key)</SelectItem>
+                <SelectItem value="google">Google Static Maps (satellite)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {mapProvider === "google" && (
+            <div>
+              <Label>Google Maps API Key</Label>
+              <Input
+                value={googleKey}
+                onChange={(e) => setGoogleKey(e.target.value)}
+                placeholder="AIza..."
+                type="password"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Enable "Maps Static API" in Google Cloud Console. Stored locally in your browser.
+              </p>
+            </div>
+          )}
         </div>
         <div className="pt-2">
           <Button onClick={save} disabled={saving} className="gap-2">
