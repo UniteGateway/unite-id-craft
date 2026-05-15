@@ -208,8 +208,7 @@ const SavingsSlide = forwardRef<HTMLDivElement, { vars: ProposalVars }>(
           >
             <IndianRupee size={22} color={GOLD} />
             <span className="text-white text-[20px] font-bold tracking-[0.04em]">
-              <span style={{ color: GOLD }}>₹1.2 – ₹1.4 CR</span> per year
-              (approx.)
+              <span style={{ color: GOLD }}>₹{year1.toFixed(2)} CR</span> in year 1 (auto-calculated)
             </span>
           </div>
         </div>
@@ -254,8 +253,8 @@ const SavingsSlide = forwardRef<HTMLDivElement, { vars: ProposalVars }>(
           }}
         >
           {[
-            { label: "ANNUAL SAVINGS", value: "₹1.2 – 1.4 Cr" },
-            { label: "PAYBACK PERIOD", value: `${vars.PAYBACK} Years` },
+            { label: "YEAR-1 SAVINGS", value: `₹${year1.toFixed(2)} Cr` },
+            { label: "PAYBACK PERIOD", value: `${fin.payback_years.toFixed(1)} Years` },
             { label: "PROJECT LIFE", value: `${life} Years` },
             { label: "LIFETIME CO₂ AVOIDED", value: `${co2Total.toLocaleString("en-IN")} T` },
           ].map((s, i) => (
