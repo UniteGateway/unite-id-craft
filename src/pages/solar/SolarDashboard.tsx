@@ -4,7 +4,7 @@ import SolarShell from "@/components/solar/SolarShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, FileText, Sun, TrendingUp } from "lucide-react";
+import { Sparkles, FileText, Sun, TrendingUp, Gauge, Upload } from "lucide-react";
 
 interface Stats {
   total: number;
@@ -43,6 +43,55 @@ const SolarDashboard: React.FC = () => {
         <Button asChild className="gap-2">
           <Link to="/solar/generate"><Sparkles className="h-4 w-4" /> New Proposal</Link>
         </Button>
+      </div>
+
+      {/* Feature Thumbnails */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Link
+          to="/solar/feasibility"
+          className="group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-[#0a1b33] to-[#1a3c6e] text-white p-5 hover:shadow-lg transition"
+        >
+          <div className="absolute -right-6 -bottom-6 opacity-15">
+            <Sun className="h-40 w-40 text-orange-400" />
+          </div>
+          <div className="relative">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-400/20 text-orange-300 text-[10px] uppercase tracking-wider font-semibold">
+              <Sparkles className="h-3 w-3" /> AI Powered · New
+            </div>
+            <h3 className="text-xl font-extrabold mt-2 flex items-center gap-2">
+              <Gauge className="h-5 w-5 text-orange-400" /> Feasibility Analysis
+            </h3>
+            <p className="text-sm text-white/80 mt-1 max-w-md">
+              Upload an electricity bill and instantly get a complete solar feasibility report — capacity, savings, ROI, payback, charts, PDF & PNG.
+            </p>
+            <div className="mt-3 inline-flex items-center gap-1.5 text-orange-300 text-sm font-semibold">
+              <Upload className="h-4 w-4" /> Upload Bill →
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          to="/solar/generate"
+          className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 hover:shadow-lg transition"
+        >
+          <div className="absolute -right-6 -bottom-6 opacity-10">
+            <FileText className="h-40 w-40 text-primary" />
+          </div>
+          <div className="relative">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] uppercase tracking-wider font-semibold">
+              <Sparkles className="h-3 w-3" /> Studio
+            </div>
+            <h3 className="text-xl font-extrabold mt-2 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" /> Generate Proposal
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1 max-w-md">
+              Build a polished techno-commercial proposal deck with editable slides, branding, and one-click export.
+            </p>
+            <div className="mt-3 inline-flex items-center gap-1.5 text-primary text-sm font-semibold">
+              Start Proposal →
+            </div>
+          </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
