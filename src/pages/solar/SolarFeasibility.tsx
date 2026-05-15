@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import SolarShell from "@/components/solar/SolarShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import {
   Loader2, Upload, FileImage, FileText, Sparkles, Sun,
   IndianRupee, Leaf, TrendingUp, BatteryCharging, Download,
+  MapPin, Building2, Banknote, FileCheck2, Handshake, Wrench,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -23,6 +24,7 @@ import {
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import FeasibilityChatbot from "@/components/solar/FeasibilityChatbot";
+import { geocodeLocation, staticMapUrlFromSettings, type GeoPoint } from "@/lib/geocode";
 
 const SEGMENT_LABEL: Record<Segment, string> = {
   residential: "Residential",
@@ -48,6 +50,33 @@ const SolarFeasibility: React.FC = () => {
   });
   const [report, setReport] = useState<FeasibilityReport | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
+  const [geo, setGeo] = useState<GeoPoint | null>(null);
+  const [mapUrl, setMapUrl] = useState<string>("");
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  // Auto-geocode location whenever a report is generated
+  useEffect(() => {
+    if (!report || !manual.location) return;
+    let cancelled = false;
+    setGeoLoading(true);
+    geocodeLocation(manual.location).then((p) => {
+      if (cancelled) return;
+      setGeo(p);
+      if (p) setMapUrl(staticMapUrlFromSettings(p, 800, 420, 18));
+      setGeoLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [report, manual.location]);
+
+  const findOnMap = async () => {
+    if (!manual.location) { toast.error("Enter a location first"); return; }
+    setGeoLoading(true);
+    const p = await geocodeLocation(manual.location);
+    setGeo(p);
+    if (p) { setMapUrl(staticMapUrlFromSettings(p, 800, 420, 18)); toast.success("Location captured"); }
+    else toast.error("Could not find that location");
+    setGeoLoading(false);
+  };
 
   const onUpload = async () => {
     if (!file) { toast.error("Please select a bill image or PDF first."); return; }
@@ -109,21 +138,45 @@ const SolarFeasibility: React.FC = () => {
   };
   const exportPDF = async () => {
     if (!reportRef.current) return;
-    const canvas = await html2canvas(reportRef.current, { scale: 2, backgroundColor: "#fff" });
-    const img = canvas.toDataURL("image/png");
+    const canvas = await html2canvas(reportRef.current, { scale: 2, backgroundColor: "#fff", useCORS: true });
     const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-    const pw = pdf.internal.pageSize.getWidth();
-    const ph = (canvas.height * pw) / canvas.width;
-    let y = 0; const pageH = pdf.internal.pageSize.getHeight();
-    if (ph <= pageH) { pdf.addImage(img, "PNG", 0, 0, pw, ph); }
-    else {
-      // simple multi-page
-      let remaining = ph;
-      while (remaining > 0) {
-        pdf.addImage(img, "PNG", 0, y, pw, ph);
-        remaining -= pageH;
-        if (remaining > 0) { pdf.addPage(); y -= pageH; }
-      }
+    const pageW = pdf.internal.pageSize.getWidth();   // 595
+    const pageH = pdf.internal.pageSize.getHeight();  // 842
+    const margin = 28;                                 // ~10mm
+    const contentW = pageW - margin * 2;
+    const contentH = pageH - margin * 2;
+    // pixels per pt at our render scale
+    const pxPerPt = canvas.width / contentW;
+    const sliceHpx = Math.floor(contentH * pxPerPt);
+    const totalPx = canvas.height;
+    let renderedPx = 0;
+    let pageNum = 0;
+    while (renderedPx < totalPx) {
+      const remaining = totalPx - renderedPx;
+      const thisSlicePx = Math.min(sliceHpx, remaining);
+      const slice = document.createElement("canvas");
+      slice.width = canvas.width;
+      slice.height = thisSlicePx;
+      const ctx = slice.getContext("2d")!;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, slice.width, slice.height);
+      ctx.drawImage(
+        canvas,
+        0, renderedPx, canvas.width, thisSlicePx,
+        0, 0, canvas.width, thisSlicePx,
+      );
+      if (pageNum > 0) pdf.addPage();
+      const sliceHpt = thisSlicePx / pxPerPt;
+      pdf.addImage(slice.toDataURL("image/jpeg", 0.92), "JPEG", margin, margin, contentW, sliceHpt);
+      // footer
+      pdf.setFontSize(8);
+      pdf.setTextColor(120);
+      pdf.text(
+        `Unite Solar · Feasibility Report · Page ${pageNum + 1}`,
+        pageW / 2, pageH - 12, { align: "center" },
+      );
+      renderedPx += thisSlicePx;
+      pageNum++;
     }
     pdf.save(`Solar-Feasibility-${manual.consumer_name || "Report"}.pdf`);
   };
