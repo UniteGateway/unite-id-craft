@@ -265,6 +265,10 @@ const SolarFeasibility: React.FC = () => {
           <Button onClick={generateReport} className="w-full gap-2 bg-primary">
             <Sparkles className="h-4 w-4" /> Generate Feasibility Report
           </Button>
+          <Button onClick={findOnMap} variant="outline" className="w-full gap-2" disabled={geoLoading}>
+            {geoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+            Find Location & Capture Map
+          </Button>
         </Card>
       </div>
 
@@ -395,6 +399,127 @@ const SolarFeasibility: React.FC = () => {
                   {report.ai_tips.map((t, i) => <li key={i}>{t}</li>)}
                   <li>{report.net_metering_note}</li>
                 </ul>
+              </Card>
+
+              {/* Location + satellite map */}
+              {(mapUrl || manual.location) && (
+                <Card className="p-4">
+                  <div className="font-semibold mb-2 flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-primary" /> Site Location
+                  </div>
+                  <div className="text-sm mb-2">
+                    <span className="text-muted-foreground">Address: </span>
+                    <span className="font-medium">{manual.location || "—"}</span>
+                    {geo && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({geo.lat.toFixed(5)}°, {geo.lng.toFixed(5)}°)
+                      </span>
+                    )}
+                  </div>
+                  {mapUrl ? (
+                    <img src={mapUrl} alt="Site satellite view"
+                      crossOrigin="anonymous"
+                      className="w-full rounded border border-border"
+                      style={{ maxHeight: 380, objectFit: "cover" }} />
+                  ) : (
+                    <div className="text-xs text-muted-foreground">
+                      Click "Find Location & Capture Map" to add satellite imagery.
+                    </div>
+                  )}
+                </Card>
+              )}
+
+              {/* State regulatory / permission */}
+              <Card className="p-4">
+                <div className="font-semibold mb-2 flex items-center gap-2">
+                  <FileCheck2 className="h-4 w-4 text-primary" /> Regulatory & Permissions
+                </div>
+                <KV label="State" v={extracted?.state || report.state || "Detect from bill"} />
+                <KV label="DISCOM / Utility" v={report.discom || extracted?.utility_provider || "—"} />
+                <KV label="Tariff Category" v={extracted?.tariff_category || "—"} />
+                <div className="mt-2 text-sm bg-amber-50 border border-amber-200 rounded p-3">
+                  <div className="font-semibold text-amber-900 mb-1">Approval Pathway</div>
+                  <div className="text-amber-900/90">{report.state_permission}</div>
+                </div>
+              </Card>
+
+              {/* Investment Models */}
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* BOOT */}
+                <Card className="p-4 border-green-200">
+                  <div className="font-semibold mb-2 flex items-center gap-2 text-green-700">
+                    <Handshake className="h-4 w-4" /> BOOT Model
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Build-Own-Operate-Transfer · Zero CapEx
+                  </div>
+                  <KV label="Rent" v={`₹${report.boot.rent_per_kw_per_month.toLocaleString("en-IN")}/kW/month`} />
+                  <KV label="Period" v={`${report.boot.period_years} years`} />
+                  <KV label="Monthly Rent" v={formatINR(report.boot.monthly_rent)} />
+                  <KV label="Annual Rent" v={formatINR(report.boot.annual_rent)} />
+                  <KV label={`Total (${report.boot.period_years} yrs)`} v={formatINR(report.boot.total_rent)} />
+                  <div className="mt-2 text-xs bg-green-50 border border-green-200 rounded p-2 text-green-800">
+                    {report.boot.handover_after}
+                  </div>
+                </Card>
+
+                {/* PPA */}
+                <Card className="p-4 border-blue-200">
+                  <div className="font-semibold mb-2 flex items-center gap-2 text-blue-700">
+                    <IndianRupee className="h-4 w-4" /> PPA Model
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Power Purchase Agreement · 25-year long term
+                  </div>
+                  <KV label="Grid Tariff" v={`₹${report.ppa.grid_tariff} / kWh`} />
+                  <KV label="Discount" v={`${report.ppa.discount_pct}%`} />
+                  <KV label="PPA Tariff" v={`₹${report.ppa.ppa_tariff} / kWh`} />
+                  <KV label="Term" v={`${report.ppa.period_years} years`} />
+                  <KV label="Year-1 Saving" v={formatINR(report.ppa.year1_savings)} />
+                  <KV label="25-yr Saving" v={formatINR(report.ppa.lifetime_savings_25y)} />
+                </Card>
+
+                {/* EPC */}
+                <Card className="p-4 border-orange-200">
+                  <div className="font-semibold mb-2 flex items-center gap-2 text-orange-700">
+                    <Wrench className="h-4 w-4" /> EPC Model
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Turnkey · Incl. GST, Insurance & Module Cleaning
+                  </div>
+                  <KV label="Rate" v={`₹${report.epc.rate_per_kw.toLocaleString("en-IN")} / kW`} />
+                  <KV label="Capacity" v={`${report.recommended_capacity_kw} kW`} />
+                  <KV label="Total EPC Cost" v={formatINR(report.epc.total_cost)} />
+                  <div className="mt-2 text-xs font-semibold text-orange-900">Payment Milestones</div>
+                  <div className="mt-1 space-y-1 text-xs">
+                    {report.epc.payment_terms.map((p, i) => (
+                      <div key={i} className="flex justify-between border-b border-orange-100 py-1">
+                        <span>{p.pct}% · {p.milestone}</span>
+                        <span className="font-semibold">{formatINR(p.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Bank Details */}
+              <Card className="p-4">
+                <div className="font-semibold mb-2 flex items-center gap-2">
+                  <Banknote className="h-4 w-4 text-primary" /> Bank Details (for EPC payments)
+                </div>
+                <div className="grid md:grid-cols-2 gap-x-6">
+                  <KV label="Beneficiary" v="Unite Developers Global Inc" />
+                  <KV label="Bank Name" v="HDFC Bank Ltd." />
+                  <KV label="Account No." v="50200012345678" />
+                  <KV label="IFSC" v="HDFC0001234" />
+                  <KV label="Branch" v="Gachibowli, Hyderabad" />
+                  <KV label="GSTIN" v="36AABCU1234A1Z5" />
+                  <KV label="PAN" v="AABCU1234A" />
+                  <KV label="Account Type" v="Current" />
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Update these from Solar → Branding → Bank Details before sharing the report.
+                </div>
               </Card>
 
               <div className="text-center text-xs text-muted-foreground pt-2 border-t">
