@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBranding } from "@/hooks/useBranding";
 import { toast } from "sonner";
-import { Loader2, Palette, Save } from "lucide-react";
+import { Loader2, Palette, Save, Upload, X } from "lucide-react";
 
 const THEMES = ["Dark Premium", "Light Corporate", "Solar Gold"] as const;
 
@@ -20,6 +20,7 @@ const SolarBranding: React.FC = () => {
   const [theme, setTheme] = useState<string>(THEMES[0]);
   const [company, setCompany] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     setLogoUrl(branding.brand_logo_url ?? "");
@@ -46,6 +47,24 @@ const SolarBranding: React.FC = () => {
     refresh();
   };
 
+  const onUpload = async (file: File) => {
+    if (!user) return toast.error("Please sign in first");
+    if (!file.type.startsWith("image/")) return toast.error("Please choose an image file");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Max 5 MB");
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${user.id}/logo-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("branding").upload(path, file, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+    setUploading(false);
+    if (error) return toast.error(error.message);
+    const { data } = supabase.storage.from("branding").getPublicUrl(path);
+    setLogoUrl(data.publicUrl);
+    toast.success("Logo uploaded — click Save Branding to apply");
+  };
+
   return (
     <SolarShell title="Branding">
       <div className="mb-5 flex items-center gap-2">
@@ -64,8 +83,33 @@ const SolarBranding: React.FC = () => {
           </div>
           <div>
             <Label>Logo URL</Label>
-            <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://…/logo.png" />
-            <p className="text-xs text-muted-foreground mt-1">Paste a public image URL. Upload UI coming soon.</p>
+            <div className="flex gap-2">
+              <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://…/logo.png or upload below" />
+              {logoUrl && (
+                <Button type="button" variant="outline" size="icon" onClick={() => setLogoUrl("")} title="Clear">
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="mt-2 flex items-center gap-3">
+              <label className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md border border-border hover:bg-muted cursor-pointer">
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                Upload logo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) onUpload(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              {logoUrl && <img src={logoUrl} alt="logo preview" className="h-10 w-10 object-contain rounded border border-border bg-white" />}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">PNG/JPG/SVG up to 5 MB. Used in proposals and the Feasibility report header.</p>
           </div>
           <div>
             <Label>Primary Color</Label>
