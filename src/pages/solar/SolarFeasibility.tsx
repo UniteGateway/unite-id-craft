@@ -25,6 +25,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import FeasibilityChatbot from "@/components/solar/FeasibilityChatbot";
 import { geocodeLocation, staticMapUrlFromSettings, type GeoPoint } from "@/lib/geocode";
+import { useBranding } from "@/hooks/useBranding";
 
 const SEGMENT_LABEL: Record<Segment, string> = {
   residential: "Residential",
@@ -36,6 +37,7 @@ const SEGMENT_LABEL: Record<Segment, string> = {
 const COLORS = ["#16a34a", "#f59e0b", "#1a3c6e", "#0ea5e9", "#dc2626"];
 
 const SolarFeasibility: React.FC = () => {
+  const { branding } = useBranding();
   const [file, setFile] = useState<File | null>(null);
   const [segment, setSegment] = useState<Segment>("residential");
   const [extracting, setExtracting] = useState(false);
@@ -330,14 +332,26 @@ const SolarFeasibility: React.FC = () => {
             {/* Header */}
             <div className="px-8 py-6 flex items-center justify-between gap-4"
               style={{ background: "linear-gradient(135deg,#0a1b33 0%,#1a3c6e 100%)" }}>
-              <div>
-                <div className="text-[11px] tracking-[0.3em] uppercase text-orange-400">Unite Solar</div>
-                <div className="text-2xl md:text-3xl font-extrabold text-white">Solar Feasibility Report</div>
-                <div className="text-sm text-white/80 mt-1">
-                  {manual.consumer_name || "Customer"} · {manual.location || "—"} · {SEGMENT_LABEL[report.segment]}
+              <div className="flex items-center gap-4">
+                {branding.brand_logo_url && (
+                  <div className="bg-white rounded-md p-2 shrink-0">
+                    <img
+                      src={branding.brand_logo_url}
+                      alt={branding.company || "Logo"}
+                      crossOrigin="anonymous"
+                      className="h-12 w-auto object-contain"
+                    />
+                  </div>
+                )}
+                <div>
+                  <div className="text-[11px] tracking-[0.3em] uppercase text-orange-400">{branding.company || "Unite Solar"}</div>
+                  <div className="text-2xl md:text-3xl font-extrabold text-white">Solar Feasibility Report</div>
+                  <div className="text-sm text-white/80 mt-1">
+                    {manual.consumer_name || "Customer"} · {manual.location || "—"} · {SEGMENT_LABEL[report.segment]}
+                  </div>
                 </div>
               </div>
-              <Sun className="h-14 w-14 text-orange-400 shrink-0" />
+              {!branding.brand_logo_url && <Sun className="h-14 w-14 text-orange-400 shrink-0" />}
             </div>
 
             <div className="p-6 space-y-6">
