@@ -17,6 +17,9 @@ export interface FeasibilityInput {
   loan_pct?: number;    // 0-1, share financed
   loan_rate_pct?: number; // annual
   loan_years?: number;
+  // EPC overrides
+  epc_rate_per_kw?: number;
+  epc_milestone_labels?: [string, string, string, string];
 }
 
 export interface FeasibilityReport {
