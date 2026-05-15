@@ -1,13 +1,15 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import jsPDF from "jspdf";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
 import AppNav from "@/components/AppNav";
 import AppFooter from "@/components/AppFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, Upload, FileText, X } from "lucide-react";
 import {
   AGREEMENTS,
   fillTemplate,
@@ -28,6 +30,8 @@ const AgreementBuilder: React.FC = () => {
   }, [def]);
 
   const [values, setValues] = useState<Record<string, string>>(initial);
+  const [template, setTemplate] = useState<{ name: string; data: ArrayBuffer } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   if (!def) {
     return (
@@ -47,6 +51,46 @@ const AgreementBuilder: React.FC = () => {
 
   const handleChange = (k: string, v: string) =>
     setValues((prev) => ({ ...prev, [k]: v }));
+
+  const onTemplateUpload = async (file: File) => {
+    if (!file.name.toLowerCase().endsWith(".docx")) {
+      toast({
+        title: "Unsupported file",
+        description: "Please upload a .docx Word template with {placeholders}.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const data = await file.arrayBuffer();
+    setTemplate({ name: file.name, data });
+    toast({ title: "Template loaded", description: file.name });
+  };
+
+  const downloadFromTemplate = () => {
+    if (!template) return;
+    try {
+      const zip = new PizZip(template.data);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "{", end: "}" },
+      });
+      doc.render(display);
+      const out = doc.getZip().generate({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(out);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${def!.slug}-${(display.party_name || "party").toString().replace(/[^\w]+/g, "-").toLowerCase()}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: "Filled template downloaded", description: a.download });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to render template";
+      toast({ title: "Template error", description: msg, variant: "destructive" });
+    }
+  };
 
   const downloadPdf = () => {
     const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -167,10 +211,70 @@ const AgreementBuilder: React.FC = () => {
             </Button>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight">{def.title}</h1>
           </div>
-          <Button onClick={downloadPdf}>
-            <Download className="h-4 w-4 mr-2" /> Download PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            {template && (
+              <Button variant="secondary" onClick={downloadFromTemplate}>
+                <FileText className="h-4 w-4 mr-2" /> Download from template
+              </Button>
+            )}
+            <Button onClick={downloadPdf}>
+              <Download className="h-4 w-4 mr-2" /> Download PDF
+            </Button>
+          </div>
         </div>
+
+        {/* Custom template upload */}
+        <section className="mb-6 rounded-xl border border-dashed border-border bg-muted/30 p-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <Upload className="h-4 w-4" /> Use your own Word template (.docx)
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload a .docx with placeholders like <code className="px-1 rounded bg-muted">{"{party_name}"}</code>, <code className="px-1 rounded bg-muted">{"{effective_date}"}</code> — values from the form below will be merged in.
+              </p>
+              <details className="mt-2">
+                <summary className="text-xs text-primary cursor-pointer">Show available placeholders</summary>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {def.fields.map((f) => (
+                    <code key={f.key} className="text-[11px] px-1.5 py-0.5 rounded bg-background border border-border">
+                      {`{${f.key}}`}
+                    </code>
+                  ))}
+                </div>
+              </details>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onTemplateUpload(f);
+                  if (fileRef.current) fileRef.current.value = "";
+                }}
+              />
+              <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" /> {template ? "Replace" : "Upload"} template
+              </Button>
+              {template && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <FileText className="h-3.5 w-3.5" />
+                  <span className="max-w-[140px] truncate">{template.name}</span>
+                  <button
+                    onClick={() => setTemplate(null)}
+                    className="hover:text-destructive"
+                    aria-label="Remove template"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Form */}
