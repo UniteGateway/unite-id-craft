@@ -1,6 +1,7 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useMemo } from "react";
 import SlideFrame from "./SlideFrame";
 import { ProposalVars } from "./types";
+import { computeFinancials } from "@/lib/solar-financials";
 import logoUrl from "@/assets/unite-solar-logo.png";
 import {
   LineChart,
@@ -118,31 +119,29 @@ const KpiRow: React.FC<{
 
 const RoiSlide = forwardRef<HTMLDivElement, { vars: ProposalVars }>(
   ({ vars }, ref) => {
-    const projectCost = parseFloat(vars.PROJECT_COST) || 0; // Cr
-    const totalSavings = parseFloat(vars.TOTAL_SAVINGS) || 0; // Cr
-    const omCostLakhsYr = parseFloat(vars.OM_COST) || 0; // Lakhs/yr
+    const projectCost = parseFloat(vars.PROJECT_COST) || 0;
     const lifeYrs = parseInt(vars.LIFE) || 25;
-    const payback = parseFloat(vars.PAYBACK) || 4.5;
-    const annualSavings = totalSavings / lifeYrs; // Cr/yr (rough)
-    const omCostCrYr = omCostLakhsYr / 100; // Cr/yr
-    const netAnnual = annualSavings - omCostCrYr;
-    const netLifetime = totalSavings - omCostCrYr * lifeYrs;
-    const netPct =
-      totalSavings > 0 ? Math.round((netLifetime / totalSavings) * 100) : 82;
-
-    // Cumulative cash flow data (Cr): year 0 = -projectCost, then +netAnnual every year
-    const cashFlow = Array.from({ length: lifeYrs + 1 }, (_, y) => {
-      const cum = -projectCost + netAnnual * y;
-      return {
-        year: y,
-        cum: parseFloat(cum.toFixed(2)),
-      };
-    });
-
-    // Break-even point on the curve
+    const omCostLakhsYr = parseFloat(vars.OM_COST) || 0;
+    const fin = useMemo(
+      () => computeFinancials({
+        capacity_mw: parseFloat(vars.CAPACITY) || 0,
+        annual_units_lakh: parseFloat(vars.ANNUAL_UNITS) || 0,
+        tariff_rs_per_kwh: parseFloat(vars.TARIFF) || 8,
+        tariff_escalation_pct: parseFloat(vars.ESCALATION_PCT) || 5,
+        degradation_pct: parseFloat(vars.DEGRADATION_PCT) || 0.7,
+        project_cost_cr: projectCost,
+        om_cost_lakhs_per_year: omCostLakhsYr,
+        life_years: lifeYrs,
+      }),
+      [vars.CAPACITY, vars.ANNUAL_UNITS, vars.TARIFF, vars.ESCALATION_PCT, vars.DEGRADATION_PCT, projectCost, omCostLakhsYr, lifeYrs]
+    );
+    const totalSavings = fin.total_savings_cr;
+    const netLifetime = fin.total_net_cr;
+    const netPct = totalSavings > 0 ? Math.round((netLifetime / totalSavings) * 100) : 82;
+    const payback = fin.payback_years;
+    const cashFlow = [{ year: 0, cum: +(-projectCost).toFixed(2) }, ...fin.annual.map((a) => ({ year: a.year, cum: a.cumulative_cr }))];
     const breakEvenY = payback;
-    const breakEvenCum =
-      -projectCost + netAnnual * breakEvenY; // ~ 0
+    const breakEvenCum = 0;
 
     return (
       <SlideFrame ref={ref} className="bg-white text-[#0A1B33]">
