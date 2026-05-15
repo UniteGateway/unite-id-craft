@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import mammoth from "mammoth";
+import html2canvas from "html2canvas";
 import AppNav from "@/components/AppNav";
 import AppFooter from "@/components/AppFooter";
 import { Button } from "@/components/ui/button";
@@ -66,17 +68,26 @@ const AgreementBuilder: React.FC = () => {
     toast({ title: "Template loaded", description: file.name });
   };
 
+  const renderTemplateBlob = (): Blob | null => {
+    if (!template) return null;
+    const zip = new PizZip(template.data);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      delimiters: { start: "{", end: "}" },
+    });
+    doc.render(display);
+    return doc.getZip().generate({
+      type: "blob",
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+  };
+
   const downloadFromTemplate = () => {
     if (!template) return;
     try {
-      const zip = new PizZip(template.data);
-      const doc = new Docxtemplater(zip, {
-        paragraphLoop: true,
-        linebreaks: true,
-        delimiters: { start: "{", end: "}" },
-      });
-      doc.render(display);
-      const out = doc.getZip().generate({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const out = renderTemplateBlob();
+      if (!out) return;
       const url = URL.createObjectURL(out);
       const a = document.createElement("a");
       a.href = url;
@@ -89,6 +100,61 @@ const AgreementBuilder: React.FC = () => {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to render template";
       toast({ title: "Template error", description: msg, variant: "destructive" });
+    }
+  };
+
+  const downloadTemplateAsPdf = async () => {
+    if (!template) return;
+    let host: HTMLDivElement | null = null;
+    try {
+      const blob = renderTemplateBlob();
+      if (!blob) return;
+      const buf = await blob.arrayBuffer();
+      const { value: html } = await mammoth.convertToHtml({ arrayBuffer: buf });
+
+      const A4_WIDTH_PX = 794; // ~210mm at 96 DPI
+      host = document.createElement("div");
+      host.style.cssText = `position:fixed;left:-10000px;top:0;width:${A4_WIDTH_PX}px;background:#fff;color:#000;padding:48px;font-family:'Helvetica','Arial',sans-serif;font-size:12px;line-height:1.55;`;
+      host.innerHTML = `<style>
+        h1{font-size:20px;margin:0 0 12px;font-weight:700;text-align:center;}
+        h2{font-size:16px;margin:18px 0 8px;font-weight:700;}
+        h3{font-size:14px;margin:14px 0 6px;font-weight:700;}
+        p{margin:0 0 8px;}
+        table{border-collapse:collapse;width:100%;margin:8px 0;}
+        td,th{border:1px solid #999;padding:6px;vertical-align:top;}
+        ul,ol{margin:0 0 8px 18px;padding:0;}
+        img{max-width:100%;height:auto;}
+      </style>${html}`;
+      document.body.appendChild(host);
+
+      const canvas = await html2canvas(host, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
+      const pdf = new jsPDF({ unit: "pt", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+
+      let heightLeft = imgH;
+      let position = 0;
+      pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
+      heightLeft -= pageH;
+      while (heightLeft > 0) {
+        position = heightLeft - imgH;
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
+        heightLeft -= pageH;
+      }
+
+      const filename = `${def!.slug}-${(display.party_name || "party").toString().replace(/[^\w]+/g, "-").toLowerCase()}-from-template.pdf`;
+      pdf.save(filename);
+      toast({ title: "Template PDF downloaded", description: filename });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to export template as PDF";
+      toast({ title: "PDF export error", description: msg, variant: "destructive" });
+    } finally {
+      if (host && host.parentNode) host.parentNode.removeChild(host);
     }
   };
 
@@ -213,12 +279,17 @@ const AgreementBuilder: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             {template && (
-              <Button variant="secondary" onClick={downloadFromTemplate}>
-                <FileText className="h-4 w-4 mr-2" /> Download from template
-              </Button>
+              <>
+                <Button variant="secondary" onClick={downloadFromTemplate}>
+                  <FileText className="h-4 w-4 mr-2" /> Template .docx
+                </Button>
+                <Button variant="secondary" onClick={downloadTemplateAsPdf}>
+                  <Download className="h-4 w-4 mr-2" /> Template PDF
+                </Button>
+              </>
             )}
             <Button onClick={downloadPdf}>
-              <Download className="h-4 w-4 mr-2" /> Download PDF
+              <Download className="h-4 w-4 mr-2" /> Built-in PDF
             </Button>
           </div>
         </div>
