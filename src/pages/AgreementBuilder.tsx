@@ -1,13 +1,15 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import jsPDF from "jspdf";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
 import AppNav from "@/components/AppNav";
 import AppFooter from "@/components/AppFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, Upload, FileText, X } from "lucide-react";
 import {
   AGREEMENTS,
   fillTemplate,
@@ -28,6 +30,8 @@ const AgreementBuilder: React.FC = () => {
   }, [def]);
 
   const [values, setValues] = useState<Record<string, string>>(initial);
+  const [template, setTemplate] = useState<{ name: string; data: ArrayBuffer } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   if (!def) {
     return (
@@ -47,6 +51,46 @@ const AgreementBuilder: React.FC = () => {
 
   const handleChange = (k: string, v: string) =>
     setValues((prev) => ({ ...prev, [k]: v }));
+
+  const onTemplateUpload = async (file: File) => {
+    if (!file.name.toLowerCase().endsWith(".docx")) {
+      toast({
+        title: "Unsupported file",
+        description: "Please upload a .docx Word template with {placeholders}.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const data = await file.arrayBuffer();
+    setTemplate({ name: file.name, data });
+    toast({ title: "Template loaded", description: file.name });
+  };
+
+  const downloadFromTemplate = () => {
+    if (!template) return;
+    try {
+      const zip = new PizZip(template.data);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "{", end: "}" },
+      });
+      doc.render(display);
+      const out = doc.getZip().generate({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(out);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${def!.slug}-${(display.party_name || "party").toString().replace(/[^\w]+/g, "-").toLowerCase()}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: "Filled template downloaded", description: a.download });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to render template";
+      toast({ title: "Template error", description: msg, variant: "destructive" });
+    }
+  };
 
   const downloadPdf = () => {
     const doc = new jsPDF({ unit: "pt", format: "a4" });
