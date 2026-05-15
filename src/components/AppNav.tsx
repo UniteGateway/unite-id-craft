@@ -5,6 +5,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/ThemeToggle";
+import uniteSolarLogo from "@/assets/unite-solar-logo.png";
 
 const navItem = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -22,6 +23,9 @@ const AppNav: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between gap-4">
+        <NavLink to="/home" className="flex items-center gap-2 shrink-0 mr-2">
+          <img src={uniteSolarLogo} alt="Unite Solar" className="h-8 w-auto" />
+        </NavLink>
         <div className="flex items-center gap-1 overflow-x-auto">
           <NavLink to="/home" className={navItem}>
             <HomeIcon className="h-4 w-4" />
