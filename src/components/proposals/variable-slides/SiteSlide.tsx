@@ -1,9 +1,10 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 import SlideFrame from "./SlideFrame";
 import { ProposalVars } from "./types";
 import logoUrl from "@/assets/unite-solar-logo.png";
 import rooftopUrl from "@/assets/proposal-site-rooftop.jpg";
 import mapUrl from "@/assets/proposal-site-map.jpg";
+import { geocodeLocation, osmStaticMapUrl } from "@/lib/geocode";
 import {
   MapPin,
   Home,
@@ -48,6 +49,22 @@ const Row: React.FC<{
 interface Props { vars: ProposalVars; }
 
 const SiteSlide = forwardRef<HTMLDivElement, Props>(({ vars }, ref) => {
+  const [dynMap, setDynMap] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const lat = parseFloat(vars.LATITUDE);
+    const lng = parseFloat(vars.LONGITUDE);
+    if (isFinite(lat) && isFinite(lng) && (lat !== 0 || lng !== 0)) {
+      setDynMap(osmStaticMapUrl({ lat, lng }, 760, 460, 16));
+      return;
+    }
+    if (!vars.LOCATION) { setDynMap(null); return; }
+    geocodeLocation(vars.LOCATION).then((p) => {
+      if (cancelled) return;
+      setDynMap(p ? osmStaticMapUrl(p, 760, 460, 16) : null);
+    });
+    return () => { cancelled = true; };
+  }, [vars.LOCATION, vars.LATITUDE, vars.LONGITUDE]);
   return (
     <SlideFrame ref={ref} className="!bg-white !text-[#0A1B33]">
       {/* Logo */}
@@ -94,7 +111,12 @@ const SiteSlide = forwardRef<HTMLDivElement, Props>(({ vars }, ref) => {
           border: `4px solid ${ORANGE}`,
         }}
       >
-        <img src={mapUrl} alt="Location map" className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          src={dynMap || mapUrl}
+          alt="Location map"
+          className="absolute inset-0 h-full w-full object-cover"
+          crossOrigin="anonymous"
+        />
         {/* radial highlight */}
         <div
           className="absolute"

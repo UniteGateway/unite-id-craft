@@ -1,8 +1,7 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useMemo } from "react";
 import SlideFrame from "./SlideFrame";
 import { ProposalVars } from "./types";
 import logoUrl from "@/assets/unite-solar-logo.png";
-import diagramUrl from "@/assets/proposal-layout-topview.jpg";
 import {
   SunMedium,
   Cpu,
@@ -54,6 +53,20 @@ interface Props {
 
 const LayoutSlide = forwardRef<HTMLDivElement, Props>(({ vars }, ref) => {
   const projectUpper = vars.PROJECT_NAME.toUpperCase();
+  const layout = useMemo(() => {
+    const area = parseFloat(vars.ROOF_AREA_SQM) || 0;
+    const PANEL_W = 1.13, PANEL_H = 2.28; // m (550W)
+    const PANEL_AREA = PANEL_W * PANEL_H;
+    const PACKING = 0.55;
+    const usable = area * PACKING;
+    const panels = Math.max(0, Math.floor(usable / PANEL_AREA));
+    const side = Math.sqrt(Math.max(area, 1));
+    const cols = Math.max(1, Math.floor(side / (PANEL_W + 0.3)));
+    const rows = Math.max(1, Math.ceil(panels / Math.max(cols, 1)));
+    const dcKw = (panels * 550) / 1000;
+    const targetMw = parseFloat(vars.CAPACITY) || 0;
+    return { area, panels, rows, cols, dcKw, targetMw };
+  }, [vars.ROOF_AREA_SQM, vars.CAPACITY]);
 
   const items: LegendItem[] = [
     {
@@ -161,45 +174,45 @@ const LayoutSlide = forwardRef<HTMLDivElement, Props>(({ vars }, ref) => {
                 overflow: "hidden",
               }}
             >
-              {/* Diagram image (cropped to hide garbled labels) */}
-              <div
-                className="absolute"
-                style={{ left: 0, right: 0, top: 0, height: 540, overflow: "hidden" }}
-              >
-                <img
-                  src={diagramUrl}
-                  alt={`${vars.CAPACITY} MW solar plant layout top view`}
-                  className="w-full h-full object-cover"
-                  style={{ objectPosition: "center top" }}
-                />
-                {/* Subtle wash for readability */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.0) 35%, rgba(248,250,252,0.85) 100%)",
-                  }}
-                />
-                {/* Numbered pins */}
-                {items.map((p) => (
-                  <div
-                    key={p.n}
-                    className="absolute flex items-center justify-center rounded-full text-white font-extrabold"
-                    style={{
-                      left: `${p.x}%`,
-                      top: `${p.y}%`,
-                      transform: "translate(-50%,-50%)",
-                      width: 44,
-                      height: 44,
-                      background: ORANGE,
-                      border: "4px solid #fff",
-                      fontSize: 20,
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.45)",
-                    }}
-                  >
-                    {p.n}
-                  </div>
-                ))}
+              {/* Dynamic rooftop panel grid (computed from area) */}
+              <div className="absolute" style={{ left: 0, right: 0, top: 0, height: 540, overflow: "hidden" }}>
+                <svg width="100%" height="100%" viewBox="0 0 1180 540" preserveAspectRatio="xMidYMid meet">
+                  {/* Roof background */}
+                  <rect x="20" y="20" width="1140" height="500" rx="14" fill="#E8EEF6" stroke="#94A3B8" strokeWidth="2" strokeDasharray="6 4" />
+                  {(() => {
+                    const padX = 40, padY = 40;
+                    const gridW = 1100, gridH = 460;
+                    const cols = Math.max(1, layout.cols);
+                    const rows = Math.max(1, layout.rows);
+                    const cellW = gridW / cols;
+                    const cellH = gridH / rows;
+                    const pad = 2;
+                    const max = Math.min(layout.panels, cols * rows);
+                    const cells = [];
+                    for (let i = 0; i < max; i++) {
+                      const r = Math.floor(i / cols);
+                      const c = i % cols;
+                      cells.push(
+                        <rect key={i}
+                          x={padX + c * cellW + pad} y={padY + r * cellH + pad}
+                          width={cellW - pad * 2} height={cellH - pad * 2}
+                          fill="#1E5FBF" stroke="#0A1B33" strokeWidth="0.5" rx="1"
+                        />
+                      );
+                    }
+                    return cells;
+                  })()}
+                  {/* Stats overlay */}
+                  <g transform="translate(40, 470)">
+                    <rect width="1100" height="40" fill="rgba(10,27,51,0.85)" rx="6" />
+                    <text x="20" y="26" fontSize="16" fontWeight="800" fill="#F59E0B">
+                      {layout.panels} panels · {layout.rows} rows × {layout.cols} cols · {layout.dcKw.toFixed(1)} kWp DC
+                    </text>
+                    <text x="1080" y="26" fontSize="13" fontWeight="700" fill="#fff" textAnchor="end">
+                      Roof area: {layout.area.toLocaleString("en-IN")} m² · packing 55%
+                    </text>
+                  </g>
+                </svg>
               </div>
 
               {/* Bottom info strip (covers any garbled text) */}

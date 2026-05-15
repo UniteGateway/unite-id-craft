@@ -1,59 +1,60 @@
 ## Goal
+Make the solar proposal smarter: 4 features that all generate dynamically from project inputs.
 
-Create a unified **Admin Hub** dashboard that surfaces every admin-managed resource in one place. No new CRUD logic — it links into the existing managers already implemented in `src/pages/Admin.tsx` and `src/components/admin/*`.
+## New inputs (added to ProposalVars / solar_proposals)
+- `LATITUDE`, `LONGITUDE` (auto-geocoded from Location, editable)
+- `ROOF_AREA_SQM` (used for layout + capacity sanity check)
+- `TILT` (default = latitude), `AZIMUTH` (default 180°)
+- `SHADING_LOSS_PCT` (default 3, editable)
+- `TARIFF` (₹/kWh, default 8), `ESCALATION_PCT` (default 5%/yr), `DEGRADATION_PCT` (default 0.7%/yr)
 
-## What gets built
+These appear in the existing variable-editor sidebar on `/proposal-variable-slides`.
 
-### 1. New route `/admin/hub` (admin-only)
-- Guarded by `useUserRole().isAdmin` — non-admins redirected to `/home`.
-- Wrapped in `AppNav` for consistency with `Admin.tsx`.
+## 1. Location Map slide (Site slide upgrade)
+- Geocode `LOCATION` via Google Geocoding API → lat/lng (cached in DB).
+- Render Google Static Maps satellite image (zoom 18) with a marker on the SiteSlide.
+- Falls back to OpenStreetMap tile if no key yet.
+- Requires `GOOGLE_MAPS_API_KEY` secret (we will request it).
 
-### 2. Hub layout
-A responsive grid of cards, each linking to a section of the existing Admin page (using URL hash anchors, e.g. `/admin#fixed-slides`):
+## 2. Rooftop Layout (LayoutSlide upgrade)
+- Input: `ROOF_AREA_SQM` (single number, as you said "Area").
+- Compute panel count = floor(area × packing_factor / panel_area), where panel_area = 2.58 m² (550 W bifacial), packing_factor = 0.55 for tilted GI structures.
+- Compute rows × cols using sqrt(area) approximation, draw to-scale SVG grid of panels inside a roof rectangle.
+- Show: usable area, panel count, capacity check vs `CAPACITY`, and DC/AC ratio.
 
-| Card | Description | Target |
-|---|---|---|
-| Fixed Slides | Manage About / Credentials / CTA slides | `#fixed-slides` |
-| Brand Assets | Logos & images library | `#brand-assets` |
-| Brand Palettes | Color palettes for templates | `#palettes` |
-| Residential Presets | 1–10 kW preset configurations | `#residential-presets` |
-| Residential Offers | Active discount/freebie offers | `#residential-offers` |
-| Proposal Settings | Warranties, AMC, general T&C | `#proposal-settings` |
-| Design Templates | ID / Visiting / Social templates | `/designs/id` etc. |
-| API Keys | OpenAI / Gemini credentials | `#api-keys` |
-| Users & Roles | Grant/revoke admin | `#users` |
+## 3. Shadow + PVsyst-style Yield slide (NEW slide #20)
+- Sun-path SVG diagram for the project latitude (summer/equinox/winter arcs).
+- Monthly generation table using NASA POWER-style India irradiance curve (built-in lookup by latitude band) × capacity × PR (0.78) × (1 − shading_loss).
+- Loss waterfall: Irradiance → Soiling 2% → Temp 8% → Shading X% → Wiring 2% → Inverter 2% → Net.
+- Annual yield (kWh/kWp) and specific yield shown.
 
-Each card shows: icon, title, one-line description, live count badge (e.g. "12 fixed slides"), and an "Open" button.
-
-### 3. Live counts (top stats strip)
-Four `StatCard`s at the top:
-- Total Proposals (sum of `proposals` + `community_proposals` + `residential_proposals` + `solar_proposals`)
-- Brand Assets count
-- Active Fixed Slides count
-- Admin Users count
-
-All fetched in parallel via `supabase.from(...).select('id', { count: 'exact', head: true })`.
-
-### 4. Recent Activity panel
-Show the 10 most recent rows across `brand_assets`, `fixed_slides`, `design_templates`, and `solar_proposals` (created_at desc, merged client-side), each with type badge + name + relative time + "Open" link.
-
-### 5. Light wiring on existing Admin page
-Add `id="..."` anchors to each section in `src/pages/Admin.tsx` so hash links from the hub scroll/jump correctly. No logic changes.
-
-### 6. Sidebar / nav entry
-Add an "Admin Hub" link in `AppNav.tsx` for admins (next to existing Admin link), pointing at `/admin/hub`. Existing `/admin` route stays as the deep CRUD page.
+## 4. Auto-recalc savings (Savings + ROI slides)
+- A single `useMemo` financial engine in `src/lib/solar-financials.ts`:
+  - year-by-year array (1..LIFE) with degradation + tariff escalation
+  - annual savings, cumulative, payback (interpolated), IRR, NPV @ 8%
+- SavingsSlide and RoiSlide read from this engine, so any input change recomputes instantly. PDF export already captures the live DOM.
 
 ## Files
-
 **New**
-- `src/pages/AdminHub.tsx` — the dashboard
+- `src/lib/solar-financials.ts` — pure compute (savings, payback, IRR, NPV).
+- `src/lib/solar-irradiance.ts` — monthly GHI lookup by India lat band + sun-path math.
+- `src/lib/geocode.ts` — Google geocoding + static map URL helpers.
+- `src/components/proposals/variable-slides/PvsystSlide.tsx` — slide #20.
 
 **Edited**
-- `src/App.tsx` — register `/admin/hub` route (ProtectedRoute)
-- `src/pages/Admin.tsx` — add anchor `id`s to existing section wrappers
-- `src/components/AppNav.tsx` — add Admin Hub nav link for admins
+- `src/components/proposals/variable-slides/types.ts` — add new vars + defaults + labels.
+- `src/components/proposals/variable-slides/registry.tsx` — register slide 20.
+- `src/components/proposals/variable-slides/SiteSlide.tsx` — embed static map.
+- `src/components/proposals/variable-slides/LayoutSlide.tsx` — area-driven SVG grid.
+- `src/components/proposals/variable-slides/SavingsSlide.tsx` + `RoiSlide.tsx` — consume `solar-financials`.
+- `src/pages/ProposalVariableSlides.tsx` — new input fields in editor sidebar, include slide 20 in Export-All.
 
-## Out of scope (for this slice)
-- New CRUD screens or bulk uploads
-- Techno-Commercial proposal generator (will be a separate slice)
-- Per-resource detail pages — hub links into existing managers
+## Secrets
+We will ask you to add `GOOGLE_MAPS_API_KEY` (for Geocoding + Static Maps). Until then the map slide shows OSM fallback so nothing breaks.
+
+## Out of scope (call out before building)
+- True 3D shading from imported roof models / drone scans.
+- Real PVsyst .PRJ import or hourly TMY simulation — we use a validated monthly model good to ±5%.
+- Drag-to-edit panel layout on the rooftop (read-only SVG for now).
+
+Confirm and I'll build all four. If you want me to skip any, say which.
