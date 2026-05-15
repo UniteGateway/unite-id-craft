@@ -1,8 +1,7 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useMemo } from "react";
 import SlideFrame from "./SlideFrame";
 import { ProposalVars } from "./types";
 import logoUrl from "@/assets/unite-solar-logo.png";
-import diagramUrl from "@/assets/proposal-layout-topview.jpg";
 import {
   SunMedium,
   Cpu,
@@ -54,6 +53,20 @@ interface Props {
 
 const LayoutSlide = forwardRef<HTMLDivElement, Props>(({ vars }, ref) => {
   const projectUpper = vars.PROJECT_NAME.toUpperCase();
+  const layout = useMemo(() => {
+    const area = parseFloat(vars.ROOF_AREA_SQM) || 0;
+    const PANEL_W = 1.13, PANEL_H = 2.28; // m (550W)
+    const PANEL_AREA = PANEL_W * PANEL_H;
+    const PACKING = 0.55;
+    const usable = area * PACKING;
+    const panels = Math.max(0, Math.floor(usable / PANEL_AREA));
+    const side = Math.sqrt(Math.max(area, 1));
+    const cols = Math.max(1, Math.floor(side / (PANEL_W + 0.3)));
+    const rows = Math.max(1, Math.ceil(panels / Math.max(cols, 1)));
+    const dcKw = (panels * 550) / 1000;
+    const targetMw = parseFloat(vars.CAPACITY) || 0;
+    return { area, panels, rows, cols, dcKw, targetMw };
+  }, [vars.ROOF_AREA_SQM, vars.CAPACITY]);
 
   const items: LegendItem[] = [
     {
