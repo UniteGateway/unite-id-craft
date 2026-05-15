@@ -50,6 +50,13 @@ const SolarFeasibility: React.FC = () => {
   });
   const [report, setReport] = useState<FeasibilityReport | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
+  const [epcRate, setEpcRate] = useState<string>("40000");
+  const [epcLabels, setEpcLabels] = useState<[string, string, string, string]>([
+    "Advance against Purchase Order",
+    "Material ready to dispatch",
+    "Pre-installation",
+    "Post-installation / Commissioning",
+  ]);
   const [geo, setGeo] = useState<GeoPoint | null>(null);
   const [mapUrl, setMapUrl] = useState<string>("");
   const [geoLoading, setGeoLoading] = useState(false);
@@ -123,6 +130,8 @@ const SolarFeasibility: React.FC = () => {
       sanction_load_kw: parseFloat(manual.sanction_load_kw) || undefined,
       energy_charge_per_unit: parseFloat(manual.energy_charge_per_unit) || undefined,
       state: extracted?.state,
+      epc_rate_per_kw: parseFloat(epcRate) || undefined,
+      epc_milestone_labels: epcLabels,
     });
     setReport(r);
     setTimeout(() => reportRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
