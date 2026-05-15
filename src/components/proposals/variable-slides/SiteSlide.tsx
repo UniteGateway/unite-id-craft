@@ -4,7 +4,7 @@ import { ProposalVars } from "./types";
 import logoUrl from "@/assets/unite-solar-logo.png";
 import rooftopUrl from "@/assets/proposal-site-rooftop.jpg";
 import mapUrl from "@/assets/proposal-site-map.jpg";
-import { geocodeLocation, osmStaticMapUrl } from "@/lib/geocode";
+import { geocodeLocation, staticMapUrlFromSettings } from "@/lib/geocode";
 import {
   MapPin,
   Home,
@@ -55,13 +55,13 @@ const SiteSlide = forwardRef<HTMLDivElement, Props>(({ vars }, ref) => {
     const lat = parseFloat(vars.LATITUDE);
     const lng = parseFloat(vars.LONGITUDE);
     if (isFinite(lat) && isFinite(lng) && (lat !== 0 || lng !== 0)) {
-      setDynMap(osmStaticMapUrl({ lat, lng }, 760, 460, 16));
+      setDynMap(staticMapUrlFromSettings({ lat, lng }, 760, 460, 18));
       return;
     }
     if (!vars.LOCATION) { setDynMap(null); return; }
     geocodeLocation(vars.LOCATION).then((p) => {
       if (cancelled) return;
-      setDynMap(p ? osmStaticMapUrl(p, 760, 460, 16) : null);
+      setDynMap(p ? staticMapUrlFromSettings(p, 760, 460, 18) : null);
     });
     return () => { cancelled = true; };
   }, [vars.LOCATION, vars.LATITUDE, vars.LONGITUDE]);
