@@ -25,7 +25,6 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import FeasibilityChatbot from "@/components/solar/FeasibilityChatbot";
 import { geocodeLocation, staticMapUrlFromSettings, type GeoPoint } from "@/lib/geocode";
-import uniteSolarLogo from "@/assets/unite-solar-logo.png";
 
 const SEGMENT_LABEL: Record<Segment, string> = {
   residential: "Residential",
