@@ -111,7 +111,12 @@ const SiteSlide = forwardRef<HTMLDivElement, Props>(({ vars }, ref) => {
           border: `4px solid ${ORANGE}`,
         }}
       >
-        <img src={mapUrl} alt="Location map" className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          src={dynMap || mapUrl}
+          alt="Location map"
+          className="absolute inset-0 h-full w-full object-cover"
+          crossOrigin="anonymous"
+        />
         {/* radial highlight */}
         <div
           className="absolute"
