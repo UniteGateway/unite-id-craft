@@ -22,6 +22,7 @@ import {
 } from "@/lib/feasibility";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import FeasibilityChatbot from "@/components/solar/FeasibilityChatbot";
 
 const SEGMENT_LABEL: Record<Segment, string> = {
   residential: "Residential",
@@ -350,6 +351,29 @@ const SolarFeasibility: React.FC = () => {
           </div>
         </div>
       )}
+
+      <div className="mt-8">
+        <FeasibilityChatbot
+          enabled={!!report}
+          context={{
+            customer: {
+              name: manual.consumer_name,
+              location: manual.location,
+              segment,
+            },
+            bill: {
+              monthly_units: manual.monthly_units,
+              monthly_bill: manual.monthly_bill,
+              tariff_per_unit: manual.energy_charge_per_unit,
+              sanction_load_kw: manual.sanction_load_kw,
+              tariff_category: extracted?.tariff_category,
+              utility_provider: extracted?.utility_provider,
+              state: extracted?.state,
+            },
+            feasibility: report,
+          }}
+        />
+      </div>
     </SolarShell>
   );
 };
