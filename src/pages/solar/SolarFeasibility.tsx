@@ -25,6 +25,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import FeasibilityChatbot from "@/components/solar/FeasibilityChatbot";
 import { geocodeLocation, staticMapUrlFromSettings, type GeoPoint } from "@/lib/geocode";
+import uniteSolarLogo from "@/assets/unite-solar-logo.png";
 
 const SEGMENT_LABEL: Record<Segment, string> = {
   residential: "Residential",
@@ -328,16 +329,21 @@ const SolarFeasibility: React.FC = () => {
 
           <div ref={reportRef} className="bg-white text-[#0a1b33] rounded-lg overflow-hidden shadow-lg">
             {/* Header */}
-            <div className="px-8 py-6 flex items-center justify-between"
+            <div className="px-8 py-6 flex items-center justify-between gap-4"
               style={{ background: "linear-gradient(135deg,#0a1b33 0%,#1a3c6e 100%)" }}>
-              <div>
-                <div className="text-[11px] tracking-[0.3em] uppercase text-orange-400">Unite Solar</div>
-                <div className="text-2xl md:text-3xl font-extrabold text-white">Solar Feasibility Report</div>
-                <div className="text-sm text-white/80 mt-1">
-                  {manual.consumer_name || "Customer"} · {manual.location || "—"} · {SEGMENT_LABEL[report.segment]}
+              <div className="flex items-center gap-4">
+                <div className="bg-white rounded-md p-2 shrink-0">
+                  <img src={uniteSolarLogo} alt="Unite Solar" className="h-12 w-auto" crossOrigin="anonymous" />
+                </div>
+                <div>
+                  <div className="text-[11px] tracking-[0.3em] uppercase text-orange-400">Unite Solar</div>
+                  <div className="text-2xl md:text-3xl font-extrabold text-white">Solar Feasibility Report</div>
+                  <div className="text-sm text-white/80 mt-1">
+                    {manual.consumer_name || "Customer"} · {manual.location || "—"} · {SEGMENT_LABEL[report.segment]}
+                  </div>
                 </div>
               </div>
-              <Sun className="h-14 w-14 text-orange-400" />
+              <Sun className="h-14 w-14 text-orange-400 shrink-0" />
             </div>
 
             <div className="p-6 space-y-6">
@@ -552,12 +558,11 @@ const SolarFeasibility: React.FC = () => {
                 </div>
                 <div className="grid md:grid-cols-2 gap-x-6">
                   <KV label="Beneficiary" v="Unite Developers Global Inc" />
-                  <KV label="Bank Name" v="HDFC Bank Ltd." />
-                  <KV label="Account No." v="50200012345678" />
-                  <KV label="IFSC" v="HDFC0001234" />
-                  <KV label="Branch" v="Gachibowli, Hyderabad" />
-                  <KV label="GSTIN" v="36AABCU1234A1Z5" />
-                  <KV label="PAN" v="AABCU1234A" />
+                  <KV label="Bank Name" v="Axis Bank Ltd." />
+                  <KV label="Account No." v="925020025300736" />
+                  <KV label="IFSC" v="UTIB0000030" />
+                  <KV label="Branch" v="Jubilee Hills" />
+                  <KV label="Customer ID" v="975232560" />
                   <KV label="Account Type" v="Current" />
                 </div>
                 <div className="mt-2 text-xs text-muted-foreground">
