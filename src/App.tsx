@@ -32,6 +32,7 @@ import SolarBranding from "./pages/solar/SolarBranding.tsx";
 import SolarSettings from "./pages/solar/SolarSettings.tsx";
 import SolarProposalSummary from "./pages/solar/SolarProposalSummary.tsx";
 import SolarProposalSlides from "./pages/solar/SolarProposalSlides.tsx";
+import SolarFeasibility from "./pages/solar/SolarFeasibility.tsx";
 
 const queryClient = new QueryClient();
 
@@ -177,6 +178,7 @@ const App = () => (
             <Route path="/solar/assets" element={<ProtectedRoute><SolarAssets /></ProtectedRoute>} />
             <Route path="/solar/branding" element={<ProtectedRoute><SolarBranding /></ProtectedRoute>} />
             <Route path="/solar/settings" element={<ProtectedRoute><SolarSettings /></ProtectedRoute>} />
+            <Route path="/solar/feasibility" element={<ProtectedRoute><SolarFeasibility /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
