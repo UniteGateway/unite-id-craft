@@ -281,6 +281,40 @@ const SolarFeasibility: React.FC = () => {
         </Card>
       </div>
 
+      {/* EPC settings */}
+      <Card className="p-5 mt-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Wrench className="h-4 w-4 text-orange-600" />
+          <h2 className="font-semibold">EPC Settings (editable)</h2>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field
+            label="EPC Rate (₹ / kW, incl. GST + Insurance + Cleaning)"
+            value={epcRate} type="number"
+            onChange={(v) => setEpcRate(v)}
+          />
+          <div className="hidden md:block" />
+          {epcLabels.map((lbl, i) => {
+            const pcts = [10, 70, 15, 5];
+            return (
+              <Field
+                key={i}
+                label={`${pcts[i]}% Milestone Label`}
+                value={lbl}
+                onChange={(v) => {
+                  const next = [...epcLabels] as [string, string, string, string];
+                  next[i] = v;
+                  setEpcLabels(next);
+                }}
+              />
+            );
+          })}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Default: <b>10%</b> advance against PO · <b>70%</b> material ready to dispatch · <b>15%</b> pre-installation · <b>5%</b> post-installation. Percentages are fixed; only the rate and milestone wording are editable. Regenerate the report to apply changes.
+        </div>
+      </Card>
+
       {report && (
         <div className="mt-8">
           <div className="flex items-center justify-end gap-2 mb-3">
