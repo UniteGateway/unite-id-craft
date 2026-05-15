@@ -1,6 +1,7 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useMemo } from "react";
 import SlideFrame from "./SlideFrame";
 import { ProposalVars } from "./types";
+import { computeFinancials } from "@/lib/solar-financials";
 import logoUrl from "@/assets/unite-solar-logo.png";
 import heroUrl from "@/assets/proposal-savings-hero.jpg";
 import { TrendingUp, Zap, Battery, PiggyBank, Sparkles, IndianRupee } from "lucide-react";
@@ -47,8 +48,22 @@ const Benefit: React.FC<{ Icon: typeof Zap; title: string; desc: string }> = ({
 
 const SavingsSlide = forwardRef<HTMLDivElement, { vars: ProposalVars }>(
   ({ vars }, ref) => {
-    const totalSavings = vars.TOTAL_SAVINGS;
     const life = vars.LIFE;
+    const fin = useMemo(
+      () => computeFinancials({
+        capacity_mw: parseFloat(vars.CAPACITY) || 0,
+        annual_units_lakh: parseFloat(vars.ANNUAL_UNITS) || 0,
+        tariff_rs_per_kwh: parseFloat(vars.TARIFF) || 8,
+        tariff_escalation_pct: parseFloat(vars.ESCALATION_PCT) || 5,
+        degradation_pct: parseFloat(vars.DEGRADATION_PCT) || 0.7,
+        project_cost_cr: parseFloat(vars.PROJECT_COST) || 0,
+        om_cost_lakhs_per_year: parseFloat(vars.OM_COST) || 0,
+        life_years: parseInt(vars.LIFE) || 25,
+      }),
+      [vars.CAPACITY, vars.ANNUAL_UNITS, vars.TARIFF, vars.ESCALATION_PCT, vars.DEGRADATION_PCT, vars.PROJECT_COST, vars.OM_COST, vars.LIFE]
+    );
+    const totalSavings = fin.total_savings_cr.toFixed(1);
+    const year1 = fin.year1_savings_cr;
     const annualLakh = parseFloat(vars.ANNUAL_UNITS) || 0;
     const co2Total =
       (parseFloat(vars.CO2) || 0) * (parseFloat(life) || 0);
