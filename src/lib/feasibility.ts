@@ -53,6 +53,38 @@ export interface FeasibilityReport {
 
   ai_tips: string[];
   net_metering_note: string;
+
+  // State / regulatory
+  state?: string;
+  discom?: string;
+  state_permission?: string;
+
+  // BOOT (Build-Own-Operate-Transfer): client pays only rent
+  boot: {
+    rent_per_kw_per_month: number;
+    period_years: number;
+    monthly_rent: number;
+    annual_rent: number;
+    total_rent: number;
+    handover_after: string;
+  };
+
+  // PPA: 25% discount on grid tariff for 25 years
+  ppa: {
+    discount_pct: number;
+    grid_tariff: number;
+    ppa_tariff: number;
+    period_years: number;
+    year1_savings: number;
+    lifetime_savings_25y: number;
+  };
+
+  // EPC: turnkey at ₹40,000/kW incl. GST + insurance + cleaning
+  epc: {
+    rate_per_kw: number;
+    total_cost: number;
+    payment_terms: { milestone: string; pct: number; amount: number }[];
+  };
 }
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -204,6 +236,100 @@ export function computeFeasibility(input: FeasibilityInput): FeasibilityReport {
     net_metering_note: seg === "residential"
       ? "Eligible for net-metering up to sanction load under DISCOM policy."
       : "Net/Gross metering applicable; export tariff per state ERC order.",
+    ...buildModels(capacityKw, annualGen, tariff, input),
+  };
+}
+
+// ---- BOOT / PPA / EPC models ----
+function buildModels(
+  capacityKw: number,
+  annualGen: number,
+  tariff: number,
+  input: FeasibilityInput,
+) {
+  // BOOT
+  const RENT = 1000; // ₹ / kW / month
+  const bootMonthly = Math.round(capacityKw * RENT);
+  const bootAnnual = bootMonthly * 12;
+  const bootYears = 6;
+  const boot = {
+    rent_per_kw_per_month: RENT,
+    period_years: bootYears,
+    monthly_rent: bootMonthly,
+    annual_rent: bootAnnual,
+    total_rent: bootAnnual * bootYears,
+    handover_after: `Plant transferred FREE to client after ${bootYears} years.`,
+  };
+
+  // PPA
+  const ppaDiscount = 0.25;
+  const ppaTariff = Math.round(tariff * (1 - ppaDiscount) * 100) / 100;
+  let ppaLife = 0;
+  for (let y = 1; y <= 25; y++) {
+    const gen = annualGen * Math.pow(1 - 0.007, y - 1);
+    const grid = tariff * Math.pow(1.05, y - 1);
+    const ppa = ppaTariff * Math.pow(1.05, y - 1);
+    ppaLife += gen * (grid - ppa);
+  }
+  const ppa = {
+    discount_pct: ppaDiscount * 100,
+    grid_tariff: Math.round(tariff * 100) / 100,
+    ppa_tariff: ppaTariff,
+    period_years: 25,
+    year1_savings: Math.round(annualGen * (tariff - ppaTariff)),
+    lifetime_savings_25y: Math.round(ppaLife),
+  };
+
+  // EPC
+  const EPC_RATE = 40000; // ₹/kW incl. GST, insurance, cleaning
+  const epcTotal = Math.round(capacityKw * EPC_RATE);
+  const epc = {
+    rate_per_kw: EPC_RATE,
+    total_cost: epcTotal,
+    payment_terms: [
+      { milestone: "Advance against Purchase Order", pct: 10, amount: Math.round(epcTotal * 0.10) },
+      { milestone: "Material ready to dispatch",     pct: 70, amount: Math.round(epcTotal * 0.70) },
+      { milestone: "Pre-installation",                pct: 15, amount: Math.round(epcTotal * 0.15) },
+      { milestone: "Post-installation / Commissioning", pct: 5, amount: Math.round(epcTotal * 0.05) },
+    ],
+  };
+
+  const reg = stateRegulatory(input.state);
+  return { boot, ppa, epc, state: input.state, discom: reg.discom, state_permission: reg.permission };
+}
+
+// Indian state → DISCOM + rooftop solar approval authority
+const STATE_REG: Record<string, { discom: string; permission: string }> = {
+  "telangana":     { discom: "TSSPDCL / TSNPDCL", permission: "TS Transco / TSSPDCL net-metering approval (≤500 kW under PM Surya Ghar / TSREDCO empanelment)." },
+  "andhra pradesh":{ discom: "APSPDCL / APEPDCL / APCPDCL", permission: "APERC / NREDCAP empanelment + DISCOM net-metering sanction." },
+  "karnataka":     { discom: "BESCOM / MESCOM / HESCOM", permission: "BESCOM / KERC net-metering approval; KREDL empanelment for >10 kW." },
+  "tamil nadu":    { discom: "TANGEDCO", permission: "TANGEDCO net-metering / gross-metering sanction; TEDA empanelled vendor." },
+  "kerala":        { discom: "KSEB", permission: "KSEB net-metering approval under ANERT scheme." },
+  "maharashtra":   { discom: "MSEDCL / BEST / Tata Power / Adani", permission: "MSEDCL net-metering portal sanction + MEDA listed vendor." },
+  "gujarat":       { discom: "DGVCL / MGVCL / PGVCL / UGVCL", permission: "GUVNL / GEDA Surya Gujarat scheme net-metering approval." },
+  "rajasthan":     { discom: "JVVNL / AVVNL / JdVVNL", permission: "RREC empanelment + DISCOM net-metering sanction." },
+  "delhi":         { discom: "BRPL / BYPL / TPDDL", permission: "DERC net-metering sanction; SDMC / NDMC structural NOC if >25 kWp." },
+  "uttar pradesh": { discom: "UPPCL (PuVVNL / DVVNL / MVVNL / PVVNL)", permission: "UPNEDA empanelment + UPPCL net-metering portal sanction." },
+  "madhya pradesh":{ discom: "MPPKVVCL / MPMKVVCL / MPPaKVVCL", permission: "MPUVN empanelment + DISCOM net-metering approval." },
+  "haryana":       { discom: "UHBVN / DHBVN", permission: "HAREDA empanelment + DISCOM net-metering sanction." },
+  "punjab":        { discom: "PSPCL", permission: "PEDA empanelment + PSPCL net-metering sanction." },
+  "west bengal":   { discom: "WBSEDCL / CESC", permission: "WBREDA empanelment + DISCOM net-metering approval." },
+  "odisha":        { discom: "TPCODL / TPNODL / TPWODL / TPSODL", permission: "OREDA empanelment + DISCOM net-metering sanction." },
+  "bihar":         { discom: "NBPDCL / SBPDCL", permission: "BREDA empanelment + DISCOM net-metering approval." },
+  "chhattisgarh":  { discom: "CSPDCL", permission: "CREDA empanelment + DISCOM net-metering sanction." },
+  "jharkhand":     { discom: "JBVNL", permission: "JREDA empanelment + JBVNL net-metering approval." },
+  "assam":         { discom: "APDCL", permission: "AEDA empanelment + APDCL net-metering sanction." },
+  "uttarakhand":   { discom: "UPCL", permission: "UREDA empanelment + UPCL net-metering approval." },
+  "himachal pradesh": { discom: "HPSEBL", permission: "HIMURJA empanelment + HPSEBL net-metering sanction." },
+  "goa":           { discom: "Goa Electricity Dept.", permission: "GEDA empanelment + Goa Electricity Dept. net-metering approval." },
+};
+
+export function stateRegulatory(state?: string): { discom: string; permission: string } {
+  const k = (state || "").trim().toLowerCase();
+  if (k && STATE_REG[k]) return STATE_REG[k];
+  return {
+    discom: "Local DISCOM",
+    permission: "Net-metering / gross-metering approval as per State Electricity Regulatory Commission (SERC) and DISCOM policy.",
   };
 }
 
