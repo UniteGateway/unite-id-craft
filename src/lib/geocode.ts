@@ -32,3 +32,44 @@ export function osmStaticMapUrl(p: GeoPoint, w = 760, h = 460, zoom = 16): strin
   const lng = p.lng.toFixed(5);
   return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=${zoom}&size=${w}x${h}&maptype=mapnik&markers=${lat},${lng},red-pushpin`;
 }
+
+// Google Static Maps (satellite). Requires an API key with Static Maps API enabled.
+export function googleStaticMapUrl(
+  p: GeoPoint,
+  apiKey: string,
+  w = 760,
+  h = 460,
+  zoom = 18,
+  mapType: "satellite" | "hybrid" | "roadmap" = "satellite",
+): string {
+  const lat = p.lat.toFixed(6);
+  const lng = p.lng.toFixed(6);
+  return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=${zoom}&size=${w}x${h}&maptype=${mapType}&markers=color:orange%7C${lat},${lng}&key=${apiKey}`;
+}
+
+// ---- Map provider settings (persisted in localStorage) ----
+export type MapProvider = "osm" | "google";
+const PROVIDER_KEY = "unite.mapProvider";
+const GKEY_KEY = "unite.googleMapsApiKey";
+
+export function getMapProvider(): MapProvider {
+  if (typeof window === "undefined") return "osm";
+  return (localStorage.getItem(PROVIDER_KEY) as MapProvider) || "osm";
+}
+export function setMapProvider(p: MapProvider) {
+  localStorage.setItem(PROVIDER_KEY, p);
+}
+export function getGoogleMapsApiKey(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(GKEY_KEY) || "";
+}
+export function setGoogleMapsApiKey(key: string) {
+  localStorage.setItem(GKEY_KEY, key);
+}
+
+export function staticMapUrlFromSettings(p: GeoPoint, w = 760, h = 460, zoom = 18): string {
+  const provider = getMapProvider();
+  const key = getGoogleMapsApiKey();
+  if (provider === "google" && key) return googleStaticMapUrl(p, key, w, h, zoom);
+  return osmStaticMapUrl(p, w, h, Math.min(zoom, 18));
+}
