@@ -56,6 +56,7 @@ const IMG = {
   createProposal: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=70",
   feasibility: "https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=800&q=70",
   agreements: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=70",
+  coveringLetters: "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=800&q=70",
 };
 
 const designTiles: Tile[] = [
@@ -69,6 +70,7 @@ const designTiles: Tile[] = [
   { icon: Wand2, title: "Create Proposal", desc: "Smart fixed + variable slides", to: "/create-proposal", hue: "from-amber-500 to-orange-500", image: IMG.createProposal, ready: true },
   { icon: Gauge, title: "Feasibility Analysis", desc: "AI report from power bill", to: "/solar/feasibility", hue: "from-green-500 to-yellow-400", image: IMG.feasibility, ready: true },
   { icon: FileSignature, title: "Agreements", desc: "Franchise, Agent, B2B, EPC, OEM, Finance", to: "/agreements", hue: "from-stone-700 to-stone-500", image: IMG.agreements, ready: true },
+  { icon: Mail, title: "Covering Letters", desc: "Govt, Industries, Institutions, Corporates", to: "/covering-letters", hue: "from-sky-600 to-indigo-500", image: IMG.coveringLetters, ready: true },
   { icon: Users, title: "CRM", desc: "Customer relationship manager", to: "https://crm.unitesolar.in", hue: "from-teal-600 to-emerald-400", image: IMG.crm, ready: true },
   { icon: Users, title: "CRM Portal", desc: "Open crm.unitesolar.in", to: "https://crm.unitesolar.in", hue: "from-emerald-600 to-teal-500", image: IMG.crm, ready: true },
 ];
