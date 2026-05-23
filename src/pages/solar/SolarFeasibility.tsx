@@ -372,6 +372,30 @@ const SolarFeasibility: React.FC = () => {
                 <KPI icon={<BatteryCharging className="h-4 w-4" />} label="System Type" value={report.system_type.toUpperCase()} />
               </div>
 
+              {/* Capacity split: Net-metering (≤500 kW) + Behind-the-meter */}
+              <Card className="p-4 border-orange-200 bg-orange-50/40">
+                <div className="font-semibold mb-2 flex items-center gap-2">
+                  <BatteryCharging className="h-4 w-4 text-orange-600" />
+                  Capacity Split – Net-Metering & Behind-the-Meter
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div className="rounded-md bg-white p-3 border">
+                    <div className="text-xs text-muted-foreground">Net-Metering (≤ 500 kW cap)</div>
+                    <div className="text-lg font-bold text-green-700">{report.net_metering_kw} kW</div>
+                  </div>
+                  <div className="rounded-md bg-white p-3 border">
+                    <div className="text-xs text-muted-foreground">Behind-the-Meter (self-consumption)</div>
+                    <div className="text-lg font-bold text-orange-700">{report.behind_the_meter_kw} kW</div>
+                    <div className="text-[11px] text-muted-foreground">cap: {report.behind_the_meter_cap_kw} kW (50% of consumption)</div>
+                  </div>
+                  <div className="rounded-md bg-white p-3 border">
+                    <div className="text-xs text-muted-foreground">Total Recommended</div>
+                    <div className="text-lg font-bold">{report.recommended_capacity_kw} kW</div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">{report.capacity_split_note}</p>
+              </Card>
+
               {/* Generation chart */}
               <Card className="p-4">
                 <div className="font-semibold mb-2">Monthly Solar Generation (kWh)</div>
