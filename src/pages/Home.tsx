@@ -156,23 +156,27 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
       <AppNav />
-      <main className="mx-auto max-w-6xl px-4 py-5 md:py-6 pb-[env(safe-area-inset-bottom)]">
+      <main className="mx-auto max-w-6xl px-4 py-6 md:py-8 pb-[env(safe-area-inset-bottom)]">
         <PageBanner
           image={BANNERS.studio}
           eyebrow="Exclusive Unite Solar Studio"
           icon={<Sparkles className="h-3.5 w-3.5" />}
           title={`Welcome${user?.email ? `, ${user.email.split("@")[0]}` : ""} 👋`}
           subtitle="Pick a tool below to start designing on-brand — ID cards, business cards, proposals & more."
-          height="md"
-          className="mb-6 md:mb-8"
+          height="lg"
+          className="mb-8 md:mb-10 rounded-3xl overflow-hidden shadow-xl ring-1 ring-primary/10"
         />
 
-        <section className="mb-10">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
-            Create
-          </h2>
+        <section className="mb-12">
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Create</h2>
+              <p className="text-sm text-muted-foreground">Design tools, proposals & sales kits.</p>
+            </div>
+            <div className="hidden md:block h-px flex-1 ml-6 bg-gradient-to-r from-border to-transparent" />
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {designTiles.map((t) => (
               <Tile
@@ -184,10 +188,14 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        <section className="mb-10">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
-            Stationery
-          </h2>
+        <section className="mb-12">
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Stationery</h2>
+              <p className="text-sm text-muted-foreground">Letterheads, envelopes & bill books.</p>
+            </div>
+            <div className="hidden md:block h-px flex-1 ml-6 bg-gradient-to-r from-border to-transparent" />
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {stationeryTiles.map((t) => (
               <Tile key={t.title} tile={t} onClick={() => handleTileClick(t)} />
@@ -195,10 +203,14 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        <section className="mb-12">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
-            Your work
-          </h2>
+        <section className="mb-14">
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Your work</h2>
+              <p className="text-sm text-muted-foreground">Saved designs and history.</p>
+            </div>
+            <div className="hidden md:block h-px flex-1 ml-6 bg-gradient-to-r from-border to-transparent" />
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {visibleWorkTiles.map((t) => (
               <Tile key={t.title} tile={t} onClick={() => handleTileClick(t)} />

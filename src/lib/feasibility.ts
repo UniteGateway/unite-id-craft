@@ -10,6 +10,8 @@ export interface FeasibilityInput {
   monthly_bill: number;
   energy_charge_per_unit?: number;
   sanction_load_kw?: number;
+  /** Required capacity (kW) explicitly requested by the client. Overrides auto-sizing. */
+  required_kw?: number;
   state?: string;
   // Cost overrides
   cost_per_kw?: number; // ₹/kW installed
@@ -56,6 +58,16 @@ export interface FeasibilityReport {
 
   ai_tips: string[];
   net_metering_note: string;
+
+  /** Statewide net-metering cap (kW). */
+  net_metering_cap_kw: number;
+  /** Portion of recommended capacity eligible for net-metering. */
+  net_metering_kw: number;
+  /** Portion above the cap, deployed behind-the-meter (self-consumption only). */
+  behind_the_meter_kw: number;
+  /** Cap on behind-the-meter sizing (50% of monthly consumption ÷ specific yield). */
+  behind_the_meter_cap_kw: number;
+  capacity_split_note: string;
 
   // State / regulatory
   state?: string;
@@ -122,7 +134,23 @@ export function computeFeasibility(input: FeasibilityInput): FeasibilityReport {
   if (input.sanction_load_kw && input.sanction_load_kw > 0) {
     capacityKw = Math.min(capacityKw, input.sanction_load_kw);
   }
+  // If client explicitly requires a capacity, use it
+  if (input.required_kw && input.required_kw > 0) {
+    capacityKw = input.required_kw;
+  }
   capacityKw = Math.max(1, Math.round(capacityKw * 10) / 10);
+
+  // ---- Net-metering vs Behind-the-meter split (statewide 500 kW cap) ----
+  const NET_METERING_CAP_KW = 500;
+  // Behind-the-meter (self consumption) sized so daily generation ≤ 50% of daily consumption
+  const dailyUnits = monthlyUnits / 30;
+  const behindCap = Math.max(0, Math.round(((dailyUnits * 0.5) / SPECIFIC_YIELD_DAILY) * 10) / 10);
+  const netMeteringKw = Math.min(capacityKw, NET_METERING_CAP_KW);
+  const behindRaw = Math.max(0, capacityKw - NET_METERING_CAP_KW);
+  const behindKw = Math.min(behindRaw, behindCap);
+  const splitNote = capacityKw <= NET_METERING_CAP_KW
+    ? `Full ${capacityKw} kW eligible for net-metering (within the 500 kW statewide cap).`
+    : `Net-metering limited to ${NET_METERING_CAP_KW} kW (statewide cap). Balance ${Math.round(behindRaw*10)/10} kW recommended Behind-the-Meter (self-consumption, no export); sized down to ${behindKw} kW to keep generation ≤ 50% of consumption.`;
 
   // Panel = 550 W bifacial, 2.58 m² area
   const panelCount = Math.ceil((capacityKw * 1000) / 550);
@@ -239,6 +267,11 @@ export function computeFeasibility(input: FeasibilityInput): FeasibilityReport {
     net_metering_note: seg === "residential"
       ? "Eligible for net-metering up to sanction load under DISCOM policy."
       : "Net/Gross metering applicable; export tariff per state ERC order.",
+    net_metering_cap_kw: NET_METERING_CAP_KW,
+    net_metering_kw: Math.round(netMeteringKw * 10) / 10,
+    behind_the_meter_kw: Math.round(behindKw * 10) / 10,
+    behind_the_meter_cap_kw: behindCap,
+    capacity_split_note: splitNote,
     ...buildModels(capacityKw, annualGen, tariff, input),
   };
 }

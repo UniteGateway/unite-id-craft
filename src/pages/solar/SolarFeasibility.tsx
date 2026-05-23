@@ -46,6 +46,7 @@ const SolarFeasibility: React.FC = () => {
     monthly_units: "",
     monthly_bill: "",
     sanction_load_kw: "",
+    required_kw: "",
     energy_charge_per_unit: "",
     consumer_name: "",
     location: "",
@@ -108,6 +109,7 @@ const SolarFeasibility: React.FC = () => {
         monthly_units: String(data.monthly_units ?? ""),
         monthly_bill: String(data.monthly_bill ?? ""),
         sanction_load_kw: String(data.sanction_load_kw ?? ""),
+        required_kw: "",
         energy_charge_per_unit: String(data.energy_charge_per_unit ?? ""),
         consumer_name: data.consumer_name ?? "",
         location: data.location ?? "",
@@ -130,6 +132,7 @@ const SolarFeasibility: React.FC = () => {
       monthly_units: units,
       monthly_bill: bill,
       sanction_load_kw: parseFloat(manual.sanction_load_kw) || undefined,
+      required_kw: parseFloat(manual.required_kw) || undefined,
       energy_charge_per_unit: parseFloat(manual.energy_charge_per_unit) || undefined,
       state: extracted?.state,
       epc_rate_per_kw: parseFloat(epcRate) || undefined,
@@ -272,6 +275,8 @@ const SolarFeasibility: React.FC = () => {
               onChange={(v) => setManual({ ...manual, energy_charge_per_unit: v })} />
             <Field label="Sanction Load (kW)" value={manual.sanction_load_kw} type="number"
               onChange={(v) => setManual({ ...manual, sanction_load_kw: v })} />
+            <Field label="Required Capacity (kW)" value={manual.required_kw} type="number"
+              onChange={(v) => setManual({ ...manual, required_kw: v })} />
           </div>
           <Button onClick={generateReport} className="w-full gap-2 bg-primary">
             <Sparkles className="h-4 w-4" /> Generate Feasibility Report
@@ -366,6 +371,30 @@ const SolarFeasibility: React.FC = () => {
                 <KPI icon={<Leaf className="h-4 w-4" />} label="CO₂ Offset (25y)" value={`${report.co2_offset_tonnes_25y} t`} />
                 <KPI icon={<BatteryCharging className="h-4 w-4" />} label="System Type" value={report.system_type.toUpperCase()} />
               </div>
+
+              {/* Capacity split: Net-metering (≤500 kW) + Behind-the-meter */}
+              <Card className="p-4 border-orange-200 bg-orange-50/40">
+                <div className="font-semibold mb-2 flex items-center gap-2">
+                  <BatteryCharging className="h-4 w-4 text-orange-600" />
+                  Capacity Split – Net-Metering & Behind-the-Meter
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div className="rounded-md bg-white p-3 border">
+                    <div className="text-xs text-muted-foreground">Net-Metering (≤ 500 kW cap)</div>
+                    <div className="text-lg font-bold text-green-700">{report.net_metering_kw} kW</div>
+                  </div>
+                  <div className="rounded-md bg-white p-3 border">
+                    <div className="text-xs text-muted-foreground">Behind-the-Meter (self-consumption)</div>
+                    <div className="text-lg font-bold text-orange-700">{report.behind_the_meter_kw} kW</div>
+                    <div className="text-[11px] text-muted-foreground">cap: {report.behind_the_meter_cap_kw} kW (50% of consumption)</div>
+                  </div>
+                  <div className="rounded-md bg-white p-3 border">
+                    <div className="text-xs text-muted-foreground">Total Recommended</div>
+                    <div className="text-lg font-bold">{report.recommended_capacity_kw} kW</div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">{report.capacity_split_note}</p>
+              </Card>
 
               {/* Generation chart */}
               <Card className="p-4">

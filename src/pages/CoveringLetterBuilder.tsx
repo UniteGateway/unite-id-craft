@@ -22,14 +22,17 @@ import {
   getTemplatesByCategory,
 } from "@/lib/covering-letters";
 import letterhead from "@/assets/unite-letterhead.png";
-import { ArrowLeft, Download, FileText } from "lucide-react";
+import { ArrowLeft, Download, FileText, ImagePlus, Mail, Save, Trash2 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const CoveringLetterBuilder: React.FC = () => {
   const { category = "" } = useParams();
   const nav = useNavigate();
+  const { user } = useAuth();
   const cat = getCategory(category);
   const templates = useMemo(
     () => (cat ? getTemplatesByCategory(cat.key) : []),
@@ -52,6 +55,10 @@ const CoveringLetterBuilder: React.FC = () => {
   const [body, setBody] = useState(activeTpl?.body ?? "");
   const [senderName, setSenderName] = useState("");
   const [senderDesignation, setSenderDesignation] = useState("");
+  const [signatureUrl, setSignatureUrl] = useState<string>("");
+  const [signatureUploading, setSignatureUploading] = useState(false);
+  const [clientEmail, setClientEmail] = useState("");
+  const [saving, setSaving] = useState(false);
 
   React.useEffect(() => {
     if (!activeTpl) return;
@@ -73,6 +80,57 @@ const CoveringLetterBuilder: React.FC = () => {
   const renderedBody = fillLetter(body, vars);
 
   const previewRef = useRef<HTMLDivElement>(null);
+
+  const uploadSignature = async (file: File) => {
+    if (!user) { toast.error("Sign in to upload a signature"); return; }
+    setSignatureUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("letter-signatures").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("letter-signatures").getPublicUrl(path);
+      setSignatureUrl(data.publicUrl);
+      toast.success("Signature uploaded");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    } finally { setSignatureUploading(false); }
+  };
+
+  const saveLetter = async () => {
+    if (!user) { toast.error("Sign in to save"); return; }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("covering_letters").insert({
+        user_id: user.id,
+        category: cat!.key,
+        template_id: activeTpl?.id,
+        template_name: activeTpl?.name,
+        date,
+        to_name: toName,
+        to_designation: toDesignation,
+        to_org: toOrg,
+        to_address: toAddress,
+        subject,
+        body,
+        sender_name: senderName,
+        sender_designation: senderDesignation,
+        signature_url: signatureUrl || null,
+        client_email: clientEmail || null,
+      });
+      if (error) throw error;
+      toast.success("Letter saved to your dashboard");
+    } catch (e: any) {
+      toast.error(e.message || "Could not save");
+    } finally { setSaving(false); }
+  };
+
+  const emailToClient = async () => {
+    if (!clientEmail) { toast.error("Enter the client's email first"); return; }
+    toast.info("Email sending will activate once the sender domain is verified. Your letter is saved to history.", { duration: 6000 });
+    await saveLetter();
+  };
 
   const downloadPdf = async () => {
     const node = previewRef.current;
@@ -134,9 +192,17 @@ const CoveringLetterBuilder: React.FC = () => {
               </p>
             </div>
           </div>
-          <Button onClick={downloadPdf}>
-            <Download className="h-4 w-4 mr-1" /> Download PDF
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={saveLetter} disabled={saving}>
+              <Save className="h-4 w-4 mr-1" /> {saving ? "Saving…" : "Save to Dashboard"}
+            </Button>
+            <Button variant="outline" onClick={emailToClient}>
+              <Mail className="h-4 w-4 mr-1" /> Email to Client
+            </Button>
+            <Button onClick={downloadPdf}>
+              <Download className="h-4 w-4 mr-1" /> Download PDF
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -221,6 +287,44 @@ const CoveringLetterBuilder: React.FC = () => {
                 <Input value={senderDesignation} onChange={(e) => setSenderDesignation(e.target.value)} placeholder="e.g. Director – Business Development" />
               </div>
             </div>
+
+            <div className="rounded-md border border-border p-3 space-y-3 bg-muted/30">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Signature & Delivery
+              </div>
+              <div>
+                <Label>Signature image (PNG with transparent background works best)</Label>
+                <div className="mt-1 flex items-center gap-3">
+                  <label className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border cursor-pointer hover:bg-muted/60 text-sm">
+                    <ImagePlus className="h-4 w-4" />
+                    {signatureUploading ? "Uploading…" : "Upload signature"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && uploadSignature(e.target.files[0])}
+                    />
+                  </label>
+                  {signatureUrl && (
+                    <>
+                      <img src={signatureUrl} alt="Signature" className="h-10 bg-white rounded border p-1" />
+                      <Button variant="ghost" size="sm" onClick={() => setSignatureUrl("")}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label>Client Email (for sending the letter)</Label>
+                <Input
+                  type="email"
+                  value={clientEmail}
+                  onChange={(e) => setClientEmail(e.target.value)}
+                  placeholder="client@example.com"
+                />
+              </div>
+            </div>
           </Card>
 
           {/* PREVIEW */}
@@ -267,11 +371,37 @@ const CoveringLetterBuilder: React.FC = () => {
                       {toAddress && <div>{toAddress}</div>}
                     </div>
 
-                    <div style={{ marginBottom: 14, fontWeight: 700 }}>
+                    <div
+                      style={{
+                        marginBottom: 16,
+                        fontWeight: 800,
+                        fontSize: 14,
+                        color: "#0f172a",
+                        textDecoration: "underline",
+                        textUnderlineOffset: 3,
+                      }}
+                    >
                       Subject: {renderedSubject}
                     </div>
 
                     <div style={{ whiteSpace: "pre-wrap" }}>{renderedBody}</div>
+
+                    {/* Sender block – always rendered, even if body template did not include it */}
+                    <div style={{ marginTop: 28 }}>
+                      {signatureUrl && (
+                        <img
+                          src={signatureUrl}
+                          alt="Signature"
+                          crossOrigin="anonymous"
+                          style={{ height: 60, objectFit: "contain", marginBottom: 4 }}
+                        />
+                      )}
+                      <div style={{ fontWeight: 700 }}>{senderName || "__________"}</div>
+                      {senderDesignation && (
+                        <div style={{ color: "#374151" }}>{senderDesignation}</div>
+                      )}
+                      <div style={{ color: "#374151" }}>Unite Solar (Unite Developers Global Inc.)</div>
+                    </div>
                   </div>
                 </div>
               </div>
