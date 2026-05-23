@@ -2,7 +2,8 @@ export type LetterCategory =
   | "government"
   | "industries"
   | "institutions"
-  | "corporates";
+  | "corporates"
+  | "chief_minister";
 
 export interface LetterTemplate {
   id: string;
@@ -54,6 +55,14 @@ export const LETTER_CATEGORIES: LetterCategoryDef[] = [
     description: "IT parks, BFSI, retail chains, hotels and large corporate offices for C&I solar.",
     hue: "from-violet-600 to-fuchsia-400",
     image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=70",
+  },
+  {
+    key: "chief_minister",
+    title: "Chief Minister – Special",
+    short: "CM Special",
+    description: "High-protocol introduction and policy-support letters addressed to the Hon'ble Chief Minister.",
+    hue: "from-amber-600 to-red-500",
+    image: "https://images.unsplash.com/photo-1591291621164-2c6367723315?auto=format&fit=crop&w=800&q=70",
   },
 ];
 
@@ -186,6 +195,57 @@ M/s Unite Solar (Unite Developers Global Inc.), Hyderabad, partners with corpora
 • Single-window EPC, financing tie-ups and 25-yr O&M
 
 We would value the opportunity to introduce our credentials, reference customers and indicative tariff to the Energy / Sustainability / Admin leadership at {to_org}.
+
+${SIGN_OFF}`,
+  },
+
+  // CHIEF MINISTER – SPECIAL
+  {
+    id: "cm-intro",
+    category: "chief_minister",
+    name: "Introduction to Hon'ble Chief Minister",
+    subject: "Respectful Introduction – M/s Unite Solar – Partner in achieving the State's Renewable Energy Vision",
+    body: `Respected Hon'ble Chief Minister Sir / Madam,
+
+At the outset, we, M/s Unite Solar – a unit of Unite Developers Global Inc., Hyderabad – consider it a great privilege to humbly introduce our organisation to your good office.
+
+Inspired by your visionary leadership and the progressive policies of the Government of {to_org}, we are deeply motivated to contribute meaningfully to the State's clean-energy transition, in alignment with the Hon'ble Prime Minister's national target of 500 GW non-fossil capacity by 2030 and the PM Surya Ghar: Muft Bijli Yojana.
+
+About M/s Unite Solar:
+• Full-service Solar EPC – design, supply, installation, O&M
+• Rooftop, ground-mounted and open-access solar PV plants
+• Strict compliance with MNRE, BIS / IEC standards and State DISCOM regulations
+• Active engagements across Telangana, Andhra Pradesh, Karnataka & Maharashtra
+• ALMM-listed modules, BIS-certified inverters only
+
+We respectfully seek your kind blessings and an opportunity to:
+1. Present our credentials and execution capability before the State Nodal Agency / Energy Department.
+2. Participate in the State's rooftop solarisation of government buildings, schools, hospitals and PHCs.
+3. Support beneficiary mobilisation under PM Surya Ghar in rural and semi-urban clusters.
+4. Set up a long-term Centre of Excellence for skilling local youth in solar EPC and O&M.
+
+It would be our singular honour to call upon you, at your kind convenience, to apprise your good office of our proposals in further detail and to receive your valuable guidance.
+
+${SIGN_OFF}`,
+  },
+  {
+    id: "cm-policy-support",
+    category: "chief_minister",
+    name: "Request for Policy Support – Rooftop & Open-Access Solar",
+    subject: "Humble Memorandum – Strengthening Rooftop & Open-Access Solar Ecosystem in the State",
+    body: `Respected Hon'ble Chief Minister Sir / Madam,
+
+With profound respect and gratitude for your unwavering commitment to sustainable development, we, M/s Unite Solar (Unite Developers Global Inc., Hyderabad), submit this humble memorandum seeking your benign consideration of certain enabling measures that can dramatically accelerate rooftop and open-access solar adoption across the State of {to_org}.
+
+Suggested Policy Levers:
+1. Single-window online clearance for rooftop systems up to 500 kW (net-metering) – within a defined service-level timeline.
+2. Enabling Behind-the-Meter solar (without grid export) for industrial / commercial consumers above 500 kW, up to 50% of their contracted demand – with simplified approvals.
+3. Group / Virtual Net-Metering for housing societies, gated communities and MSME clusters.
+4. Waiver of Cross-Subsidy Surcharge and Additional Surcharge for captive / group-captive open-access solar for a defined horizon.
+5. State top-up subsidy for LIG / EWS households over and above the Central PM Surya Ghar benefit.
+6. Dedicated solar skilling mission in ITIs / Polytechnics, with industry partnership.
+
+M/s Unite Solar shall be deeply honoured to extend our full technical, advisory and execution support – pro bono where required – to your good office, the Energy Department and the State Nodal Agency, in shaping and implementing these measures.
 
 ${SIGN_OFF}`,
   },
