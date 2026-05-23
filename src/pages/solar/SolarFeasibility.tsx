@@ -46,6 +46,7 @@ const SolarFeasibility: React.FC = () => {
     monthly_units: "",
     monthly_bill: "",
     sanction_load_kw: "",
+    required_kw: "",
     energy_charge_per_unit: "",
     consumer_name: "",
     location: "",
@@ -130,6 +131,7 @@ const SolarFeasibility: React.FC = () => {
       monthly_units: units,
       monthly_bill: bill,
       sanction_load_kw: parseFloat(manual.sanction_load_kw) || undefined,
+      required_kw: parseFloat(manual.required_kw) || undefined,
       energy_charge_per_unit: parseFloat(manual.energy_charge_per_unit) || undefined,
       state: extracted?.state,
       epc_rate_per_kw: parseFloat(epcRate) || undefined,
@@ -272,6 +274,8 @@ const SolarFeasibility: React.FC = () => {
               onChange={(v) => setManual({ ...manual, energy_charge_per_unit: v })} />
             <Field label="Sanction Load (kW)" value={manual.sanction_load_kw} type="number"
               onChange={(v) => setManual({ ...manual, sanction_load_kw: v })} />
+            <Field label="Required Capacity (kW)" value={manual.required_kw} type="number"
+              onChange={(v) => setManual({ ...manual, required_kw: v })} />
           </div>
           <Button onClick={generateReport} className="w-full gap-2 bg-primary">
             <Sparkles className="h-4 w-4" /> Generate Feasibility Report
