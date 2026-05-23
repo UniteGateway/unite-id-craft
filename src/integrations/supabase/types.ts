@@ -170,6 +170,72 @@ export type Database = {
         }
         Relationships: []
       }
+      covering_letters: {
+        Row: {
+          body: string
+          category: string
+          client_email: string | null
+          created_at: string
+          date: string | null
+          emailed_at: string | null
+          id: string
+          sender_designation: string | null
+          sender_name: string | null
+          signature_url: string | null
+          subject: string
+          template_id: string | null
+          template_name: string | null
+          to_address: string | null
+          to_designation: string | null
+          to_name: string | null
+          to_org: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          category: string
+          client_email?: string | null
+          created_at?: string
+          date?: string | null
+          emailed_at?: string | null
+          id?: string
+          sender_designation?: string | null
+          sender_name?: string | null
+          signature_url?: string | null
+          subject?: string
+          template_id?: string | null
+          template_name?: string | null
+          to_address?: string | null
+          to_designation?: string | null
+          to_name?: string | null
+          to_org?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          client_email?: string | null
+          created_at?: string
+          date?: string | null
+          emailed_at?: string | null
+          id?: string
+          sender_designation?: string | null
+          sender_name?: string | null
+          signature_url?: string | null
+          subject?: string
+          template_id?: string | null
+          template_name?: string | null
+          to_address?: string | null
+          to_designation?: string | null
+          to_name?: string | null
+          to_org?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       design_templates: {
         Row: {
           created_at: string
