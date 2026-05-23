@@ -109,6 +109,7 @@ const SolarFeasibility: React.FC = () => {
         monthly_units: String(data.monthly_units ?? ""),
         monthly_bill: String(data.monthly_bill ?? ""),
         sanction_load_kw: String(data.sanction_load_kw ?? ""),
+        required_kw: "",
         energy_charge_per_unit: String(data.energy_charge_per_unit ?? ""),
         consumer_name: data.consumer_name ?? "",
         location: data.location ?? "",
