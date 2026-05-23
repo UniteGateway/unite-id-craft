@@ -371,7 +371,16 @@ const CoveringLetterBuilder: React.FC = () => {
                       {toAddress && <div>{toAddress}</div>}
                     </div>
 
-                    <div style={{ marginBottom: 14, fontWeight: 700 }}>
+                    <div
+                      style={{
+                        marginBottom: 16,
+                        fontWeight: 800,
+                        fontSize: 14,
+                        color: "#0f172a",
+                        textDecoration: "underline",
+                        textUnderlineOffset: 3,
+                      }}
+                    >
                       Subject: {renderedSubject}
                     </div>
 
