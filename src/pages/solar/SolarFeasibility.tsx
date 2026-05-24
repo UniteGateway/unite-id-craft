@@ -24,6 +24,7 @@ import {
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import FeasibilityChatbot from "@/components/solar/FeasibilityChatbot";
+import FeasibilityNetMeteringSections from "@/components/solar/FeasibilityNetMeteringSections";
 import { geocodeLocation, staticMapUrlFromSettings, type GeoPoint } from "@/lib/geocode";
 import { useBranding } from "@/hooks/useBranding";
 
