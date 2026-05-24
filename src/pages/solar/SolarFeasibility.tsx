@@ -24,6 +24,7 @@ import {
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import FeasibilityChatbot from "@/components/solar/FeasibilityChatbot";
+import FeasibilityNetMeteringSections from "@/components/solar/FeasibilityNetMeteringSections";
 import { geocodeLocation, staticMapUrlFromSettings, type GeoPoint } from "@/lib/geocode";
 import { useBranding } from "@/hooks/useBranding";
 
@@ -528,6 +529,9 @@ const SolarFeasibility: React.FC = () => {
                   <div className="text-amber-900/90">{report.state_permission}</div>
                 </div>
               </Card>
+
+              {/* Premium Net Metering + BTM intelligence sections */}
+              <FeasibilityNetMeteringSections r={report} sanctionLoad={manual.sanction_load_kw} />
 
               {/* Investment Models */}
               <div className="grid md:grid-cols-3 gap-4">
