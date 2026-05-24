@@ -530,6 +530,9 @@ const SolarFeasibility: React.FC = () => {
                 </div>
               </Card>
 
+              {/* Premium Net Metering + BTM intelligence sections */}
+              <FeasibilityNetMeteringSections r={report} sanctionLoad={manual.sanction_load_kw} />
+
               {/* Investment Models */}
               <div className="grid md:grid-cols-3 gap-4">
                 {/* BOOT */}
