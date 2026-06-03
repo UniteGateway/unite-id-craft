@@ -37,6 +37,9 @@ import Agreements from "./pages/Agreements.tsx";
 import AgreementBuilder from "./pages/AgreementBuilder.tsx";
 import CoveringLetters from "./pages/CoveringLetters.tsx";
 import CoveringLetterBuilder from "./pages/CoveringLetterBuilder.tsx";
+import Quotations from "./pages/Quotations.tsx";
+import QuotationBuilder from "./pages/QuotationBuilder.tsx";
+import PriceBook from "./pages/admin/PriceBook.tsx";
 
 const queryClient = new QueryClient();
 
@@ -187,6 +190,10 @@ const App = () => (
             <Route path="/agreements/:slug" element={<ProtectedRoute><AgreementBuilder /></ProtectedRoute>} />
             <Route path="/covering-letters" element={<ProtectedRoute><CoveringLetters /></ProtectedRoute>} />
             <Route path="/covering-letters/:category" element={<ProtectedRoute><CoveringLetterBuilder /></ProtectedRoute>} />
+            <Route path="/quotations" element={<ProtectedRoute><Quotations /></ProtectedRoute>} />
+            <Route path="/quotations/new" element={<ProtectedRoute><QuotationBuilder /></ProtectedRoute>} />
+            <Route path="/quotations/:id" element={<ProtectedRoute><QuotationBuilder /></ProtectedRoute>} />
+            <Route path="/admin/price-book" element={<ProtectedRoute><PriceBook /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

@@ -71,6 +71,7 @@ const designTiles: Tile[] = [
   { icon: Gauge, title: "Feasibility Analysis", desc: "AI report from power bill", to: "/solar/feasibility", hue: "from-green-500 to-yellow-400", image: IMG.feasibility, ready: true },
   { icon: FileSignature, title: "Agreements", desc: "Franchise, Agent, B2B, EPC, OEM, Finance", to: "/agreements", hue: "from-stone-700 to-stone-500", image: IMG.agreements, ready: true },
   { icon: Mail, title: "Covering Letters", desc: "Govt, Industries, Institutions, Corporates", to: "/covering-letters", hue: "from-sky-600 to-indigo-500", image: IMG.coveringLetters, ready: true },
+  { icon: Receipt, title: "Quotations", desc: "Dynamic EPC quotations with PDF", to: "/quotations", hue: "from-orange-600 to-amber-400", image: IMG.proposals, ready: true },
   { icon: Users, title: "CRM", desc: "Customer relationship manager", to: "https://crm.unitesolar.in", hue: "from-teal-600 to-emerald-400", image: IMG.crm, ready: true },
   { icon: Users, title: "CRM Portal", desc: "Open crm.unitesolar.in", to: "https://crm.unitesolar.in", hue: "from-emerald-600 to-teal-500", image: IMG.crm, ready: true },
 ];
