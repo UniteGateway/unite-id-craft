@@ -367,6 +367,231 @@ export type Database = {
         }
         Relationships: []
       }
+      price_bos: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          id: string
+          item: string
+          per_kw_qty: number | null
+          rate: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string
+          id?: string
+          item: string
+          per_kw_qty?: number | null
+          rate: number
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          id?: string
+          item?: string
+          per_kw_qty?: number | null
+          rate?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      price_inverters: {
+        Row: {
+          active: boolean
+          brand: string
+          capacity_kw: number
+          created_at: string
+          id: string
+          model: string | null
+          phase: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          brand: string
+          capacity_kw: number
+          created_at?: string
+          id?: string
+          model?: string | null
+          phase?: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          brand?: string
+          capacity_kw?: number
+          created_at?: string
+          id?: string
+          model?: string | null
+          phase?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      price_labour: {
+        Row: {
+          id: string
+          installation_per_kw: number
+          rate_per_wp: number
+          segment: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          installation_per_kw?: number
+          rate_per_wp: number
+          segment: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          installation_per_kw?: number
+          rate_per_wp?: number
+          segment?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      price_modules: {
+        Row: {
+          active: boolean
+          brand: string
+          created_at: string
+          id: string
+          price_per_wp: number
+          technology: string
+          updated_at: string
+          wattage: number
+        }
+        Insert: {
+          active?: boolean
+          brand: string
+          created_at?: string
+          id?: string
+          price_per_wp: number
+          technology: string
+          updated_at?: string
+          wattage: number
+        }
+        Update: {
+          active?: boolean
+          brand?: string
+          created_at?: string
+          id?: string
+          price_per_wp?: number
+          technology?: string
+          updated_at?: string
+          wattage?: number
+        }
+        Relationships: []
+      }
+      price_state_policies: {
+        Row: {
+          id: string
+          net_metering_charge_per_kw: number
+          state: string
+          statutory_charge_per_kw: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          net_metering_charge_per_kw?: number
+          state: string
+          statutory_charge_per_kw?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          net_metering_charge_per_kw?: number
+          state?: string
+          statutory_charge_per_kw?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      price_structures: {
+        Row: {
+          active: boolean
+          created_at: string
+          height_premium_per_floor_pct: number
+          id: string
+          rate_per_wp: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          height_premium_per_floor_pct?: number
+          id?: string
+          rate_per_wp: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          height_premium_per_floor_pct?: number
+          id?: string
+          rate_per_wp?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_settings: {
+        Row: {
+          channel_partner_margin_pct: number
+          company_margin_pct: number
+          design_charges_per_kw: number
+          franchise_margin_pct: number
+          gst_pct: number
+          id: number
+          installation_per_kw: number
+          logistics_per_kw: number
+          sales_margin_pct: number
+          statutory_per_kw: number
+          updated_at: string
+        }
+        Insert: {
+          channel_partner_margin_pct?: number
+          company_margin_pct?: number
+          design_charges_per_kw?: number
+          franchise_margin_pct?: number
+          gst_pct?: number
+          id?: number
+          installation_per_kw?: number
+          logistics_per_kw?: number
+          sales_margin_pct?: number
+          statutory_per_kw?: number
+          updated_at?: string
+        }
+        Update: {
+          channel_partner_margin_pct?: number
+          company_margin_pct?: number
+          design_charges_per_kw?: number
+          franchise_margin_pct?: number
+          gst_pct?: number
+          id?: number
+          installation_per_kw?: number
+          logistics_per_kw?: number
+          sales_margin_pct?: number
+          statutory_per_kw?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -535,6 +760,99 @@ export type Database = {
           updated_at?: string
           user_id?: string
           wall_type?: string | null
+        }
+        Relationships: []
+      }
+      quotations: {
+        Row: {
+          address: string | null
+          capacity_kw: number
+          city: string | null
+          company_name: string | null
+          connection_type: string | null
+          costing: Json
+          created_at: string
+          customer_name: string
+          email: string | null
+          final_price: number
+          floors: number | null
+          gst: number
+          id: string
+          inverter_id: string | null
+          mobile: string | null
+          module_id: string | null
+          net_to_customer: number
+          pincode: string | null
+          project_type: string | null
+          segment: string
+          state: string | null
+          status: string
+          structure_type: string | null
+          subsidy: number
+          subtotal: number
+          tariff: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          capacity_kw: number
+          city?: string | null
+          company_name?: string | null
+          connection_type?: string | null
+          costing?: Json
+          created_at?: string
+          customer_name: string
+          email?: string | null
+          final_price?: number
+          floors?: number | null
+          gst?: number
+          id?: string
+          inverter_id?: string | null
+          mobile?: string | null
+          module_id?: string | null
+          net_to_customer?: number
+          pincode?: string | null
+          project_type?: string | null
+          segment?: string
+          state?: string | null
+          status?: string
+          structure_type?: string | null
+          subsidy?: number
+          subtotal?: number
+          tariff?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          capacity_kw?: number
+          city?: string | null
+          company_name?: string | null
+          connection_type?: string | null
+          costing?: Json
+          created_at?: string
+          customer_name?: string
+          email?: string | null
+          final_price?: number
+          floors?: number | null
+          gst?: number
+          id?: string
+          inverter_id?: string | null
+          mobile?: string | null
+          module_id?: string | null
+          net_to_customer?: number
+          pincode?: string | null
+          project_type?: string | null
+          segment?: string
+          state?: string | null
+          status?: string
+          structure_type?: string | null
+          subsidy?: number
+          subtotal?: number
+          tariff?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -870,6 +1188,36 @@ export type Database = {
           project_type?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      subsidy_slabs: {
+        Row: {
+          amount: number
+          id: string
+          kw_max: number
+          kw_min: number
+          notes: string | null
+          scheme: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          id?: string
+          kw_max: number
+          kw_min: number
+          notes?: string | null
+          scheme?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          kw_max?: number
+          kw_min?: number
+          notes?: string | null
+          scheme?: string
+          updated_at?: string
         }
         Relationships: []
       }
