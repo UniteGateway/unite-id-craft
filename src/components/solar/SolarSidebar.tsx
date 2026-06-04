@@ -8,6 +8,7 @@ import {
   Settings as SettingsIcon,
   Briefcase,
   Gauge,
+  Users,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 
 const items = [
   { title: "Dashboard", url: "/solar", icon: LayoutDashboard, end: true },
+  { title: "Leads", url: "/leads", icon: Users },
   { title: "Generate Proposal", url: "/solar/generate", icon: Sparkles },
   { title: "Feasibility Analysis", url: "/solar/feasibility", icon: Gauge },
   { title: "Techno-Commercial", url: "/proposal-variable-slides", icon: Briefcase },

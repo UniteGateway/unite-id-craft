@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import AppNav from "@/components/AppNav";
@@ -23,6 +23,8 @@ export default function QuotationBuilder() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
+  const [search] = useSearchParams();
+  const leadId = search.get("leadId");
   const [pb, setPb] = useState<PriceBook | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,10 +61,37 @@ export default function QuotationBuilder() {
           structure_type: data.structure_type ?? "RCC Roof",
           floors: data.floors ?? 0, tariff: Number(data.tariff) || 8,
         });
+      } else if (leadId && user) {
+        const { data: lead } = await supabase.from("leads").select("*").eq("id", leadId).maybeSingle();
+        if (lead) {
+          const seg = (lead.segment ?? "").toLowerCase();
+          const segment: "residential" | "commercial" | "industrial" =
+            seg === "residential" ? "residential" : seg === "industrial" ? "industrial" : "commercial";
+          const designModuleId = (lead as any).design?.module?.id as string | undefined;
+          const designInverterId = (lead as any).design?.inverter?.id as string | undefined;
+          const designStructure = (lead as any).design?.structure?.type as string | undefined;
+          const totalKw = (lead as any).feasibility?.total_kw as number | undefined;
+          setForm((f) => ({
+            ...f,
+            customer_name: lead.name ?? "",
+            mobile: lead.phone ?? "",
+            email: lead.email ?? "",
+            address: lead.address ?? "",
+            city: lead.city ?? "",
+            state: lead.state ?? f.state,
+            segment,
+            project_type: lead.segment ?? f.project_type,
+            capacity_kw: totalKw ?? lead.sanction_load_kw ?? f.capacity_kw,
+            module_id: designModuleId ?? f.module_id,
+            inverter_id: designInverterId ?? f.inverter_id,
+            structure_type: designStructure ?? f.structure_type,
+            tariff: lead.tariff_inr_per_kwh ?? f.tariff,
+          }));
+        }
       }
       setLoading(false);
     })();
-  }, [id, user]);
+  }, [id, user, leadId]);
 
   const cost = useMemo(() => {
     if (!pb) return null;
