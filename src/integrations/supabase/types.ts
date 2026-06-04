@@ -367,6 +367,96 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          address: string | null
+          avg_units_kwh: number | null
+          bill_extraction: Json | null
+          city: string | null
+          consumer_no: string | null
+          contract_demand_kva: number | null
+          created_at: string
+          design: Json | null
+          discom: string | null
+          email: string | null
+          feasibility: Json | null
+          id: string
+          monthly_bill_inr: number | null
+          name: string
+          notes: string | null
+          owner_id: string
+          phone: string | null
+          roof_area_sqm: number | null
+          roof_type: string | null
+          sanction_load_kw: number | null
+          segment: string
+          shadow_free_pct: number | null
+          source: string | null
+          state: string | null
+          status: string
+          tariff_inr_per_kwh: number | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          avg_units_kwh?: number | null
+          bill_extraction?: Json | null
+          city?: string | null
+          consumer_no?: string | null
+          contract_demand_kva?: number | null
+          created_at?: string
+          design?: Json | null
+          discom?: string | null
+          email?: string | null
+          feasibility?: Json | null
+          id?: string
+          monthly_bill_inr?: number | null
+          name: string
+          notes?: string | null
+          owner_id: string
+          phone?: string | null
+          roof_area_sqm?: number | null
+          roof_type?: string | null
+          sanction_load_kw?: number | null
+          segment?: string
+          shadow_free_pct?: number | null
+          source?: string | null
+          state?: string | null
+          status?: string
+          tariff_inr_per_kwh?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          avg_units_kwh?: number | null
+          bill_extraction?: Json | null
+          city?: string | null
+          consumer_no?: string | null
+          contract_demand_kva?: number | null
+          created_at?: string
+          design?: Json | null
+          discom?: string | null
+          email?: string | null
+          feasibility?: Json | null
+          id?: string
+          monthly_bill_inr?: number | null
+          name?: string
+          notes?: string | null
+          owner_id?: string
+          phone?: string | null
+          roof_area_sqm?: number | null
+          roof_type?: string | null
+          sanction_load_kw?: number | null
+          segment?: string
+          shadow_free_pct?: number | null
+          source?: string | null
+          state?: string | null
+          status?: string
+          tariff_inr_per_kwh?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       price_bos: {
         Row: {
           active: boolean

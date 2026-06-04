@@ -1,60 +1,52 @@
-## Goal
-Make the solar proposal smarter: 4 features that all generate dynamically from project inputs.
+## Phase 2 — Lead → Bill OCR → Feasibility → Design → Quote
 
-## New inputs (added to ProposalVars / solar_proposals)
-- `LATITUDE`, `LONGITUDE` (auto-geocoded from Location, editable)
-- `ROOF_AREA_SQM` (used for layout + capacity sanity check)
-- `TILT` (default = latitude), `AZIMUTH` (default 180°)
-- `SHADING_LOSS_PCT` (default 3, editable)
-- `TARIFF` (₹/kWh, default 8), `ESCALATION_PCT` (default 5%/yr), `DEGRADATION_PCT` (default 0.7%/yr)
+Builds the customer-facing funnel on top of the Phase 1 pricing core. Every step writes to one `leads` record, so the final quotation auto-fills with real site numbers instead of manual entry.
 
-These appear in the existing variable-editor sidebar on `/proposal-variable-slides`.
+### 1. Lead capture (Module 1)
+- New table `leads`: name, phone, email, segment (Residential / Commercial / Industrial / Captive / OA), state, city, address, sanction_load_kw, monthly_bill_inr, avg_units_kwh, roof_area_sqm, roof_type (RCC / Metal / Ground), shadow_free_pct, source, owner_id, status (new → feasibility → design → quoted → won/lost), created_at.
+- New page `/leads` — list + filters + status pipeline.
+- New page `/leads/new` — create form (also embeddable as a public capture form later).
+- New page `/leads/:id` — single lead workspace with tabs: **Overview · Bill · Feasibility · Design · Quote**.
 
-## 1. Location Map slide (Site slide upgrade)
-- Geocode `LOCATION` via Google Geocoding API → lat/lng (cached in DB).
-- Render Google Static Maps satellite image (zoom 18) with a marker on the SiteSlide.
-- Falls back to OpenStreetMap tile if no key yet.
-- Requires `GOOGLE_MAPS_API_KEY` secret (we will request it).
+### 2. Bill OCR (Module 2)
+- New edge function `extract-power-bill` (uses Lovable AI `google/gemini-2.5-flash` with image input).
+- Upload bill image/PDF → returns: discom, consumer_no, tariff_category, sanction_load_kw, contract_demand_kva, monthly_units_kwh (last 6 months array), avg_monthly_bill_inr, tariff_slab_inr_per_kwh, fixed_charges_inr.
+- Stored on the lead; one-click "Apply to lead".
+- New storage bucket `power-bills` (private, owner-only RLS).
 
-## 2. Rooftop Layout (LayoutSlide upgrade)
-- Input: `ROOF_AREA_SQM` (single number, as you said "Area").
-- Compute panel count = floor(area × packing_factor / panel_area), where panel_area = 2.58 m² (550 W bifacial), packing_factor = 0.55 for tilted GI structures.
-- Compute rows × cols using sqrt(area) approximation, draw to-scale SVG grid of panels inside a roof rectangle.
-- Show: usable area, panel count, capacity check vs `CAPACITY`, and DC/AC ratio.
+### 3. Feasibility engine (Module 3)
+- Pure TS module `src/lib/feasibility-engine.ts` consuming lead + bill data:
+  - **Recommended size (kW)** = min(roof-area-capacity, load-based-capacity, 500 kW state cap when net-metering).
+  - **Net-metering eligibility** per state (reuses `price_state_policies`).
+  - **BTM / Zero-export split** when load > 500 kW: NM = 500, BTM = balance ≤ 50% of avg consumption.
+  - **Annual generation** via `solar-irradiance.ts` (already exists).
+  - **CO₂, payback, IRR** via `solar-financials.ts` (already exists).
+- Tab in lead workspace renders the existing `FeasibilityNetMeteringSections` component with these numbers pre-filled (no manual entry).
+- "Promote to formal Feasibility Report" button → creates a `covering_letters` + feasibility record (reuses existing flow).
 
-## 3. Shadow + PVsyst-style Yield slide (NEW slide #20)
-- Sun-path SVG diagram for the project latitude (summer/equinox/winter arcs).
-- Monthly generation table using NASA POWER-style India irradiance curve (built-in lookup by latitude band) × capacity × PR (0.78) × (1 − shading_loss).
-- Loss waterfall: Irradiance → Soiling 2% → Temp 8% → Shading X% → Wiring 2% → Inverter 2% → Net.
-- Annual yield (kWh/kWp) and specific yield shown.
+### 4. Design engine (Module 4)
+- Pure TS module `src/lib/design-engine.ts`:
+  - Module pick = highest-Wp panel in `price_modules` matching budget tier.
+  - Inverter pick = closest match to recommended kW with DC/AC ratio 1.15–1.25 from `price_inverters`.
+  - Structure pick = matches roof_type from `price_structures`.
+  - String sizing: panels/string from inverter MPPT range; strings/MPPT from current limits.
+  - BOQ = modules + inverters + structure + BOS (cable lengths estimated from roof area).
+- Design tab shows: equipment list, string config diagram (SVG), one-line BOQ table.
+- "Send to Quote" → opens `QuotationBuilder` with everything pre-populated; user only confirms margin.
 
-## 4. Auto-recalc savings (Savings + ROI slides)
-- A single `useMemo` financial engine in `src/lib/solar-financials.ts`:
-  - year-by-year array (1..LIFE) with degradation + tariff escalation
-  - annual savings, cumulative, payback (interpolated), IRR, NPV @ 8%
-- SavingsSlide and RoiSlide read from this engine, so any input change recomputes instantly. PDF export already captures the live DOM.
+### 5. Wiring it all together
+- `QuotationBuilder` accepts `?leadId=` query param and hydrates customer + capacity + selected SKUs.
+- Lead status auto-advances on each step.
+- Dashboard tile: "Lead Pipeline" with counts per status.
 
-## Files
-**New**
-- `src/lib/solar-financials.ts` — pure compute (savings, payback, IRR, NPV).
-- `src/lib/solar-irradiance.ts` — monthly GHI lookup by India lat band + sun-path math.
-- `src/lib/geocode.ts` — Google geocoding + static map URL helpers.
-- `src/components/proposals/variable-slides/PvsystSlide.tsx` — slide #20.
+### Technical notes (skip if non-technical)
+- New files: `src/pages/leads/*` (List, New, Detail), `src/lib/feasibility-engine.ts`, `src/lib/design-engine.ts`, `supabase/functions/extract-power-bill/index.ts` (already exists — extend it), migration for `leads` + `power-bills` bucket.
+- Reuses: `pricing.ts`, `solar-financials.ts`, `solar-irradiance.ts`, `FeasibilityNetMeteringSections.tsx`, `QuotationBuilder.tsx`, `price_*` tables.
+- AI: Lovable AI Gateway `google/gemini-2.5-flash` for bill OCR (vision-capable, no extra key).
 
-**Edited**
-- `src/components/proposals/variable-slides/types.ts` — add new vars + defaults + labels.
-- `src/components/proposals/variable-slides/registry.tsx` — register slide 20.
-- `src/components/proposals/variable-slides/SiteSlide.tsx` — embed static map.
-- `src/components/proposals/variable-slides/LayoutSlide.tsx` — area-driven SVG grid.
-- `src/components/proposals/variable-slides/SavingsSlide.tsx` + `RoiSlide.tsx` — consume `solar-financials`.
-- `src/pages/ProposalVariableSlides.tsx` — new input fields in editor sidebar, include slide 20 in Export-All.
+### Out of scope for Phase 2 (call out)
+- Site Survey AI with photo/video complexity scoring → Phase 4.
+- EMI / finance partner integration → Phase 3.
+- Public lead-capture landing form (kept internal for now).
 
-## Secrets
-We will ask you to add `GOOGLE_MAPS_API_KEY` (for Geocoding + Static Maps). Until then the map slide shows OSM fallback so nothing breaks.
-
-## Out of scope (call out before building)
-- True 3D shading from imported roof models / drone scans.
-- Real PVsyst .PRJ import or hourly TMY simulation — we use a validated monthly model good to ±5%.
-- Drag-to-edit panel layout on the rooftop (read-only SVG for now).
-
-Confirm and I'll build all four. If you want me to skip any, say which.
+Confirm and I'll build it. If you want to drop any of the four modules, say which.
