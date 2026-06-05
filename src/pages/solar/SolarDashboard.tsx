@@ -51,7 +51,7 @@ const SolarDashboard: React.FC = () => {
       </div>
 
       {/* Feature Thumbnails */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Link
           to="/solar/feasibility"
           className="group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-[#0a1b33] to-[#1a3c6e] text-white p-5 hover:shadow-lg transition"
@@ -71,6 +71,29 @@ const SolarDashboard: React.FC = () => {
             </p>
             <div className="mt-3 inline-flex items-center gap-1.5 text-orange-300 text-sm font-semibold">
               <Upload className="h-4 w-4" /> Upload Bill →
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          to="/leads"
+          className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 hover:shadow-lg transition"
+        >
+          <div className="absolute -right-6 -bottom-6 opacity-10">
+            <Users className="h-40 w-40 text-primary" />
+          </div>
+          <div className="relative">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] uppercase tracking-wider font-semibold">
+              <Sparkles className="h-3 w-3" /> Pipeline
+            </div>
+            <h3 className="text-xl font-extrabold mt-2 flex items-center gap-2">
+              <Users className="h-5 w-5 text-emerald-600" /> Leads
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1 max-w-md">
+              Capture leads, run bill OCR, auto-size systems, generate BOQ and send quotes — all in one workspace.
+            </p>
+            <div className="mt-3 inline-flex items-center gap-1.5 text-emerald-600 text-sm font-semibold">
+              Open Pipeline <ArrowRight className="h-4 w-4" />
             </div>
           </div>
         </Link>
