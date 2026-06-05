@@ -122,8 +122,9 @@ const SolarDashboard: React.FC = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <StatCard icon={<FileText className="h-4 w-4" />} label="Proposals" value={stats.total.toString()} />
+        <StatCard icon={<Users className="h-4 w-4" />} label="Leads" value={stats.leads.toString()} />
         <StatCard icon={<Sun className="h-4 w-4" />} label="Total Capacity" value={`${stats.totalCapacityMw.toFixed(1)} MW`} />
         <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Cumulative Savings" value={`₹${stats.totalSavingsCr.toFixed(1)} Cr`} />
       </div>
