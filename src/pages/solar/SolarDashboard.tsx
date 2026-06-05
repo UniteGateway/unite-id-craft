@@ -4,12 +4,13 @@ import SolarShell from "@/components/solar/SolarShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, FileText, Sun, TrendingUp, Gauge, Upload } from "lucide-react";
+import { Sparkles, FileText, Sun, TrendingUp, Gauge, Upload, Users, ArrowRight } from "lucide-react";
 
 interface Stats {
   total: number;
   totalCapacityMw: number;
   totalSavingsCr: number;
+  leads: number;
 }
 
 const SolarDashboard: React.FC = () => {
