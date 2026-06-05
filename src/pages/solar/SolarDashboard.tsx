@@ -4,31 +4,36 @@ import SolarShell from "@/components/solar/SolarShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, FileText, Sun, TrendingUp, Gauge, Upload } from "lucide-react";
+import { Sparkles, FileText, Sun, TrendingUp, Gauge, Upload, Users, ArrowRight } from "lucide-react";
 
 interface Stats {
   total: number;
   totalCapacityMw: number;
   totalSavingsCr: number;
+  leads: number;
 }
 
 const SolarDashboard: React.FC = () => {
-  const [stats, setStats] = useState<Stats>({ total: 0, totalCapacityMw: 0, totalSavingsCr: 0 });
+  const [stats, setStats] = useState<Stats>({ total: 0, totalCapacityMw: 0, totalSavingsCr: 0, leads: 0 });
   const [recent, setRecent] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("solar_proposals")
-        .select("id, project_name, location, capacity_mw, computed, created_at")
-        .order("created_at", { ascending: false })
-        .limit(50);
-      const rows = (data ?? []) as any[];
+      const [proposalsRes, leadsRes] = await Promise.all([
+        supabase
+          .from("solar_proposals")
+          .select("id, project_name, location, capacity_mw, computed, created_at")
+          .order("created_at", { ascending: false })
+          .limit(50),
+        supabase.from("leads").select("id", { count: "exact", head: true }),
+      ]);
+      const rows = (proposalsRes.data ?? []) as any[];
       setRecent(rows.slice(0, 5));
       setStats({
         total: rows.length,
         totalCapacityMw: rows.reduce((s, r) => s + (Number(r.capacity_mw) || 0), 0),
         totalSavingsCr: rows.reduce((s, r) => s + (Number(r.computed?.total_savings_cr) || 0), 0),
+        leads: leadsRes.count ?? 0,
       });
     })();
   }, []);
@@ -46,7 +51,7 @@ const SolarDashboard: React.FC = () => {
       </div>
 
       {/* Feature Thumbnails */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Link
           to="/solar/feasibility"
           className="group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-[#0a1b33] to-[#1a3c6e] text-white p-5 hover:shadow-lg transition"
@@ -66,6 +71,29 @@ const SolarDashboard: React.FC = () => {
             </p>
             <div className="mt-3 inline-flex items-center gap-1.5 text-orange-300 text-sm font-semibold">
               <Upload className="h-4 w-4" /> Upload Bill →
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          to="/leads"
+          className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 hover:shadow-lg transition"
+        >
+          <div className="absolute -right-6 -bottom-6 opacity-10">
+            <Users className="h-40 w-40 text-primary" />
+          </div>
+          <div className="relative">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] uppercase tracking-wider font-semibold">
+              <Sparkles className="h-3 w-3" /> Pipeline
+            </div>
+            <h3 className="text-xl font-extrabold mt-2 flex items-center gap-2">
+              <Users className="h-5 w-5 text-emerald-600" /> Leads
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1 max-w-md">
+              Capture leads, run bill OCR, auto-size systems, generate BOQ and send quotes — all in one workspace.
+            </p>
+            <div className="mt-3 inline-flex items-center gap-1.5 text-emerald-600 text-sm font-semibold">
+              Open Pipeline <ArrowRight className="h-4 w-4" />
             </div>
           </div>
         </Link>
@@ -94,8 +122,9 @@ const SolarDashboard: React.FC = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <StatCard icon={<FileText className="h-4 w-4" />} label="Proposals" value={stats.total.toString()} />
+        <StatCard icon={<Users className="h-4 w-4" />} label="Leads" value={stats.leads.toString()} />
         <StatCard icon={<Sun className="h-4 w-4" />} label="Total Capacity" value={`${stats.totalCapacityMw.toFixed(1)} MW`} />
         <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Cumulative Savings" value={`₹${stats.totalSavingsCr.toFixed(1)} Cr`} />
       </div>
