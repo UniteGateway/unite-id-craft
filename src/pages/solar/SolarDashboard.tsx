@@ -19,17 +19,21 @@ const SolarDashboard: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("solar_proposals")
-        .select("id, project_name, location, capacity_mw, computed, created_at")
-        .order("created_at", { ascending: false })
-        .limit(50);
-      const rows = (data ?? []) as any[];
+      const [proposalsRes, leadsRes] = await Promise.all([
+        supabase
+          .from("solar_proposals")
+          .select("id, project_name, location, capacity_mw, computed, created_at")
+          .order("created_at", { ascending: false })
+          .limit(50),
+        supabase.from("leads").select("id", { count: "exact", head: true }),
+      ]);
+      const rows = (proposalsRes.data ?? []) as any[];
       setRecent(rows.slice(0, 5));
       setStats({
         total: rows.length,
         totalCapacityMw: rows.reduce((s, r) => s + (Number(r.capacity_mw) || 0), 0),
         totalSavingsCr: rows.reduce((s, r) => s + (Number(r.computed?.total_savings_cr) || 0), 0),
+        leads: leadsRes.count ?? 0,
       });
     })();
   }, []);
