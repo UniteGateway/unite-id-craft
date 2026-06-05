@@ -14,7 +14,7 @@ interface Stats {
 }
 
 const SolarDashboard: React.FC = () => {
-  const [stats, setStats] = useState<Stats>({ total: 0, totalCapacityMw: 0, totalSavingsCr: 0 });
+  const [stats, setStats] = useState<Stats>({ total: 0, totalCapacityMw: 0, totalSavingsCr: 0, leads: 0 });
   const [recent, setRecent] = useState<any[]>([]);
 
   useEffect(() => {
