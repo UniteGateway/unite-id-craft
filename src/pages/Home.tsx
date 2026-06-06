@@ -74,6 +74,7 @@ const designTiles: Tile[] = [
   { icon: Receipt, title: "Quotations", desc: "Dynamic EPC quotations with PDF", to: "/quotations", hue: "from-orange-600 to-amber-400", image: IMG.proposals, ready: true },
   { icon: Users, title: "CRM", desc: "Customer relationship manager", to: "https://crm.unitesolar.in", hue: "from-teal-600 to-emerald-400", image: IMG.crm, ready: true },
   { icon: Users, title: "CRM Portal", desc: "Open crm.unitesolar.in", to: "https://crm.unitesolar.in", hue: "from-emerald-600 to-teal-500", image: IMG.crm, ready: true },
+  { icon: Users, title: "Leads", desc: "Solar lead pipeline & quotes", to: "/leads", hue: "from-emerald-600 to-teal-500", image: IMG.crm, ready: true },
 ];
 
 const stationeryTiles: Tile[] = [
