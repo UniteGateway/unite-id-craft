@@ -28,6 +28,7 @@ import FeasibilityNetMeteringSections from "@/components/solar/FeasibilityNetMet
 import { geocodeLocation, staticMapUrlFromSettings, type GeoPoint } from "@/lib/geocode";
 import { useBranding } from "@/hooks/useBranding";
 import { downloadFeasibilityQuotePDF } from "@/lib/feasibility-quote-pdf";
+import logoAsset from "@/assets/unite-solar-logo.png.asset.json";
 
 const SEGMENT_LABEL: Record<Segment, string> = {
   residential: "Residential",
@@ -158,13 +159,72 @@ const SolarFeasibility: React.FC = () => {
     const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
     const pageW = pdf.internal.pageSize.getWidth();   // 595
     const pageH = pdf.internal.pageSize.getHeight();  // 842
-    const margin = 28;                                 // ~10mm
-    const contentW = pageW - margin * 2;
-    const contentH = pageH - margin * 2;
-    // pixels per pt at our render scale
+    const M = 40;                                      // 4-side margin
+    const headerH = 70;
+    const footerH = 30;
+    const contentW = pageW - M * 2;
+    const contentTop = M + headerH + 8;
+    const contentBottom = pageH - M - footerH - 8;
+    const contentH = contentBottom - contentTop;
+
+    // Load logo once
+    let logoData: string | null = null;
+    let logoRatio = 1;
+    try {
+      const res = await fetch(logoAsset.url);
+      const blob = await res.blob();
+      logoData = await new Promise<string>((resolve) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.readAsDataURL(blob);
+      });
+      const dims = await new Promise<{ w: number; h: number }>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = () => resolve({ w: 1, h: 1 });
+        img.src = logoData!;
+      });
+      logoRatio = dims.w / dims.h;
+    } catch { /* ignore */ }
+
+    const drawChrome = (pageNum: number, pageTotal: number) => {
+      // Header
+      if (logoData) {
+        const lh = 42;
+        const lw = logoRatio * lh;
+        pdf.addImage(logoData, "PNG", M, M, lw, lh);
+      }
+      pdf.setTextColor("#1a3c6e");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.text("UNITE SOLAR", pageW - M, M + 14, { align: "right" });
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor("#6b7280");
+      pdf.text("Solar Feasibility Report", pageW - M, M + 28, { align: "right" });
+      pdf.text(new Date().toLocaleDateString("en-IN"), pageW - M, M + 40, { align: "right" });
+      pdf.setDrawColor("#f08c00");
+      pdf.setLineWidth(1.2);
+      pdf.line(M, M + headerH, pageW - M, M + headerH);
+      // Footer
+      pdf.setDrawColor("#f08c00");
+      pdf.setLineWidth(1);
+      pdf.line(M, pageH - M - footerH + 6, pageW - M, pageH - M - footerH + 6);
+      pdf.setTextColor("#6b7280");
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(7.5);
+      pdf.text(
+        "Unite Solar — A Unite Developers Global Inc. Company",
+        M, pageH - M - 6,
+      );
+      pdf.text(`Page ${pageNum} of ${pageTotal}`, pageW - M, pageH - M - 6, { align: "right" });
+    };
+
     const pxPerPt = canvas.width / contentW;
     const sliceHpx = Math.floor(contentH * pxPerPt);
     const totalPx = canvas.height;
+    const pageTotal = Math.max(1, Math.ceil(totalPx / sliceHpx));
+
     let renderedPx = 0;
     let pageNum = 0;
     while (renderedPx < totalPx) {
@@ -176,21 +236,11 @@ const SolarFeasibility: React.FC = () => {
       const ctx = slice.getContext("2d")!;
       ctx.fillStyle = "#fff";
       ctx.fillRect(0, 0, slice.width, slice.height);
-      ctx.drawImage(
-        canvas,
-        0, renderedPx, canvas.width, thisSlicePx,
-        0, 0, canvas.width, thisSlicePx,
-      );
+      ctx.drawImage(canvas, 0, renderedPx, canvas.width, thisSlicePx, 0, 0, canvas.width, thisSlicePx);
       if (pageNum > 0) pdf.addPage();
       const sliceHpt = thisSlicePx / pxPerPt;
-      pdf.addImage(slice.toDataURL("image/jpeg", 0.92), "JPEG", margin, margin, contentW, sliceHpt);
-      // footer
-      pdf.setFontSize(8);
-      pdf.setTextColor(120);
-      pdf.text(
-        `Unite Solar · Feasibility Report · Page ${pageNum + 1}`,
-        pageW / 2, pageH - 12, { align: "center" },
-      );
+      pdf.addImage(slice.toDataURL("image/jpeg", 0.92), "JPEG", M, contentTop, contentW, sliceHpt);
+      drawChrome(pageNum + 1, pageTotal);
       renderedPx += thisSlicePx;
       pageNum++;
     }
