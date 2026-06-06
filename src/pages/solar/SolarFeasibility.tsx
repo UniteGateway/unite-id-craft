@@ -27,6 +27,7 @@ import FeasibilityChatbot from "@/components/solar/FeasibilityChatbot";
 import FeasibilityNetMeteringSections from "@/components/solar/FeasibilityNetMeteringSections";
 import { geocodeLocation, staticMapUrlFromSettings, type GeoPoint } from "@/lib/geocode";
 import { useBranding } from "@/hooks/useBranding";
+import { downloadFeasibilityQuotePDF } from "@/lib/feasibility-quote-pdf";
 
 const SEGMENT_LABEL: Record<Segment, string> = {
   residential: "Residential",
@@ -331,6 +332,21 @@ const SolarFeasibility: React.FC = () => {
             </Button>
             <Button onClick={exportPDF} className="gap-2">
               <Download className="h-4 w-4" /> PDF
+            </Button>
+            <Button
+              onClick={() => downloadFeasibilityQuotePDF({
+                customer_name: manual.consumer_name,
+                location: manual.location,
+                segment: SEGMENT_LABEL[report.segment],
+                capacity_kw: report.recommended_capacity_kw,
+                epc_rate_per_kw: report.epc.rate_per_kw,
+                company: branding.company,
+                logo_url: branding.brand_logo_url,
+                milestones: report.epc.payment_terms.map((p) => ({ pct: p.pct, label: p.milestone })),
+              })}
+              className="gap-2 bg-orange-500 hover:bg-orange-600"
+            >
+              <FileText className="h-4 w-4" /> Generate Quote
             </Button>
           </div>
 
